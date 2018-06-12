@@ -8,6 +8,7 @@ class Generator(object):
 
     def __init__(self, data, batch_size, num_steps, prediction_size=1):
         self._data = data
+        print(data)
         self._batch_size = batch_size
         self._num_steps = num_steps
         self._data_length = data.shape[0]
@@ -30,7 +31,7 @@ class Generator(object):
             x_batch = []
             y_batch = []
             for batch_pos in range(self._batch_size):
-                pos =  batch_pos * self._batch_size + num_batch
+                pos =  batch_pos * self._num_batches + num_batch
                 x_batch.append(self._data[pos])
                 y_batch.append(self._data[pos + 1])
             x_data.append(x_batch)
