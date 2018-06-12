@@ -4,6 +4,8 @@ Created on Jun 11, 2018
 @author: nishilab
 '''
 
+import numpy as np
+
 class Generator(object):
 
     def __init__(self, data, batch_size, num_steps, prediction_size=1):
@@ -33,7 +35,7 @@ class Generator(object):
             for batch_pos in range(self._batch_size):
                 pos =  batch_pos * self._num_batches + num_batch
                 x_batch.append(self._data[pos])
-                y_batch.append(self._data[pos + 1])
+                y_batch.append(self._data[pos + 1][2])
             x_data.append(x_batch)
             y_data.append(y_batch)
         return x_data, y_data
@@ -45,7 +47,7 @@ class Generator(object):
     def get_stage(self):
         start_pos = self._pos * self._num_steps
         end_pos = (self._pos  + 1) * self._num_steps
-        return self._x_data[start_pos:end_pos], self._y_data[start_pos:end_pos] 
+        return self._x_data[start_pos:end_pos], np.reshape(self._y_data[start_pos:end_pos], [-1]) 
             
     def has_more_epoch_stages(self):
         return self._pos < self._epoch_size
