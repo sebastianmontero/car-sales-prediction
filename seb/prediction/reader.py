@@ -84,16 +84,16 @@ class Reader(object):
     def has_more_windows(self):
         return self._window_pos < self._num_windows
     
-    def get_generator(self, batch_size, num_steps):
-        return Generator(self._get_data().values, batch_size, num_steps)
+    def get_generator(self, batch_size, num_steps, for_test=False):
+        return Generator(self._get_data(for_test).values, batch_size, num_steps)
         
         
-reader = Reader(13, 11)
+'''reader = Reader(13, 12)
 
 
 reader.next_window()
 
-generator = reader.get_generator(2, 3)
+generator = reader.get_generator(2, 3, True)
 x, y = generator.get_data()
 
 with tf.Session() as sess:
@@ -106,7 +106,7 @@ with tf.Session() as sess:
         print('y value:')
         print(vals['y'])
 
-'''stage = 0
+stage = 0
  
 
 print(generator._data)

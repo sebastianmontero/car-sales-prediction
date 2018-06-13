@@ -369,7 +369,7 @@ def main(_):
     config = get_config()
     eval_config = get_config()
     eval_config.batch_size = 1
-    eval_config.num_steps = 1
+    #eval_config.num_steps = 1
     
     with tf.Graph().as_default():
         initializer = tf.random_uniform_initializer(-config.init_scale, config.init_scale)
@@ -386,14 +386,14 @@ def main(_):
             valid_input = PTBInput(config=config, data=valid_data, name='ValidInput')
             with tf.variable_scope('Model', reuse=True, initializer=initializer):
                 mvalid = PTBModel(stage = VALIDATE, config=config, input_=valid_input)
-            tf.summary.scalar('Validation Loss', mvalid.cost)
+            tf.summary.scalar('Validation Loss', mvalid.cost)'''
         with tf.name_scope('Test'):
-            test_input = PTBInput(config=eval_config, data=test_data, name='TestInput')
+            generator = reader.get_generator(eval_config.batch_size, eval_config.num_steps)
             with tf.variable_scope('Model', reuse=True, initializer=initializer):
-                mtest = PTBModel(stage=TEST, config=eval_config, input_=test_input)
+                mtest = Model(stage=TEST, config=eval_config, generator=generator)
                 
-        models = {'Train': m, 'Valid': mvalid, 'Test': mtest}'''
-        models = {'Train': m}
+        '''models = {'Train': m, 'Valid': mvalid, 'Test': mtest}'''
+        models = {'Train': m, 'Test': mtest}
         for name, model in models.items():
             model.export_ops(name)
         metagraph = tf.train.export_meta_graph()
@@ -428,14 +428,11 @@ def main(_):
                 print('Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
                 '''valid_perplexity = run_epoch(session, mvalid)
                 print('Epoch: {:d} Valid perplexity: {:.3f}'.format(i + 1, valid_perplexity))'''
+        
+        with tf.Session() as session:        
+            test_mse = run_epoch(session, mtest)
+            print('Test Mean Squared Error: {:.3f}'.format(test_mse))
             
-            '''test_perplexity = run_epoch(session, mtest, vocabulary=vocabulary)
-            print('Test perplexity: {:.3f}'.format(test_perplexity))'''
-            
-            '''if FLAGS.save_path:
-                print('Saving model to {}'.format(FLAGS.save_path))
-                session.
-                sv.saver.save(session, FLAGS.save_path, global_step=sv.global_step)'''
                 
 if __name__ == '__main__':
     tf.app.run()
