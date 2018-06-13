@@ -35,9 +35,9 @@ flags.DEFINE_string('rnn_mode', None,
 flags.DEFINE_string('optimizer', 'adagrad',
                     "The optimizer to use: adam, adagrad, gradient-descent. "
                     "Default is adagrad.")
-flags.DEFINE_string('learning_rate', "1.0", #adam requires smaller learning rate
+flags.DEFINE_string('learning_rate', "0.1", #adam requires smaller learning rate
                     "The starting learning rate to use"
-                    "Default is 1.0")
+                    "Default is 0.1")
 
 FLAGS = flags.FLAGS
 BASIC = 'basic'
@@ -91,12 +91,9 @@ class Model(object):
         if not self._is_training:
             return
         self._lr = tf.Variable(0.0, trainable=False)
-        #tvars = tf.trainable_variables()
-        #grads, _ = tf.clip_by_global_norm(tf.gradients(self._cost, tvars), config.max_grad_norm)
         optimizer = OPTIMIZERS[FLAGS.optimizer](self._lr)
         optimizer = tfestimator.clip_gradients_by_norm(optimizer, config.max_grad_norm)
         self._train_op = optimizer.minimize(self._cost, global_step=tf.train.get_or_create_global_step())
-        #self._train_op = optimizer.apply_gradients(zip(grads, tvars), global_step=tf.train.get_or_create_global_step())
         self._new_lr = tf.placeholder(tf.float32, shape=[], name='new_learning_rate')
         self._lr_update = tf.assign(self._lr, self._new_lr)
     
@@ -150,7 +147,6 @@ class Model(object):
             [make_cell(config.rnn_mode, hidden_size) for hidden_size in config.layers], state_is_tuple=True)
         
         self._initial_state = cell.zero_state(config.batch_size, data_type())
-        #state = self._initial_state
         outputs, state = tf.nn.dynamic_rnn(cell, inputs, initial_state=self._initial_state, time_major=True)
         output = tf.reshape(tf.concat(outputs, 1), [-1, config.layers[-1]])
         return output, state      
@@ -243,9 +239,9 @@ class SmallConfig(object):
     num_steps = 6
     hidden_size = 200
     max_epoch = 4
-    max_max_epoch = 13
+    max_max_epoch = 50
     keep_prob = 1.0
-    lr_decay = 0.5
+    lr_decay = 0.8
     batch_size = 3
     vocab_size = 10000
     rnn_mode = BLOCK
@@ -327,7 +323,7 @@ def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
         costs += cost
         
         if verbose:
-            print('{:.3f} Mean Squared Error: {:.3f}'.format(
+            print('{:.3f} Mean Squared Error: {:.5f}'.format(
                 step * 1.0 / epoch_size, 
                  np.exp(costs/step)))
             
@@ -427,7 +423,7 @@ def main(_):
                 lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
                 m.assign_lr(session, config.learning_rate * lr_decay)
                 
-                print('Epoch: {:d} Learning rate: {:.3f}'.format(i + 1, session.run(m.lr)))
+                print('Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
                 train_mse = run_epoch(session, m, eval_op=m.train_op, verbose=True)
                 print('Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
                 '''valid_perplexity = run_epoch(session, mvalid)
