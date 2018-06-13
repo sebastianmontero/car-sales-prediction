@@ -4,19 +4,22 @@ Created on Jun 11, 2018
 @author: nishilab
 '''
 
+import math
 import numpy as np
 import tensorflow as tf
 
 class Generator(object):
 
     def __init__(self, data, batch_size, num_steps, prediction_size=1):
-        self._data = data
+        
+        residual = (data.shape[0] - prediction_size) % batch_size
+        self._data = data[residual:]
         self._batch_size = batch_size
         self._num_steps = num_steps
         self._data_length = data.shape[0]
         self._prediction_size = prediction_size
         self._num_batches = (self._data_length - prediction_size) // batch_size
-        self._epoch_size = (self._data_length - prediction_size) // (num_steps * batch_size)
+        self._epoch_size = math.ceil((self._data_length - prediction_size) / (num_steps * batch_size))
         assert (self._epoch_size > 0), "Epoch size is zero, num_steps or batch_size are to big"
         self._pos = -1
         self._x_data, self._y_data = self._format_data()

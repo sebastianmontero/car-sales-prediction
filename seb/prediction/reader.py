@@ -77,9 +77,9 @@ class Reader(object):
         self._window_pos += 1
         return self.has_more_windows()
         
-    def _get_data(self):
+    def _get_data(self, for_test = False):
         assert (self._window_pos >= 0), "Next window must be called first to get data for window"
-        return self._data.iloc[self._window_pos: self._window_pos + self._window_size]
+        return self._data.iloc[self._window_pos: self._window_pos + self._window_size + (1 if for_test else 0) ]
         
     def has_more_windows(self):
         return self._window_pos < self._num_windows
@@ -88,16 +88,16 @@ class Reader(object):
         return Generator(self._get_data().values, batch_size, num_steps)
         
         
-'''reader = Reader(13, 37)
+reader = Reader(13, 11)
 
 
 reader.next_window()
 
-generator = reader.get_generator(3, 6)
+generator = reader.get_generator(2, 3)
 x, y = generator.get_data()
 
 with tf.Session() as sess:
-    for i in range(3):
+    for i in range(4):
         vals = sess.run({'x':x, 'y': y})
         print('x value:')
         print(vals['x'])
@@ -106,7 +106,7 @@ with tf.Session() as sess:
         print('y value:')
         print(vals['y'])
 
-stage = 0
+'''stage = 0
  
 
 print(generator._data)

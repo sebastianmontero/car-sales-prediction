@@ -236,13 +236,13 @@ class SmallConfig(object):
     init_scale = 0.1
     max_grad_norm = 5
     num_layers = 2
-    num_steps = 6
+    num_steps = 7
     hidden_size = 200
     max_epoch = 4
     max_max_epoch = 50
     keep_prob = 1.0
     lr_decay = 0.8
-    batch_size = 3
+    batch_size = 1
     vocab_size = 10000
     rnn_mode = BLOCK
     layers = [200, 150]
