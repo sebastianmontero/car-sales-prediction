@@ -5,6 +5,7 @@ Created on Jun 11, 2018
 '''
 
 import numpy as np
+import tensorflow as tf
 
 class Generator(object):
 
@@ -18,16 +19,11 @@ class Generator(object):
         self._epoch_size = (self._data_length - prediction_size) // (num_steps * batch_size)
         assert (self._epoch_size > 0), "Epoch size is zero, num_steps or batch_size are to big"
         self._pos = -1
-        self._x_data = None
-        self._x_data = None
         self._x_data, self._y_data = self._format_data()
 
     @property
     def epoch_size(self):
         return self._epoch_size
-    
-    def reset(self):
-        self._pos = -1
         
     def _format_data(self):
         x_data = []
@@ -41,19 +37,9 @@ class Generator(object):
                 y_batch.append(self._data[pos + 1][2])
             x_data.append(x_batch)
             y_data.append(y_batch)
-        return x_data, y_data
-
-    def next_epoch_stage(self):
-        self._pos += 1
-        return self.has_more_epoch_stages()
+        return np.asarray(x_data), np.asarray(y_data)
     
-    def get_stage(self):
-        start_pos = self._pos * self._num_steps
-        end_pos = (self._pos  + 1) * self._num_steps
-        return self._x_data[start_pos:end_pos], np.reshape(self._y_data[start_pos:end_pos], [-1,1]) 
-            
-    def has_more_epoch_stages(self):
-        return self._pos < self._epoch_size
-    
-    def get_num_stage(self):
-        return self._pos + 1
+    def get_data(self):
+        ds = tf.data.Dataset.from_tensor_slices((self._x_data, self._y_data))
+        ds = ds.batch(self._num_steps).repeat()
+        return ds.make_one_shot_iterator().get_next()

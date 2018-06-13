@@ -15,6 +15,8 @@ from generator import Generator
 
 from matplotlib.pyplot import axis
 
+import tensorflow as tf
+
 
 class Reader(object):
 
@@ -22,7 +24,7 @@ class Reader(object):
         self._engine = self._connect_to_db()
         self._line_id = str(line_id) 
         self._window_size = window_size
-        self.window_pos = -1
+        self._window_pos = -1
         self._window_step_size = 1
         self._included_features = ['interest_rate']
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
@@ -58,7 +60,7 @@ class Reader(object):
         self._scaler.fit(data_np[:self._window_size, :])
         data_np = self._scaler.transform(data_np)
         data_np = np.concatenate((month_np, data_np), axis=1)
-        self._data = pd.DataFrame(data_np, columns=self._features)
+        self._data = pd.DataFrame(data_np, columns=self._features, dtype=np.float32)
     
     def _process_month(self, data_df):
         data_df['month_of_year'] = data_df['month_id'].apply(lambda x: Utils.month_id_to_month_of_year(x))
@@ -72,14 +74,15 @@ class Reader(object):
         return create_engine(config['DB']['connection_url'])
     
     def next_window(self):
-        self.window_pos += 1
+        self._window_pos += 1
         return self.has_more_windows()
         
     def _get_data(self):
-        return self._data.iloc[self.window_pos: self.window_pos + self._window_size]
+        assert (self._window_pos >= 0), "Next window must be called first to get data for window"
+        return self._data.iloc[self._window_pos: self._window_pos + self._window_size]
         
     def has_more_windows(self):
-        return self.window_pos < self._num_windows
+        return self._window_pos < self._num_windows
     
     def get_generator(self, batch_size, num_steps):
         return Generator(self._get_data().values, batch_size, num_steps)
@@ -87,12 +90,21 @@ class Reader(object):
         
 '''reader = Reader(13, 37)
 
-while reader.next_window():
-    print(reader._get_data())
 
 reader.next_window()
 
-generator = reader.get_generator(3, 12)
+generator = reader.get_generator(3, 6)
+x, y = generator.get_data()
+
+with tf.Session() as sess:
+    for i in range(3):
+        vals = sess.run({'x':x, 'y': y})
+        print('x value:')
+        print(vals['x'])
+        print('')
+        print('')
+        print('y value:')
+        print(vals['y'])
 
 stage = 0
  

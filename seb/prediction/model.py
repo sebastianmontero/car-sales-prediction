@@ -60,19 +60,18 @@ def data_type():
         
 class Model(object):
     
-    def __init__(self, stage, config, num_features):
+    def __init__(self, stage, config, generator):
         self._is_training = stage == TRAIN
         self._stage = stage
         self._rnn_params = None
-        self._words = None
         self._cell = None
+        self._generator = generator
         self.batch_size = config.batch_size
-        self.num_steps = config.num_steps
-        self._inputs = tf.placeholder(tf.float32, shape=[self.num_steps, self.batch_size, num_features], name='inputs')
-        self._targets = tf.placeholder(tf.float32, shape=[self.num_steps * self.batch_size,1], name='targets')
-        vocab_size = config.vocab_size
+        self.num_steps = config.num_steps  
         
-        output, state = self._build_rnn_graph(self._inputs, config, self._is_training)
+        inputs, targets = generator.get_data()
+        targets = tf.reshape(targets, [-1, 1])
+        output, state = self._build_rnn_graph(inputs, config, self._is_training)
         
         linear_w = tf.get_variable(
             'linear_w', 
@@ -85,7 +84,7 @@ class Model(object):
             dtype=data_type())
         
         output = tf.nn.xw_plus_b(output, linear_w, linear_b)
-        self._cost = tf.losses.mean_squared_error(self._targets, output)
+        self._cost = tf.losses.mean_squared_error(targets, output)
         
         self._final_state = state
             
@@ -157,13 +156,11 @@ class Model(object):
         return output, state      
         
     def assign_lr(self, session, lr_value):
-        session.run(self._lr_update, feed_dict={self._new_lr: lr_value, self.inputs: np.zeros([6,3,4]), self.targets: np.zeros([18,1])})
+        session.run(self._lr_update, feed_dict={self._new_lr: lr_value})
     
     def export_ops(self, name):
         self._name = name
-        ops = {export_utils.with_prefix(self._name, 'cost'): self._cost,
-               export_utils.with_prefix(self._name, 'inputs'): self._inputs,
-               export_utils.with_prefix(self._name, 'targets'): self._targets}
+        ops = {export_utils.with_prefix(self._name, 'cost'): self._cost}
         
         if self._is_training:
             ops.update(lr=self._lr, new_lr=self._new_lr, lr_update=self._lr_update)
@@ -192,8 +189,6 @@ class Model(object):
                     base_variable_scope='Model/RNN')
                 tf.add_to_collection(tf.GraphKeys.SAVEABLE_OBJECTS, params_saveable)
         self._cost = tf.get_collection_ref(export_utils.with_prefix(self._name, 'cost'))[0]
-        self._inputs = tf.get_collection_ref(export_utils.with_prefix(self._name, 'inputs'))[0]
-        self._targets = tf.get_collection_ref(export_utils.with_prefix(self._name, 'targets'))[0]
         num_replicas = FLAGS.num_gpus if self._name == 'Train' else 1
         self._initial_state = export_utils.import_state_tuples(self._initial_state, self._initial_state_name, num_replicas)
         self._final_state = export_utils.import_state_tuples(self._final_state, self._final_state_name, num_replicas)
@@ -236,12 +231,9 @@ class Model(object):
         return self._final_state_name
     
     @property
-    def inputs(self):
-        return self._inputs
+    def generator(self):
+        return self._generator
     
-    @property
-    def targets(self):
-        return self._targets
 
 class SmallConfig(object):
     """Small config."""
@@ -310,7 +302,7 @@ class TestConfig(object):
     layers = [2]
         
         
-def run_epoch(session, model, generator, eval_op=None, verbose=False, vocabulary=None):
+def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
     
     costs = 0.
     state = session.run(model.initial_state)
@@ -320,23 +312,15 @@ def run_epoch(session, model, generator, eval_op=None, verbose=False, vocabulary
         'final_state': model.final_state
     }
     
-    if model._stage == TEST:
-        fetches['words'] = model.words
-    
     if eval_op is not None:
         fetches['eval_op'] = eval_op
-        
-    while generator.next_epoch_stage():
-        step = generator.get_num_stage()
+    
+    epoch_size = model.generator.epoch_size
+    for step in range(1, epoch_size + 1):
         feed_dict = {}
         for i, (c,h) in enumerate(model.initial_state):
             feed_dict[c] = state[i].c
             feed_dict[h] = state[i].h
-        x, targets = generator.get_stage()
-        print(x)
-        print(targets)
-        feed_dict[model.inputs] = x
-        feed_dict[model.targets] = targets
         vals = session.run(fetches, feed_dict)
         cost = vals['cost']
         state = vals['final_state']
@@ -344,10 +328,10 @@ def run_epoch(session, model, generator, eval_op=None, verbose=False, vocabulary
         
         if verbose:
             print('{:.3f} Mean Squared Error: {:.3f}'.format(
-                step * 1.0 / generator.epoch_size, 
+                step * 1.0 / epoch_size, 
                  np.exp(costs/step)))
             
-    return np.exp(costs / generator.epoch_size)
+    return np.exp(costs / epoch_size)
 
 def get_config():
     """Get model config."""
@@ -385,7 +369,7 @@ def main(_):
     line_id = 13
     window_size = 37
     reader = Reader(line_id, window_size)
-    
+    reader.next_window()
     config = get_config()
     eval_config = get_config()
     eval_config.batch_size = 1
@@ -397,7 +381,8 @@ def main(_):
         with tf.name_scope('Train'):
             
             with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                m = Model(stage = TRAIN, config=config, num_features=reader.num_features)
+                generator = reader.get_generator(config.batch_size, config.num_steps) 
+                m = Model(stage = TRAIN, config=config, generator=generator)
             tf.summary.scalar('Training Loss', m.cost)
             tf.summary.scalar('Learning Rate', m.lr)
         
@@ -434,7 +419,6 @@ def main(_):
             #TensorBoardDebugHook('localhost:6064')
         ]
         reader.next_window()
-        generator = reader.get_generator(config.batch_size, config.num_steps)
         with tf.train.MonitoredTrainingSession(
             checkpoint_dir=FLAGS.save_path, 
             config=config_proto,
@@ -444,11 +428,10 @@ def main(_):
                 m.assign_lr(session, config.learning_rate * lr_decay)
                 
                 print('Epoch: {:d} Learning rate: {:.3f}'.format(i + 1, session.run(m.lr)))
-                train_mse = run_epoch(session, m, generator, eval_op=m.train_op, verbose=True)
+                train_mse = run_epoch(session, m, eval_op=m.train_op, verbose=True)
                 print('Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
                 '''valid_perplexity = run_epoch(session, mvalid)
                 print('Epoch: {:d} Valid perplexity: {:.3f}'.format(i + 1, valid_perplexity))'''
-                generator.reset()
             
             '''test_perplexity = run_epoch(session, mtest, vocabulary=vocabulary)
             print('Test perplexity: {:.3f}'.format(test_perplexity))'''
