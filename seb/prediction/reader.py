@@ -31,9 +31,10 @@ class Reader(object):
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
         self._scaler = MinMaxScaler((-1,1))
-        self._data = None
+        self._inputs = None
+        self._targets = None
         self._process_data()
-        self._num_windows = self._data.shape[0] - window_size 
+        self._num_windows = self._inputs.shape[0] - window_size 
         
 
     @property
@@ -55,12 +56,14 @@ class Reader(object):
     
     def _process_data(self):
         data_df = self._raw_data()
-        data_np = data_df.values[: , 1:] #get non month cols
+        data_np = data_df.values[: , 1:] #get non month cols 
+        self._targets = data_np[:,:1]
         month_np = self._process_month(data_df)
         self._scaler.fit(data_np[:self._window_size, :])
         data_np = self._scaler.transform(data_np)
         data_np = np.concatenate((month_np, data_np), axis=1)
-        self._data = pd.DataFrame(data_np, columns=self._features, dtype=np.float32)
+        self._inputs = pd.DataFrame(data_np, columns=self._features, dtype=np.float32)
+        
     
     def _process_month(self, data_df):
         data_df['month_of_year'] = data_df['month_id'].apply(lambda x: Utils.month_id_to_month_of_year(x))
@@ -79,13 +82,15 @@ class Reader(object):
         
     def _get_data(self):
         assert (self._window_pos >= 0), "Next window must be called first to get data for window"
-        return self._data.iloc[self._window_pos: self._window_pos + self._window_size]
+        start_pos = self._window_pos
+        end_pos = self._window_pos + self._window_size
+        return self._inputs.iloc[start_pos: end_pos].values, self._targets[start_pos: end_pos]
         
     def has_more_windows(self):
         return self._window_pos < self._num_windows
     
     def get_generator(self, batch_size, num_steps):
-        return Generator(self._get_data().values, batch_size, num_steps)
+        return Generator(self._get_data(), batch_size, num_steps)
         
         
 '''reader = Reader(13, 37)

@@ -10,10 +10,10 @@ import tensorflow as tf
 class Generator(object):
 
     def __init__(self, data, batch_size, num_steps, prediction_size=1):
-        self._data = data
+        self._inputs, self._targets = data
         self._batch_size = batch_size
         self._num_steps = num_steps
-        self._data_length = data.shape[0]
+        self._data_length = self._inputs.shape[0]
         self._prediction_size = prediction_size
         self._num_batches = (self._data_length - prediction_size) // batch_size
         self._epoch_size = (self._data_length - prediction_size) // (num_steps * batch_size)
@@ -33,8 +33,8 @@ class Generator(object):
             y_batch = []
             for batch_pos in range(self._batch_size):
                 pos =  batch_pos * self._num_batches + num_batch
-                x_batch.append(self._data[pos])
-                y_batch.append(self._data[pos + 1][2])
+                x_batch.append(self._inputs[pos])
+                y_batch.append(self._targets[pos + 1])
             x_data.append(x_batch)
             y_data.append(y_batch)
         return np.asarray(x_data), np.asarray(y_data)
