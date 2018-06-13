@@ -27,12 +27,17 @@ class Reader(object):
         self._included_features = ['interest_rate']
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
+        self._num_features = len(self._features)
         self._scaler = MinMaxScaler((-1,1))
         self._data = None
         self._process_data()
         self._num_windows = self._data.shape[0] - window_size 
         
 
+    @property
+    def num_features(self):
+        return self._num_features
+    
     def _raw_data(self):
         
         included_features_str = (',' if len(self._included_features) else '') + ','.join(self._included_features) 
@@ -80,10 +85,10 @@ class Reader(object):
         return Generator(self._get_data().values, batch_size, num_steps)
         
         
-reader = Reader(13, 37)
+'''reader = Reader(13, 37)
 
-'''while reader.next_window():
-    print(reader._get_data())'''
+while reader.next_window():
+    print(reader._get_data())
 
 reader.next_window()
 
@@ -99,12 +104,11 @@ while generator.next_epoch_stage():
     
     for i in data_x:
         print(i)
-        
-    '''for i in data_y:
-        print(i)
-        for j in i:
-            print(j)'''
     
-    stage += 1
+    print('')
+    for i in data_y:
+        print(i)
+    
+    stage += 1'''
 
     

@@ -10,7 +10,6 @@ class Generator(object):
 
     def __init__(self, data, batch_size, num_steps, prediction_size=1):
         self._data = data
-        print(data)
         self._batch_size = batch_size
         self._num_steps = num_steps
         self._data_length = data.shape[0]
@@ -23,7 +22,11 @@ class Generator(object):
         self._x_data = None
         self._x_data, self._y_data = self._format_data()
 
-    def _reset(self):
+    @property
+    def epoch_size(self):
+        return self._epoch_size
+    
+    def reset(self):
         self._pos = -1
         
     def _format_data(self):
@@ -47,7 +50,10 @@ class Generator(object):
     def get_stage(self):
         start_pos = self._pos * self._num_steps
         end_pos = (self._pos  + 1) * self._num_steps
-        return self._x_data[start_pos:end_pos], np.reshape(self._y_data[start_pos:end_pos], [-1]) 
+        return self._x_data[start_pos:end_pos], np.reshape(self._y_data[start_pos:end_pos], [-1,1]) 
             
     def has_more_epoch_stages(self):
         return self._pos < self._epoch_size
+    
+    def get_num_stage(self):
+        return self._pos + 1
