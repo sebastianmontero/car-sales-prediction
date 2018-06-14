@@ -236,13 +236,13 @@ class SmallConfig(object):
     init_scale = 0.1
     max_grad_norm = 5
     num_layers = 2
-    num_steps = 7
+    num_steps = 12
     hidden_size = 200
-    max_epoch = 4
+    max_epoch = 30
     max_max_epoch = 50
     keep_prob = 1.0
     lr_decay = 0.8
-    batch_size = 1
+    batch_size = 3
     vocab_size = 10000
     rnn_mode = BLOCK
     layers = [200, 150]
@@ -388,7 +388,7 @@ def main(_):
                 mvalid = PTBModel(stage = VALIDATE, config=config, input_=valid_input)
             tf.summary.scalar('Validation Loss', mvalid.cost)'''
         with tf.name_scope('Test'):
-            generator = reader.get_generator(eval_config.batch_size, eval_config.num_steps)
+            generator = reader.get_generator(eval_config.batch_size, eval_config.num_steps, for_test=True)
             with tf.variable_scope('Model', reuse=True, initializer=initializer):
                 mtest = Model(stage=TEST, config=eval_config, generator=generator)
                 
@@ -423,13 +423,10 @@ def main(_):
                 lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
                 m.assign_lr(session, config.learning_rate * lr_decay)
                 
-                print('Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
+                print('Test Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
                 train_mse = run_epoch(session, m, eval_op=m.train_op, verbose=True)
-                print('Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
-                '''valid_perplexity = run_epoch(session, mvalid)
-                print('Epoch: {:d} Valid perplexity: {:.3f}'.format(i + 1, valid_perplexity))'''
-        
-        with tf.Session() as session:        
+                print('Test Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
+                        
             test_mse = run_epoch(session, mtest)
             print('Test Mean Squared Error: {:.3f}'.format(test_mse))
             
