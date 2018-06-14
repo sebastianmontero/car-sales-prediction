@@ -32,6 +32,7 @@ class Reader(object):
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
         self._scaler = MinMaxScaler((-1,1))
+        self._sales_scaler = MinMaxScaler((-1,1))
         self._data = None
         self._start_month_id = None
         self._process_data()
@@ -60,12 +61,15 @@ class Reader(object):
         data_df = self._raw_data()
         assert (data_df.shape[0] > (self._window_size + 1)), 'Data length: {} is smaller than window size + 1: {}'.format(data_df.shape[0], (self._window_size + 1))
          
-        self._start_month_id = int(data_df['month_id'][0])        
-        data_np = data_df.values[: , 1:] #get non month cols
+        self._start_month_id = int(data_df['month_id'][0])
+        sales_np = data_df.values[:, 1:2]
+        data_np = data_df.values[:, 2:] #get non month cols
         month_np = self._process_month(data_df)
-        self._scaler.fit(data_np[:self._window_size, :])
+        self._sales_scaler.fit(sales_np[:self._window_size])
+        self._scaler.fit(data_np[:self._window_size])
+        sales_np = self._sales_scaler.transform(sales_np)
         data_np = self._scaler.transform(data_np)
-        data_np = np.concatenate((month_np, data_np), axis=1)
+        data_np = np.concatenate((month_np, sales_np, data_np), axis=1)
         self._data = pd.DataFrame(data_np, columns=self._features, dtype=np.float32)
     
     def _process_month(self, data_df):
@@ -102,7 +106,10 @@ class Reader(object):
     def get_start_month_id(self):
         return Utils.add_months_to_month_id(self._start_month_id, self._window_pos)
     def get_end_month_id(self, for_test=False):
-        return Utils.add_months_to_month_id(self._start_month_id, self.get_end_window_pos(for_test))    
+        return Utils.add_months_to_month_id(self._start_month_id, self.get_end_window_pos(for_test))
+    
+    def unscale_sales(self, sales):
+        return self._sales_scaler.inverse_transform(sales)
         
 '''reader = Reader(13, 12)
 

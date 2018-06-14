@@ -11,6 +11,8 @@ import tensorflow.contrib.estimator as tfestimator
 import tensorflow.contrib.layers as tflayers
 import time
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from reader import Reader
 import export_utils
@@ -240,7 +242,7 @@ class SmallConfig(object):
     max_grad_norm = 5
     num_layers = 2
     num_steps = 12
-    hidden_size = 200
+    hidden_size = 100
     max_epoch = 30
     max_max_epoch = 50
     keep_prob = 1.0
@@ -374,6 +376,7 @@ def main(_):
     config = get_config()
     eval_config = get_config()
     eval_config.batch_size = 1
+    test_mses = []
     #eval_config.num_steps = 1
     
     while reader.next_window():
@@ -432,8 +435,15 @@ def main(_):
                     print('Test Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
                             
                 test_mse, predictions = run_epoch(session, mtest)
+                test_mses.append(test_mse)
                 print('Test Mean Squared Error: {:.3f}'.format(test_mse))
-                print(predictions)
+                predictions = reader.unscale_sales(np.reshape(np.concatenate(predictions), [-1,1]))
+                #print(predictions)
+                
+    sns.set()
+    plt.plot(test_mses)
+    plt.ylabel('Test Mean Squared Error')
+    plt.show()
             
                 
 if __name__ == '__main__':
