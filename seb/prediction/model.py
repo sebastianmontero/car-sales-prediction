@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
+import os
 import tensorflow as tf
 import tensorflow.contrib.seq2seq as tfseq2seq
 import tensorflow.contrib.cudnn_rnn as tfcudnn_rnn
@@ -80,10 +80,11 @@ class Model(object):
             initializer=tflayers.xavier_initializer())
         linear_b = tf.get_variable(
             'linear_b', 
-            initializer=tf.random_uniform([1],-0.1,0.1), 
+            initializer=tf.random_uniform([1]), 
             dtype=data_type())
         
         output = tf.nn.xw_plus_b(output, linear_w, linear_b)
+        self._predictions = output
         self._cost = tf.losses.mean_squared_error(targets, output)
         
         self._final_state = state
@@ -156,7 +157,8 @@ class Model(object):
     
     def export_ops(self, name):
         self._name = name
-        ops = {export_utils.with_prefix(self._name, 'cost'): self._cost}
+        ops = {export_utils.with_prefix(self._name, 'cost'): self._cost,
+               export_utils.with_prefix(self._name, 'predictions'): self._predictions}
         
         if self._is_training:
             ops.update(lr=self._lr, new_lr=self._new_lr, lr_update=self._lr_update)
@@ -185,6 +187,7 @@ class Model(object):
                     base_variable_scope='Model/RNN')
                 tf.add_to_collection(tf.GraphKeys.SAVEABLE_OBJECTS, params_saveable)
         self._cost = tf.get_collection_ref(export_utils.with_prefix(self._name, 'cost'))[0]
+        self._predictions = tf.get_collection_ref(export_utils.with_prefix(self._name, 'predictions'))[0]
         num_replicas = FLAGS.num_gpus if self._name == 'Train' else 1
         self._initial_state = export_utils.import_state_tuples(self._initial_state, self._initial_state_name, num_replicas)
         self._final_state = export_utils.import_state_tuples(self._final_state, self._final_state_name, num_replicas)
@@ -201,10 +204,6 @@ class Model(object):
     @property
     def final_state(self):
         return self._final_state
-    
-    @property
-    def words(self):
-        return self._words
     
     @property
     def stage(self):
@@ -229,6 +228,10 @@ class Model(object):
     @property
     def generator(self):
         return self._generator
+    
+    @property
+    def predictions(self):
+        return self._predictions
     
 
 class SmallConfig(object):
@@ -301,11 +304,13 @@ class TestConfig(object):
 def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
     
     costs = 0.
+    predictions = []
     state = session.run(model.initial_state)
     
     fetches ={
         'cost': model.cost,
-        'final_state': model.final_state
+        'final_state': model.final_state,
+        'predictions': model.predictions
     }
     
     if eval_op is not None:
@@ -320,6 +325,7 @@ def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
         vals = session.run(fetches, feed_dict)
         cost = vals['cost']
         state = vals['final_state']
+        predictions.append(vals['predictions'])
         costs += cost
         
         if verbose:
@@ -327,7 +333,7 @@ def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
                 step * 1.0 / epoch_size, 
                  np.exp(costs/step)))
             
-    return np.exp(costs / epoch_size)
+    return np.exp(costs / epoch_size), predictions
 
 def get_config():
     """Get model config."""
@@ -365,70 +371,69 @@ def main(_):
     line_id = 13
     window_size = 37
     reader = Reader(line_id, window_size)
-    reader.next_window()
     config = get_config()
     eval_config = get_config()
     eval_config.batch_size = 1
     #eval_config.num_steps = 1
     
-    with tf.Graph().as_default():
-        initializer = tf.random_uniform_initializer(-config.init_scale, config.init_scale)
-        
-        with tf.name_scope('Train'):
+    while reader.next_window():
+        print()
+        print('Window from: {} to {}'.format(reader.get_start_month_id(), reader.get_end_month_id()))
+        print()
+        save_path = os.path.join(FLAGS.save_path, reader.get_window_name())  
+        with tf.Graph().as_default():
+            initializer = tf.random_uniform_initializer(-config.init_scale, config.init_scale)
             
-            with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                generator = reader.get_generator(config.batch_size, config.num_steps) 
-                m = Model(stage = TRAIN, config=config, generator=generator)
-            tf.summary.scalar('Training Loss', m.cost)
-            tf.summary.scalar('Learning Rate', m.lr)
-        
-        '''with tf.name_scope('Valid'):
-            valid_input = PTBInput(config=config, data=valid_data, name='ValidInput')
-            with tf.variable_scope('Model', reuse=True, initializer=initializer):
-                mvalid = PTBModel(stage = VALIDATE, config=config, input_=valid_input)
-            tf.summary.scalar('Validation Loss', mvalid.cost)'''
-        with tf.name_scope('Test'):
-            generator = reader.get_generator(eval_config.batch_size, eval_config.num_steps, for_test=True)
-            with tf.variable_scope('Model', reuse=True, initializer=initializer):
-                mtest = Model(stage=TEST, config=eval_config, generator=generator)
+            with tf.name_scope('Train'):
                 
-        '''models = {'Train': m, 'Valid': mvalid, 'Test': mtest}'''
-        models = {'Train': m, 'Test': mtest}
-        for name, model in models.items():
-            model.export_ops(name)
-        metagraph = tf.train.export_meta_graph()
-        if tf.__version__ < '1.1.0' and FLAGS.num_gpus > 1:
-            raise ValueError('Your version of tensorflow does not support more than 1 gpu')
-        
-        soft_placement = False
-        
-        if FLAGS.num_gpus > 1:
-            soft_placement = True
-            export_utils.auto_parallel(metagraph, m)
-        
-    with tf.Graph().as_default():
-        tf.train.import_meta_graph(metagraph)
-        for model in models.values():
-            model.import_ops()
-        config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
-        hooks = [
-            #TensorBoardDebugHook('localhost:6064')
-        ]
-        reader.next_window()
-        with tf.train.MonitoredTrainingSession(
-            checkpoint_dir=FLAGS.save_path, 
-            config=config_proto,
-            hooks=hooks) as session:
-            for i in range(config.max_max_epoch):
-                lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
-                m.assign_lr(session, config.learning_rate * lr_decay)
-                
-                print('Test Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
-                train_mse = run_epoch(session, m, eval_op=m.train_op, verbose=True)
-                print('Test Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
-                        
-            test_mse = run_epoch(session, mtest)
-            print('Test Mean Squared Error: {:.3f}'.format(test_mse))
+                with tf.variable_scope("Model", reuse=None, initializer=initializer):
+                    generator = reader.get_generator(config.batch_size, config.num_steps) 
+                    m = Model(stage = TRAIN, config=config, generator=generator)
+                tf.summary.scalar('Training Loss', m.cost)
+                tf.summary.scalar('Learning Rate', m.lr)
+            
+            with tf.name_scope('Test'):
+                generator = reader.get_generator(eval_config.batch_size, eval_config.num_steps, for_test=True)
+                with tf.variable_scope('Model', reuse=True, initializer=initializer):
+                    mtest = Model(stage=TEST, config=eval_config, generator=generator)
+                    
+            '''models = {'Train': m, 'Valid': mvalid, 'Test': mtest}'''
+            models = {'Train': m, 'Test': mtest}
+            for name, model in models.items():
+                model.export_ops(name)
+            metagraph = tf.train.export_meta_graph()
+            if tf.__version__ < '1.1.0' and FLAGS.num_gpus > 1:
+                raise ValueError('Your version of tensorflow does not support more than 1 gpu')
+            
+            soft_placement = False
+            
+            if FLAGS.num_gpus > 1:
+                soft_placement = True
+                export_utils.auto_parallel(metagraph, m)
+            
+        with tf.Graph().as_default():
+            tf.train.import_meta_graph(metagraph)
+            for model in models.values():
+                model.import_ops()
+            config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
+            hooks = [
+                #TensorBoardDebugHook('localhost:6064')
+            ]
+            with tf.train.MonitoredTrainingSession(
+                checkpoint_dir=save_path, 
+                config=config_proto,
+                hooks=hooks) as session:
+                for i in range(config.max_max_epoch):
+                    lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
+                    m.assign_lr(session, config.learning_rate * lr_decay)
+                    
+                    print('Test Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
+                    train_mse,_ = run_epoch(session, m, eval_op=m.train_op, verbose=False)
+                    print('Test Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
+                            
+                test_mse, predictions = run_epoch(session, mtest)
+                print('Test Mean Squared Error: {:.3f}'.format(test_mse))
+                print(predictions)
             
                 
 if __name__ == '__main__':

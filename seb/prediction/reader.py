@@ -21,6 +21,7 @@ import tensorflow as tf
 class Reader(object):
 
     def __init__(self, line_id, window_size):
+        assert (window_size > 0), "Window size must be greater than zero"
         self._engine = self._connect_to_db()
         self._line_id = str(line_id) 
         self._window_size = window_size
@@ -32,6 +33,7 @@ class Reader(object):
         self._num_features = len(self._features)
         self._scaler = MinMaxScaler((-1,1))
         self._data = None
+        self._start_month_id = None
         self._process_data()
         self._num_windows = self._data.shape[0] - window_size 
         
@@ -54,7 +56,11 @@ class Reader(object):
         return pd.read_sql(sql, con=self._engine)
     
     def _process_data(self):
+        
         data_df = self._raw_data()
+        assert (data_df.shape[0] > (self._window_size + 1)), 'Data length: {} is smaller than window size + 1: {}'.format(data_df.shape[0], (self._window_size + 1))
+         
+        self._start_month_id = int(data_df['month_id'][0])        
         data_np = data_df.values[: , 1:] #get non month cols
         month_np = self._process_month(data_df)
         self._scaler.fit(data_np[:self._window_size, :])
@@ -79,14 +85,24 @@ class Reader(object):
         
     def _get_data(self, for_test = False):
         assert (self._window_pos >= 0), "Next window must be called first to get data for window"
-        return self._data.iloc[self._window_pos: self._window_pos + self._window_size + (1 if for_test else 0) ]
+        return self._data.iloc[self._window_pos: self.get_end_window_pos(for_test) ]
         
     def has_more_windows(self):
         return self._window_pos < self._num_windows
     
     def get_generator(self, batch_size, num_steps, for_test=False):
         return Generator(self._get_data(for_test).values, batch_size, num_steps)
-        
+    
+    def get_window_name(self, for_test=False):
+        return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(for_test))
+    
+    def get_end_window_pos(self, for_test=False):
+        return self._window_pos + self._window_size + (1 if for_test else 0)
+    
+    def get_start_month_id(self):
+        return Utils.add_months_to_month_id(self._start_month_id, self._window_pos)
+    def get_end_month_id(self, for_test=False):
+        return Utils.add_months_to_month_id(self._start_month_id, self.get_end_window_pos(for_test))    
         
 '''reader = Reader(13, 12)
 
