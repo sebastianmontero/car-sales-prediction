@@ -125,7 +125,7 @@ class Model(object):
         self._initial_state = (tfrnn.LSTMStateTuple(h=h, c=c),)
         outputs, h, c = self._cell(inputs, h, c, self._rnn_params, is_training)
         outputs = tf.transpose(outputs, [1, 0, 2])
-        outputs = tf.reshape(outputs, [-1, config.hidden_size])
+        outputs = tf.reshape(outputs, [-1, config.layers[-1]])
         return outputs,(tfrnn.LSTMStateTuple(h=h, c=c),)
     
     def _get_lstm_cell(self, rnn_mode, hidden_size, is_training):
@@ -151,7 +151,7 @@ class Model(object):
         
         self._initial_state = cell.zero_state(config.batch_size, data_type())
         outputs, state = tf.nn.dynamic_rnn(cell, inputs, initial_state=self._initial_state, time_major=True)
-        output = tf.reshape(tf.concat(outputs, 1), [-1, config.layers[-1]])
+        output = tf.reshape(outputs, [-1, config.layers[-1]])
         return output, state      
         
     def assign_lr(self, session, lr_value):
@@ -327,6 +327,8 @@ def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
         vals = session.run(fetches, feed_dict)
         cost = vals['cost']
         state = vals['final_state']
+        print(vals['predictions'])
+        print(np.reshape(vals['predictions'], [-1, model.batch_size]))
         predictions.append(vals['predictions'])
         costs += cost
         
@@ -334,7 +336,8 @@ def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
             print('{:.3f} Mean Squared Error: {:.5f}'.format(
                 step * 1.0 / epoch_size, 
                  np.exp(costs/step)))
-            
+     
+    predictions = np.reshape(np.concatenate(predictions), [-1,1])       
     return np.exp(costs / epoch_size), predictions
 
 def get_config():
@@ -371,7 +374,7 @@ def main(_):
         raise ValueError('Your machine only has {} gpus'.format(len(gpus)))
     
     line_id = 13
-    window_size = 37
+    window_size = 50
     reader = Reader(line_id, window_size)
     config = get_config()
     eval_config = get_config()
@@ -431,14 +434,14 @@ def main(_):
                     m.assign_lr(session, config.learning_rate * lr_decay)
                     
                     print('Test Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
-                    train_mse,_ = run_epoch(session, m, eval_op=m.train_op, verbose=False)
+                    train_mse, predictions = run_epoch(session, m, eval_op=m.train_op, verbose=False)
                     print('Test Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
                             
                 test_mse, predictions = run_epoch(session, mtest)
                 test_mses.append(test_mse)
                 print('Test Mean Squared Error: {:.3f}'.format(test_mse))
-                predictions = reader.unscale_sales(np.reshape(np.concatenate(predictions), [-1,1]))
-                #print(predictions)
+                predictions = reader.unscale_sales(predictions)
+                print(predictions)
                 
     sns.set()
     plt.plot(test_mses)

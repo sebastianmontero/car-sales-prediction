@@ -101,7 +101,7 @@ class Reader(object):
         return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(for_test))
     
     def get_end_window_pos(self, for_test=False):
-        return self._window_pos + self._window_size + (1 if for_test else 0)
+        return self._window_pos + self._window_size + (self._window_step_size if for_test else 0)
     
     def get_start_month_id(self):
         return Utils.add_months_to_month_id(self._start_month_id, self._window_pos)
@@ -111,12 +111,12 @@ class Reader(object):
     def unscale_sales(self, sales):
         return self._sales_scaler.inverse_transform(sales)
         
-'''reader = Reader(13, 12)
+reader = Reader(13, 12)
 
 
 reader.next_window()
 
-generator = reader.get_generator(2, 3, True)
+generator = reader.get_generator(2, 3, False)
 x, y = generator.get_data()
 
 with tf.Session() as sess:
@@ -129,7 +129,7 @@ with tf.Session() as sess:
         print('y value:')
         print(vals['y'])
 
-stage = 0
+'''stage = 0
  
 
 print(generator._data)
