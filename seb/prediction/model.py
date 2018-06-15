@@ -247,7 +247,7 @@ class SmallConfig(object):
     max_max_epoch = 50
     keep_prob = 1.0
     lr_decay = 0.8
-    batch_size = 3
+    batch_size = 1
     vocab_size = 10000
     rnn_mode = BLOCK
     layers = [200, 150]
@@ -303,7 +303,7 @@ class TestConfig(object):
     layers = [2]
         
         
-def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
+def run_epoch(session, model, config, eval_op=None, verbose=False, vocabulary=None):
     
     costs = 0.
     predictions = []
@@ -327,16 +327,15 @@ def run_epoch(session, model, eval_op=None, verbose=False, vocabulary=None):
         vals = session.run(fetches, feed_dict)
         cost = vals['cost']
         state = vals['final_state']
-        print(vals['predictions'])
-        print(np.reshape(vals['predictions'], [-1, model.batch_size]))
-        predictions.append(vals['predictions'])
+        predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size]))
         costs += cost
         
         if verbose:
             print('{:.3f} Mean Squared Error: {:.5f}'.format(
                 step * 1.0 / epoch_size, 
                  np.exp(costs/step)))
-     
+    
+    predictions = np.split(np.concatenate(predictions), model.batch_size,axis=1)
     predictions = np.reshape(np.concatenate(predictions), [-1,1])       
     return np.exp(costs / epoch_size), predictions
 
@@ -434,10 +433,10 @@ def main(_):
                     m.assign_lr(session, config.learning_rate * lr_decay)
                     
                     print('Test Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
-                    train_mse, predictions = run_epoch(session, m, eval_op=m.train_op, verbose=False)
+                    train_mse, predictions = run_epoch(session, m, config, eval_op=m.train_op, verbose=False)
                     print('Test Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
                             
-                test_mse, predictions = run_epoch(session, mtest)
+                test_mse, predictions = run_epoch(session, mtest, config)
                 test_mses.append(test_mse)
                 print('Test Mean Squared Error: {:.3f}'.format(test_mse))
                 predictions = reader.unscale_sales(predictions)

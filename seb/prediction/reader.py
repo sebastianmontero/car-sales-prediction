@@ -111,7 +111,7 @@ class Reader(object):
     def unscale_sales(self, sales):
         return self._sales_scaler.inverse_transform(sales)
         
-reader = Reader(13, 12)
+'''reader = Reader(13, 12)
 
 
 reader.next_window()
@@ -129,7 +129,7 @@ with tf.Session() as sess:
         print('y value:')
         print(vals['y'])
 
-'''stage = 0
+stage = 0
  
 
 print(generator._data)
