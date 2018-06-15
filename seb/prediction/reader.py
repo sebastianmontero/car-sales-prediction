@@ -13,20 +13,18 @@ import numpy as np
 from utils import Utils
 from generator import Generator
 
-from matplotlib.pyplot import axis
-
 import tensorflow as tf
 
 
 class Reader(object):
 
-    def __init__(self, line_id, window_size):
+    def __init__(self, line_id, window_size, prediction_size = 1):
         assert (window_size > 0), "Window size must be greater than zero"
         self._engine = self._connect_to_db()
         self._line_id = str(line_id) 
         self._window_size = window_size
         self._window_pos = -1
-        self._window_step_size = 1
+        self._prediction_size = prediction_size
         self._included_features = ['interest_rate']
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
@@ -35,6 +33,7 @@ class Reader(object):
         self._sales_scaler = MinMaxScaler((-1,1))
         self._data = None
         self._start_month_id = None
+        self._raw_data = None
         self._process_data()
         self._num_windows = self._data.shape[0] - window_size 
         
@@ -43,7 +42,11 @@ class Reader(object):
     def num_features(self):
         return self._num_features
     
-    def _raw_data(self):
+    @property
+    def window_pos(self):
+        return self._window_pos
+    
+    def _get_raw_data(self):
         
         included_features_str = (',' if len(self._included_features) else '') + ','.join(self._included_features) 
         
@@ -58,8 +61,8 @@ class Reader(object):
     
     def _process_data(self):
         
-        data_df = self._raw_data()
-        assert (data_df.shape[0] > (self._window_size + 1)), 'Data length: {} is smaller than window size + 1: {}'.format(data_df.shape[0], (self._window_size + 1))
+        self._raw_data = data_df = self._get_raw_data()
+        assert (data_df.shape[0] > (self._window_size + self._prediction_size)), 'Data length: {} is smaller than window size + 1: {}'.format(data_df.shape[0], (self._window_size + 1))
          
         self._start_month_id = int(data_df['month_id'][0])
         sales_np = data_df.values[:, 1:2]
@@ -88,23 +91,35 @@ class Reader(object):
         return self.has_more_windows()
         
     def _get_data(self, for_test = False):
-        assert (self._window_pos >= 0), "Next window must be called first to get data for window"
-        return self._data.iloc[self._window_pos: self.get_end_window_pos(for_test) ]
-        
+        return self._get_window_data(self._data, self._window_pos, for_test) 
+    
+    def get_data(self, end_window_pos, length, scaled = False):
+        return self._get_window_data_by_end_pos(self._data if scaled else self._raw_data, end_window_pos, length)
+    
+    def _get_window_data_by_end_pos(self, source, end_window_pos, length):
+        assert (end_window_pos <= source.shape[0]), "end_window_pos index out of bounds"
+        assert (length <= end_window_pos), "length must be lower than end_window_pos"
+        return source[end_window_pos - length: end_window_pos]
+    
+    def _get_window_data(self, source, window_pos, for_test = False):
+        assert (window_pos >= 0), "Next window must be called first to get data for window"
+        return source[self._window_pos: self.get_end_window_pos(for_test) ]
+    
     def has_more_windows(self):
         return self._window_pos < self._num_windows
     
     def get_generator(self, batch_size, num_steps, for_test=False):
-        return Generator(self._get_data(for_test).values, batch_size, num_steps)
+        return Generator(self._get_data(for_test).values, batch_size, num_steps, self._prediction_size)
     
     def get_window_name(self, for_test=False):
         return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(for_test))
     
     def get_end_window_pos(self, for_test=False):
-        return self._window_pos + self._window_size + (self._window_step_size if for_test else 0)
+        return self._window_pos + self._window_size + (self._prediction_size if for_test else 0)
     
     def get_start_month_id(self):
         return Utils.add_months_to_month_id(self._start_month_id, self._window_pos)
+    
     def get_end_month_id(self, for_test=False):
         return Utils.add_months_to_month_id(self._start_month_id, self.get_end_window_pos(for_test))
     

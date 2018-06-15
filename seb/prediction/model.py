@@ -15,10 +15,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from reader import Reader
+from evaluator import Evaluator
 import export_utils
 
 from tensorflow.python.client import device_lib
 from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
+from sklearn.svm.libsvm import predict
 
 flags = tf.flags
 
@@ -432,16 +434,16 @@ def main(_):
                     lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
                     m.assign_lr(session, config.learning_rate * lr_decay)
                     
-                    print('Test Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
+                    print('Train Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
                     train_mse, predictions = run_epoch(session, m, config, eval_op=m.train_op, verbose=False)
-                    print('Test Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
+                    print('Train Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
                             
                 test_mse, predictions = run_epoch(session, mtest, config)
                 test_mses.append(test_mse)
                 print('Test Mean Squared Error: {:.3f}'.format(test_mse))
-                predictions = reader.unscale_sales(predictions)
-                print(predictions)
-                
+                evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
+                evaluator.plot_real_target_vs_predicted()
+                evaluator.plot_scaled_target_vs_predicted()
     sns.set()
     plt.plot(test_mses)
     plt.ylabel('Test Mean Squared Error')
