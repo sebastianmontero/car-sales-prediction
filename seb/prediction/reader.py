@@ -62,7 +62,7 @@ class Reader(object):
     def _process_data(self):
         
         self._raw_data = data_df = self._get_raw_data()
-        assert (data_df.shape[0] > (self._window_size + self._prediction_size)), 'Data length: {} is smaller than window size + 1: {}'.format(data_df.shape[0], (self._window_size + 1))
+        assert (data_df.shape[0] >= (self._window_size + self._prediction_size)), 'Data length: {} is smaller than window size + 1: {}'.format(data_df.shape[0], (self._window_size + 1))
          
         self._start_month_id = int(data_df['month_id'][0])
         sales_np = data_df.values[:, 1:2]
@@ -97,6 +97,8 @@ class Reader(object):
         return self._get_window_data_by_end_pos(self._data if scaled else self._raw_data, end_window_pos, length)
     
     def _get_window_data_by_end_pos(self, source, end_window_pos, length):
+        if end_window_pos < 0:
+            end_window_pos = source.shape[0] + end_window_pos + 1
         assert (end_window_pos <= source.shape[0]), "end_window_pos index out of bounds"
         assert (length <= end_window_pos), "length must be lower than end_window_pos"
         return source[end_window_pos - length: end_window_pos]

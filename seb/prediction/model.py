@@ -245,14 +245,13 @@ class SmallConfig(object):
     num_layers = 2
     num_steps = 12
     hidden_size = 100
-    max_epoch = 30
-    max_max_epoch = 50
+    max_epoch = 150
+    max_max_epoch = 200
     keep_prob = 1.0
-    lr_decay = 0.8
+    lr_decay = 0.98
     batch_size = 1
-    vocab_size = 10000
     rnn_mode = BLOCK
-    layers = [200, 150]
+    layers = [50, 50]
 
 class MediumConfig(object):
     """Medium config."""
@@ -266,7 +265,6 @@ class MediumConfig(object):
     keep_prob = 0.5
     lr_decay = 0.8
     batch_size = 20
-    vocab_size = 10000
     rnn_mode = BLOCK
     layers = [650, 650]
 
@@ -283,7 +281,6 @@ class LargeConfig(object):
     keep_prob = 0.35
     lr_decay = 1 / 1.15
     batch_size = 20
-    vocab_size = 10000
     rnn_mode = BLOCK
     layers = [1500, 1500]
 
@@ -375,12 +372,12 @@ def main(_):
         raise ValueError('Your machine only has {} gpus'.format(len(gpus)))
     
     line_id = 13
-    window_size = 50
+    window_size = 52
     reader = Reader(line_id, window_size)
     config = get_config()
     eval_config = get_config()
     eval_config.batch_size = 1
-    test_mses = []
+    test_predictions = []
     #eval_config.num_steps = 1
     
     while reader.next_window():
@@ -434,20 +431,21 @@ def main(_):
                     lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
                     m.assign_lr(session, config.learning_rate * lr_decay)
                     
-                    print('Train Epoch: {:d} Learning rate: {:.5f}'.format(i + 1, session.run(m.lr)))
+    
                     train_mse, predictions = run_epoch(session, m, config, eval_op=m.train_op, verbose=False)
-                    print('Train Epoch: {:d} Mean Squared Error: {:.3f}'.format(i + 1, train_mse))
+                    print('Train Epoch: {:d} Mean Squared Error: {:.3f} Learning rate: {:.5f}'.format(i + 1, train_mse, session.run(m.lr)))
                             
                 test_mse, predictions = run_epoch(session, mtest, config)
-                test_mses.append(test_mse)
+                test_predictions.append(predictions[-1])
                 print('Test Mean Squared Error: {:.3f}'.format(test_mse))
                 evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                 evaluator.plot_real_target_vs_predicted()
                 evaluator.plot_scaled_target_vs_predicted()
-    sns.set()
-    plt.plot(test_mses)
-    plt.ylabel('Test Mean Squared Error')
-    plt.show()
+                evaluator.plot_real_errors()
+                #evaluator.plot_scaled_errors()
+    evaluator = Evaluator(reader, test_predictions, -1)
+    evaluator.plot_real_target_vs_predicted()
+    evaluator.plot_scaled_target_vs_predicted()
             
                 
 if __name__ == '__main__':
