@@ -39,7 +39,7 @@ flags.DEFINE_string('rnn_mode', None,
 flags.DEFINE_string('optimizer', 'adagrad',
                     "The optimizer to use: adam, adagrad, gradient-descent. "
                     "Default is adagrad.")
-flags.DEFINE_string('learning_rate', "0.1", #adam requires smaller learning rate
+flags.DEFINE_string('learning_rate', "1.0", #adam requires smaller learning rate
                     "The starting learning rate to use"
                     "Default is 0.1")
 
@@ -95,7 +95,7 @@ class Model(object):
             
         if not self._is_training:
             return
-        self._lr = tf.Variable(0.0, trainable=False)
+        self._lr = tf.Variable(config.learning_rate, trainable=False)
         optimizer = OPTIMIZERS[FLAGS.optimizer](self._lr)
         optimizer = tfestimator.clip_gradients_by_norm(optimizer, config.max_grad_norm)
         self._train_op = optimizer.minimize(self._cost, global_step=tf.train.get_or_create_global_step())
@@ -245,13 +245,14 @@ class SmallConfig(object):
     num_layers = 2
     num_steps = 12
     hidden_size = 100
-    max_epoch = 150
-    max_max_epoch = 200
+    max_epoch = 1000
     keep_prob = 1.0
     lr_decay = 0.98
+    mse_not_improved_threshold = 3
     batch_size = 1
     rnn_mode = BLOCK
-    layers = [50, 50]
+    layers = [100]
+    
 
 class MediumConfig(object):
     """Medium config."""
@@ -260,10 +261,10 @@ class MediumConfig(object):
     num_layers = 2
     num_steps = 35
     hidden_size = 650
-    max_epoch = 6
-    max_max_epoch = 39
+    max_epoch = 39
     keep_prob = 0.5
     lr_decay = 0.8
+    mse_not_improved_threshold = 3
     batch_size = 20
     rnn_mode = BLOCK
     layers = [650, 650]
@@ -276,10 +277,10 @@ class LargeConfig(object):
     num_layers = 2
     num_steps = 35
     hidden_size = 1500
-    max_epoch = 14
-    max_max_epoch = 55
+    max_epoch = 55
     keep_prob = 0.35
     lr_decay = 1 / 1.15
+    mse_not_improved_threshold = 3
     batch_size = 20
     rnn_mode = BLOCK
     layers = [1500, 1500]
@@ -293,11 +294,10 @@ class TestConfig(object):
     num_steps = 2
     hidden_size = 2
     max_epoch = 1
-    max_max_epoch = 1
     keep_prob = 1.0
     lr_decay = 0.5
+    mse_not_improved_threshold = 3
     batch_size = 20
-    vocab_size = 10000
     rnn_mode = BLOCK
     layers = [2]
         
@@ -427,25 +427,37 @@ def main(_):
                 checkpoint_dir=save_path, 
                 config=config_proto,
                 hooks=hooks) as session:
-                for i in range(config.max_max_epoch):
-                    lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
-                    m.assign_lr(session, config.learning_rate * lr_decay)
+                
+                min_mse = None
+                mse_not_improved_count = 0
+                
+                for i in range(config.max_epoch):
                     
-    
                     train_mse, predictions = run_epoch(session, m, config, eval_op=m.train_op, verbose=False)
-                    print('Train Epoch: {:d} Mean Squared Error: {:.3f} Learning rate: {:.5f}'.format(i + 1, train_mse, session.run(m.lr)))
+                    learning_rate =  session.run(m.lr)
+                    print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
+                    
+                    if min_mse is None or train_mse < min_mse:
+                        min_mse = train_mse
+                        mse_not_improved_count = 0
+                    else:
+                        mse_not_improved_count += 1
+                        
+                    if mse_not_improved_count > config.mse_not_improved_threshold:
+                        learning_rate = learning_rate * config.lr_decay
+                        m.assign_lr(session, learning_rate)
                             
                 test_mse, predictions = run_epoch(session, mtest, config)
                 test_predictions.append(predictions[-1])
-                print('Test Mean Squared Error: {:.3f}'.format(test_mse))
+                print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                 evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                 evaluator.plot_real_target_vs_predicted()
-                evaluator.plot_scaled_target_vs_predicted()
-                evaluator.plot_real_errors()
+                #evaluator.plot_scaled_target_vs_predicted()
+                #evaluator.plot_real_errors()
                 #evaluator.plot_scaled_errors()
     evaluator = Evaluator(reader, test_predictions, -1)
-    evaluator.plot_real_target_vs_predicted()
-    evaluator.plot_scaled_target_vs_predicted()
+    #evaluator.plot_real_target_vs_predicted()
+    #evaluator.plot_scaled_target_vs_predicted()
             
                 
 if __name__ == '__main__':
