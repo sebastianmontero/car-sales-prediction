@@ -4,15 +4,12 @@ from __future__ import print_function
 
 import os
 import tensorflow as tf
-import tensorflow.contrib.seq2seq as tfseq2seq
 import tensorflow.contrib.cudnn_rnn as tfcudnn_rnn
 import tensorflow.contrib.rnn as tfrnn
 import tensorflow.contrib.estimator as tfestimator
 import tensorflow.contrib.layers as tflayers
-import time
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+
 
 from reader import Reader
 from evaluator import Evaluator
@@ -20,7 +17,6 @@ import export_utils
 
 from tensorflow.python.client import device_lib
 from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
-from sklearn.svm.libsvm import predict
 
 flags = tf.flags
 
@@ -89,7 +85,7 @@ class Model(object):
         
         output = tf.nn.xw_plus_b(output, linear_w, linear_b)
         self._predictions = output
-        self._cost = tf.losses.mean_squared_error(targets, output)
+        self._cost = tf.losses.mean_squared_error(targets, output, config.error_weight)
         
         self._final_state = state
             
@@ -117,7 +113,6 @@ class Model(object):
             num_units=config.hidden_size,
             input_size=config.hidden_size,
             dropout=1 - config.keep_prob if is_training else 0)
-        params_size_t = self._cell.params_size()
         self._rnn_params = tf.get_variable(
             'lstm_params', 
             initializer=tflayers.xavier_initializer(), 
@@ -245,13 +240,14 @@ class SmallConfig(object):
     num_layers = 2
     num_steps = 12
     hidden_size = 100
-    max_epoch = 1000
+    max_epoch = 100
     keep_prob = 1.0
     lr_decay = 0.98
     mse_not_improved_threshold = 3
     batch_size = 1
     rnn_mode = BLOCK
     layers = [100]
+    error_weight = 1000000 
     
 
 class MediumConfig(object):
@@ -268,7 +264,7 @@ class MediumConfig(object):
     batch_size = 20
     rnn_mode = BLOCK
     layers = [650, 650]
-
+    error_weight = 100000
 
 class LargeConfig(object):
     """Large config."""
@@ -284,6 +280,7 @@ class LargeConfig(object):
     batch_size = 20
     rnn_mode = BLOCK
     layers = [1500, 1500]
+    error_weight = 100000
 
 
 class TestConfig(object):
@@ -300,6 +297,7 @@ class TestConfig(object):
     batch_size = 20
     rnn_mode = BLOCK
     layers = [2]
+    error_weight = 100000
         
         
 def run_epoch(session, model, config, eval_op=None, verbose=False, vocabulary=None):
@@ -328,7 +326,6 @@ def run_epoch(session, model, config, eval_op=None, verbose=False, vocabulary=No
         state = vals['final_state']
         predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size]))
         costs += cost
-        
         if verbose:
             print('{:.3f} Mean Squared Error: {:.5f}'.format(
                 step * 1.0 / epoch_size, 
@@ -336,7 +333,7 @@ def run_epoch(session, model, config, eval_op=None, verbose=False, vocabulary=No
     
     predictions = np.split(np.concatenate(predictions), model.batch_size,axis=1)
     predictions = np.reshape(np.concatenate(predictions), [-1,1])       
-    return np.exp(costs / epoch_size), predictions
+    return costs, predictions
 
 def get_config():
     """Get model config."""
@@ -373,7 +370,7 @@ def main(_):
     
     line_id = 13
     window_size = 52
-    reader = Reader(line_id, window_size, ['interest_rate'])
+    reader = Reader(line_id, window_size, ['interest_rate', 'exchange_rate', 'consumer_confidence_index'])
     config = get_config()
     eval_config = get_config()
     eval_config.batch_size = 1
@@ -453,7 +450,7 @@ def main(_):
                 evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                 evaluator.plot_real_target_vs_predicted()
                 #evaluator.plot_scaled_target_vs_predicted()
-                #evaluator.plot_real_errors()
+                evaluator.plot_real_errors()
                 #evaluator.plot_scaled_errors()
     evaluator = Evaluator(reader, test_predictions, -1)
     #evaluator.plot_real_target_vs_predicted()
