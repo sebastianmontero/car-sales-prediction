@@ -369,7 +369,7 @@ def main(_):
         raise ValueError('Your machine only has {} gpus'.format(len(gpus)))
     
     line_id = 13
-    window_size = 52
+    window_size = 37
     reader = Reader(line_id, window_size, ['interest_rate', 'exchange_rate', 'consumer_confidence_index'])
     config = get_config()
     eval_config = get_config()
@@ -448,9 +448,9 @@ def main(_):
                 test_predictions.append(predictions[-1])
                 print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                 evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
-                evaluator.plot_real_target_vs_predicted()
+                #evaluator.plot_real_target_vs_predicted()
                 #evaluator.plot_scaled_target_vs_predicted()
-                evaluator.plot_real_errors()
+                #evaluator.plot_real_errors()
                 #evaluator.plot_scaled_errors()
     evaluator = Evaluator(reader, test_predictions, -1)
     #evaluator.plot_real_target_vs_predicted()
