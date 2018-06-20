@@ -373,7 +373,7 @@ def main(_):
     
     line_id = 13
     window_size = 52
-    reader = Reader(line_id, window_size)
+    reader = Reader(line_id, window_size, ['interest_rate'])
     config = get_config()
     eval_config = get_config()
     eval_config.batch_size = 1

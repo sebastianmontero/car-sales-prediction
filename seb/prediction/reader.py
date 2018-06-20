@@ -197,11 +197,11 @@ class Reader(object):
         
 
 
-features = ['interest_rate', 'exchange_rate', 'energy_price_index_roc_prev_month','energy_price_index_roc_start_year']
+'''features = ['interest_rate', 'exchange_rate', 'energy_price_index_roc_prev_month','energy_price_index_roc_start_year']
 reader = Reader(13, 36, features)
 
 
-'''reader.next_window()
+reader.next_window()
 
 generator = reader.get_generator(2, 3, False)
 x, y = generator.get_data()
