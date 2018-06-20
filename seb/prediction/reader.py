@@ -13,19 +13,37 @@ import numpy as np
 from utils import Utils
 from generator import Generator
 
-import tensorflow as tf
 
 
 class Reader(object):
+    
+    scaler_fit_domain_values = {
+        'sales': [0, 180],
+        'interest_rate': [1.0, 10.0],
+        'exchange_rate': [8.0, 18.0],
+        'consumer_confidence_index': [70,120],
+        'manufacturing_confidence_index': [70,120],
+        'economic_activity_index': [80, 115]
+    }
+    
+    scale_features = [
+        'consumer_confidence_index',
+        'energy_price_index',
+        'exchange_rate',
+        'inflation_index',
+        'interest_rate',
+        'manufacturing_confidence_index',
+        'economic_activity_index']
 
-    def __init__(self, line_id, window_size, prediction_size = 1):
+    def __init__(self, line_id, window_size, included_features, prediction_size = 1):
         assert (window_size > 0), "Window size must be greater than zero"
         self._engine = self._connect_to_db()
         self._line_id = str(line_id) 
         self._window_size = window_size
         self._window_pos = -1
         self._prediction_size = prediction_size
-        self._included_features = ['interest_rate']
+        self._scale_features, self._dont_scale_features = self._group_included_features(included_features)
+        self._included_features = np.concatenate((self._scale_features, self._dont_scale_features))
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
@@ -65,15 +83,64 @@ class Reader(object):
         assert (data_df.shape[0] >= (self._window_size + self._prediction_size)), 'Data length: {} is smaller than window size + 1: {}'.format(data_df.shape[0], (self._window_size + 1))
          
         self._start_month_id = int(data_df['month_id'][0])
-        sales_np = data_df.values[:, 1:2]
-        data_np = data_df.values[:, 2:] #get non month cols
-        month_np = self._process_month(data_df)
-        self._sales_scaler.fit(sales_np[:self._window_size])
-        self._scaler.fit(data_np[:self._window_size])
+        sales_np = data_df[['sales']].values.astype('float')
+        
+        data_np = data_df[self._scale_features].values #get non month cols 
+        
+        month_np = self._process_month(data_df[['month_id']].copy())
+        
+        fit_sales_np = sales_np[:self._window_size]
+        fit_sales_np = self._add_scaler_fit_domain_values(['sales'], fit_sales_np)
+        self._sales_scaler.fit(fit_sales_np)
+        fit_data_np = data_np[:self._window_size]
+        fit_data_np = self._add_scaler_fit_domain_values(self._scale_features, fit_data_np)
+        self._scaler.fit(fit_data_np)
         sales_np = self._sales_scaler.transform(sales_np)
         data_np = self._scaler.transform(data_np)
-        data_np = np.concatenate((month_np, sales_np, data_np), axis=1)
+        
+        data_np = np.concatenate((month_np, sales_np, data_np, data_df[self._dont_scale_features].values), axis=1)
+        
         self._data = pd.DataFrame(data_np, columns=self._features, dtype=np.float32)
+        
+    def _group_included_features(self, included_features):
+        scale = []
+        dont_scale = []
+        for feature in included_features:
+            if feature in self.scale_features:
+                scale.append(feature)
+            else: 
+                dont_scale.append(feature)
+                
+        return scale, dont_scale 
+        
+    def _add_scaler_fit_domain_values(self, features, data):
+        
+        max_length = self._get_scaler_fit_domain_values_max_length()
+        domain_values = []
+        for i, feature in enumerate(features):
+            if feature in self.scaler_fit_domain_values:
+                vals = self.scaler_fit_domain_values[feature][:]
+                if len(vals) < max_length:
+                    vals.extend(self._get_sample(max_length - len(vals), data, i))
+                domain_values.append(vals)
+            else:
+                domain_values.append(self._get_sample(max_length, data, i))
+                
+        domain_values = np.array(domain_values).transpose()
+        return np.concatenate([data,domain_values])
+    
+    def _get_sample(self, num_values, data, col):
+        sample = []
+        for i in np.random.randint(len(data), size=num_values):
+            sample.append(data[i][col])
+        return sample
+    
+    def _get_scaler_fit_domain_values_max_length(self):
+        max_length = 0
+        for key,value in self.scaler_fit_domain_values.items():
+            if len(value) > max_length:
+                max_length = len(value)
+        return max_length
     
     def _process_month(self, data_df):
         data_df['month_of_year'] = data_df['month_id'].apply(lambda x: Utils.month_id_to_month_of_year(x))
@@ -128,10 +195,13 @@ class Reader(object):
     def unscale_sales(self, sales):
         return self._sales_scaler.inverse_transform(sales)
         
-'''reader = Reader(13, 12)
 
 
-reader.next_window()
+features = ['interest_rate', 'exchange_rate', 'energy_price_index_roc_prev_month','energy_price_index_roc_start_year']
+reader = Reader(13, 36, features)
+
+
+'''reader.next_window()
 
 generator = reader.get_generator(2, 3, False)
 x, y = generator.get_data()
