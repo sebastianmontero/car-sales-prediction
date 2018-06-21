@@ -49,11 +49,17 @@ class Evaluator(object):
         plt.suptitle(title)
         plt.show()
         
-    def _calculate_absolute_error(self, target, predictions):
-        return np.abs(target - predictions)
+    def _calculate_absolute_error(self, targets, predictions):
+        return np.abs(targets - predictions)
     
-    def _calculate_relative_error(self, target, predictions):
-        return np.abs((target - predictions)/target)
+    def _calculate_relative_error(self, targets, predictions):
+        return np.abs((targets - predictions)/targets) * 100
+    
+    def _calculate_absolute_mean_error(self, targets, predictions):
+        return np.mean(self._calculate_absolute_error(targets, predictions))
+    
+    def _calculate_relative_mean_error(self, targets, predictions):
+        return np.mean(self._calculate_relative_error(targets, predictions))
         
     def _get_real_sales_from_predictions(self, predictions):
         unscaled = np.reshape(self._reader.unscale_sales(predictions), [-1])
@@ -80,16 +86,28 @@ class Evaluator(object):
         return self._predictions if scaled else self._unscaled_predictions
     
     def plot_real_target_vs_predicted(self):
-        self._plot_target_vs_predicted(self._get_target_sales(), self._unscaled_predictions, 'Sales', 'Real vs Predicted Sales')
+        self._plot_target_vs_predicted(self._get_target_sales(), self._get_predictions(), 'Sales', 'Real vs Predicted Sales')
         
     def plot_scaled_target_vs_predicted(self):
-        self._plot_target_vs_predicted(self._get_target_sales(scaled=True), self._predictions, 'Sales', 'Scaled Real vs Predicted Sales')
+        self._plot_target_vs_predicted(self._get_target_sales(scaled=True), self._get_predictions(scaled=True), 'Sales', 'Scaled Real vs Predicted Sales')
     
     def plot_real_errors(self):
         return self._calculate_and_plot_errors()
     
     def plot_scaled_errors(self):
         return self._calculate_and_plot_errors(scaled=True)
+    
+    def real_absolute_mean_error(self):
+        return self._calculate_absolute_mean_error(self._get_target_sales(), self._get_predictions())
+    
+    def scaled_absolute_mean_error(self):
+        return self._calculate_absolute_mean_error(self._get_target_sales(scaled=True), self._get_predictions(scaled=True))
+    
+    def real_relative_mean_error(self):
+        return self._calculate_relative_mean_error(self._get_target_sales(), self._get_predictions())
+    
+    def scaled_relative_mean_error(self):
+        return self._calculate_relative_mean_error(self._get_target_sales(scaled=True), self._get_predictions(scaled=True))
      
         
         
