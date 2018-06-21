@@ -369,7 +369,7 @@ def main(_):
         raise ValueError('Your machine only has {} gpus'.format(len(gpus)))
     
     line_id = 13
-    window_size = 37
+    window_size = 52
     reader = Reader(line_id, window_size, ['interest_rate', 'exchange_rate', 'consumer_confidence_index'])
     config = get_config()
     eval_config = get_config()
@@ -420,7 +420,9 @@ def main(_):
             hooks = [
                 #TensorBoardDebugHook('localhost:6064')
             ]
+            scaffold = tf.train.Scaffold(saver=tf.train.Saver())
             with tf.train.MonitoredTrainingSession(
+                scaffold=scaffold,
                 checkpoint_dir=save_path, 
                 config=config_proto,
                 hooks=hooks) as session:
