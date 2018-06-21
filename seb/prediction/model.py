@@ -21,7 +21,7 @@ from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
 flags = tf.flags
 
 flags.DEFINE_string('model', 'small', "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string('save_path', '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save', "Model output directory")
+flags.DEFINE_string('save_path', '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/', "Model output directory")
 flags.DEFINE_string('output_file', '/home/nishilab/Documents/python/model-storage/language-modeling/test-output.txt', "File where the words produced by test will be saved")
 flags.DEFINE_bool('use_fp16', False, "Train using 16 bits floats instead of 32 bits")
 flags.DEFINE_integer('num_gpus', 1, 
@@ -240,7 +240,7 @@ class SmallConfig(object):
     num_layers = 2
     num_steps = 12
     hidden_size = 100
-    max_epoch = 400
+    max_epoch = 50
     keep_prob = 1
     lr_decay = 0.98
     mse_not_improved_threshold = 3
@@ -369,7 +369,7 @@ def main(_):
         raise ValueError('Your machine only has {} gpus'.format(len(gpus)))
     
     line_id = 13
-    window_size = 52
+    window_size = 37
     reader = Reader(line_id, window_size, ['interest_rate', 'exchange_rate', 'consumer_confidence_index'])
     config = get_config()
     eval_config = get_config()
@@ -381,7 +381,8 @@ def main(_):
         print()
         print('Window from: {} to {}'.format(reader.get_start_month_id(), reader.get_end_month_id()))
         print()
-        save_path = os.path.join(FLAGS.save_path, reader.get_window_name())  
+        save_path = os.path.join(FLAGS.save_path, reader.get_window_name())
+        save_file = os.path.join(save_path, 'model.ckpt')  
         with tf.Graph().as_default():
             initializer = tf.random_uniform_initializer(-config.init_scale, config.init_scale)
             
@@ -416,16 +417,17 @@ def main(_):
             tf.train.import_meta_graph(metagraph)
             for model in models.values():
                 model.import_ops()
-            config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
-            hooks = [
-                #TensorBoardDebugHook('localhost:6064')
-            ]
-            scaffold = tf.train.Scaffold(saver=tf.train.Saver())
-            with tf.train.MonitoredTrainingSession(
-                scaffold=scaffold,
-                checkpoint_dir=save_path, 
-                config=config_proto,
-                hooks=hooks) as session:
+                
+            saver = tf.train.Saver()
+            with tf.Session(config=tf.ConfigProto(allow_soft_placement=soft_placement)) as session:
+                
+                if tf.train.latest_checkpoint(save_path):
+                    saver.restore(session, tf.train.latest_checkpoint(save_path))
+                else:
+                    session.run(tf.global_variables_initializer())
+                
+                merged = tf.summary.merge_all()
+                train_writer = tf.summary.FileWriter(save_path, session.graph)
                 
                 min_mse = None
                 mse_not_improved_count = 0
@@ -435,6 +437,7 @@ def main(_):
                     train_mse, predictions = run_epoch(session, m, config, eval_op=m.train_op, verbose=False)
                     learning_rate =  session.run(m.lr)
                     print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
+                    train_writer.add_summary(session.run(merged), session.run(tf.train.get_global_step()))
                     
                     if min_mse is None or train_mse < min_mse:
                         min_mse = train_mse
@@ -452,13 +455,14 @@ def main(_):
                 evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                 print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
                 #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
-                evaluator.plot_real_target_vs_predicted()
+                #evaluator.plot_real_target_vs_predicted()
                 #evaluator.plot_scaled_target_vs_predicted()
-                evaluator.plot_real_errors()
+                #evaluator.plot_real_errors()
                 #evaluator.plot_scaled_errors()
+                saver.save(session, save_file, tf.train.get_global_step())
     evaluator = Evaluator(reader, test_predictions, -1)
-    evaluator.plot_real_target_vs_predicted()
-    evaluator.plot_real_errors()
+    #evaluator.plot_real_target_vs_predicted()
+    #evaluator.plot_real_errors()
     #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
     print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
     #evaluator.plot_scaled_target_vs_predicted()
