@@ -240,8 +240,8 @@ class SmallConfig(object):
     num_layers = 2
     num_steps = 12
     hidden_size = 100
-    max_epoch = 100
-    keep_prob = 1.0
+    max_epoch = 400
+    keep_prob = 1
     lr_decay = 0.98
     mse_not_improved_threshold = 3
     batch_size = 1
@@ -448,12 +448,17 @@ def main(_):
                 test_predictions.append(predictions[-1])
                 print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                 evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
-                #evaluator.plot_real_target_vs_predicted()
+                print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
+                #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
+                evaluator.plot_real_target_vs_predicted()
                 #evaluator.plot_scaled_target_vs_predicted()
-                #evaluator.plot_real_errors()
+                evaluator.plot_real_errors()
                 #evaluator.plot_scaled_errors()
     evaluator = Evaluator(reader, test_predictions, -1)
-    #evaluator.plot_real_target_vs_predicted()
+    evaluator.plot_real_target_vs_predicted()
+    evaluator.plot_real_errors()
+    #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
+    print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
     #evaluator.plot_scaled_target_vs_predicted()
             
                 
