@@ -117,7 +117,12 @@ class TestConfig(object):
 
 class ModelTrainer():
     
-    def _run_epoch(self, session, model, config, eval_op=None, verbose=False, vocabulary=None):
+    def __init__(self):
+        self._config = None
+        self._eval_config = None
+        self._reader = None
+    
+    def _run_epoch(self, session, model, eval_op=None, verbose=False, vocabulary=None):
         
         costs = 0.
         predictions = []
@@ -152,32 +157,37 @@ class ModelTrainer():
         predictions = np.reshape(np.concatenate(predictions), [-1,1])       
         return costs, predictions
 
-    def _get_config(self):
+    def _get_base_config(self):
         """Get model config."""
-        config = None
-        if FLAGS.model == "small":
-            config = SmallConfig()
-        elif FLAGS.model == "medium":
-            config = MediumConfig()
-        elif FLAGS.model == "large":
-            config = LargeConfig()
-        elif FLAGS.model == "test":
-            config = TestConfig()
-        else:
-            raise ValueError("Invalid model: %s", FLAGS.model)
+        config = {
+            'init_scale': 0.1,
+            'max_grad_norm': 5,
+            'num_layers': 2,
+            'num_steps': 12,
+            'hidden_size': 100,
+            'max_epoch': 1000,
+            'keep_prob': 1,
+            'lr_decay': 0.98,
+            'mse_not_improved_threshold': 3,
+            'batch_size': 1,
+            'rnn_mode': ModelRNNMode.BLOCK,
+            'layers': [100],
+            'error_weight': 1000000,
+            'data_type': tf.float32,
+            'included_features': ['interest_rate', 'exchange_rate', 'consumer_confidence_index']
+        }
         
         if FLAGS.rnn_mode:
-            config.rnn_mode = FLAGS.rnn_mode
+            config['rnn_mode'] = FLAGS.rnn_mode
         if FLAGS.num_gpus != 1 or tf.__version__ < "1.3.0" :
-            config.rnn_mode = ModelRNNMode.BASIC
+            config['rnn_mode'] = ModelRNNMode.BASIC
         
-        config.learning_rate = float(FLAGS.learning_rate)
-        config.optimizer = OPTIMIZERS[FLAGS.optimizer]
+        config['learning_rate'] = float(FLAGS.learning_rate)
+        config['optimizer'] = OPTIMIZERS[FLAGS.optimizer]
         
         return config    
             
-    
-    def train(self):
+    def setup(self, config):
         
         gpus = [
             x.name for x in device_lib.list_local_devices() if x.device_type == 'GPU'
@@ -188,12 +198,22 @@ class ModelTrainer():
         
         line_id = 13
         window_size = 52
-        reader = Reader(line_id, window_size, ['interest_rate', 'exchange_rate', 'consumer_confidence_index'])
-        config = self._get_config()
-        eval_config = self._get_config()
-        eval_config.batch_size = 1
+        self._config = self._get_base_config()
+        self._config.update(config)
+        self._eval_config = self._config.copy()
+        self._eval_config['batch_size'] = 1
+        self._reader = Reader(line_id, window_size, self._config['included_features'])
+        
+    
+    def train(self):
+        
+        assert (self._config), "setup has to be called before calling train"
+        
         test_predictions = []
         #eval_config.num_steps = 1
+        reader = self._reader
+        config = self._config
+        eval_config = self._eval_config
         
         while reader.next_window():
             print()
@@ -202,18 +222,18 @@ class ModelTrainer():
             save_path = os.path.join(FLAGS.save_path, reader.get_window_name())
             save_file = os.path.join(save_path, 'model.ckpt')  
             with tf.Graph().as_default():
-                initializer = tf.random_uniform_initializer(-config.init_scale, config.init_scale)
+                initializer = tf.random_uniform_initializer(-config['init_scale'], config['init_scale'])
                 
                 with tf.name_scope('Train'):
                     
                     with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                        generator = reader.get_generator(config.batch_size, config.num_steps) 
+                        generator = reader.get_generator(config['batch_size'], config['num_steps']) 
                         m = Model(stage=ModelStage.TRAIN, config=config, generator=generator)
                     tf.summary.scalar('Training Loss', m.cost)
                     tf.summary.scalar('Learning Rate', m.lr)
                 
                 with tf.name_scope('Test'):
-                    generator = reader.get_generator(eval_config.batch_size, eval_config.num_steps, for_test=True)
+                    generator = reader.get_generator(eval_config['batch_size'], eval_config['num_steps'], for_test=True)
                     with tf.variable_scope('Model', reuse=True, initializer=initializer):
                         mtest = Model(stage=ModelStage.TEST, config=eval_config, generator=generator)
                         
@@ -250,9 +270,9 @@ class ModelTrainer():
                     min_mse = None
                     mse_not_improved_count = 0
                     
-                    for i in range(config.max_epoch):
+                    for i in range(config['max_epoch']):
                         
-                        train_mse, predictions = self._run_epoch(session, m, config, eval_op=m.train_op, verbose=False)
+                        train_mse, predictions = self._run_epoch(session, m, eval_op=m.train_op, verbose=False)
                         learning_rate =  session.run(m.lr)
                         print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                         train_writer.add_summary(session.run(merged), session.run(tf.train.get_global_step()))
@@ -263,11 +283,11 @@ class ModelTrainer():
                         else:
                             mse_not_improved_count += 1
                             
-                        if mse_not_improved_count > config.mse_not_improved_threshold:
-                            learning_rate = learning_rate * config.lr_decay
+                        if mse_not_improved_count > config['mse_not_improved_threshold']:
+                            learning_rate = learning_rate * config['lr_decay']
                             m.assign_lr(session, learning_rate)
                                 
-                    test_mse, predictions = self._run_epoch(session, mtest, config)
+                    test_mse, predictions = self._run_epoch(session, mtest)
                     test_predictions.append(predictions[-1])
                     print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
@@ -287,6 +307,7 @@ class ModelTrainer():
             
                 
 modelTrainer = ModelTrainer()
+modelTrainer.setup({})
 modelTrainer.train()
             
         
