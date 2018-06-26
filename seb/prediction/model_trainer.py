@@ -2,7 +2,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+
 import os
+import argparse
 import tensorflow as tf
 import numpy as np
 
@@ -15,38 +17,20 @@ import export_utils
 from tensorflow.python.client import device_lib
 from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
 
-flags = tf.flags
-
-flags.DEFINE_string('model', 'small', "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string('output_file', '/home/nishilab/Documents/python/model-storage/language-modeling/test-output.txt', "File where the words produced by test will be saved")
-flags.DEFINE_bool('use_fp16', False, "Train using 16 bits floats instead of 32 bits")
-flags.DEFINE_integer('num_gpus', 1, 
-                     "If larger than 1, Grappler AutoParallel optimizer "
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', default='small', type=str, required=False, help="A type of model. Possible options are: small, medium, large.")
+parser.add_argument('--use_fp16', default=False, type=bool, required=False, help="Train using 16 bits floats instead of 32 bits")
+parser.add_argument('--num_gpus', default=1, type=int, required=False, help="If larger than 1, Grappler AutoParallel optimizer "
                      "will create multiple training replicas with each GPU "
                      "running one replica.")
-flags.DEFINE_string('rnn_mode', None,
-                    "The low level implementation of lstm cell: one of CUDNN, "
+parser.add_argument('--rnn_mode', default=None, type=str, required=False, help="The low level implementation of lstm cell: one of CUDNN, "
                     "BASIC, and BLOCK, representing cudnn_lstm, lstm, "
                     "and lstm_block_cell classes.")
-flags.DEFINE_string('optimizer', 'adagrad',
-                    "The optimizer to use: adam, adagrad, gradient-descent. "
-                    "Default is adagrad.")
-flags.DEFINE_string('learning_rate', "1.0", #adam requires smaller learning rate
-                    "The starting learning rate to use"
+parser.add_argument('--optimizer', default='adagrad', type=str, required=False, help="The optimizer to use: adam, adagrad, gradient-descent.")
+parser.add_argument('--learning_rate', default=1.0, type=float, required=False, help="The starting learning rate to use"
                     "Default is 0.1")
 
-flags.DEFINE_string('node-ip-address', None, #adam requires smaller learning rate
-                    "Node ip address")
-flags.DEFINE_string('object-store-name', None, #adam requires smaller learning rate
-                    "Object store name")
-flags.DEFINE_string('object-store-manager-name', None, #adam requires smaller learning rate
-                    "object-store-manager-name")
-flags.DEFINE_string('local-scheduler-name', None, #adam requires smaller learning rate
-                    "local-scheduler-name")
-flags.DEFINE_string('redis-address', None, #adam requires smaller learning rate
-                    "redis-address")
-
-FLAGS = flags.FLAGS
+FLAGS,_ = parser.parse_known_args()
 
 OPTIMIZERS = {
     'adam': tf.train.AdamOptimizer,
@@ -128,7 +112,7 @@ class ModelTrainer():
         if FLAGS.num_gpus != 1 or tf.__version__ < "1.3.0" :
             config['rnn_mode'] = ModelRNNMode.BASIC
         
-        config['learning_rate'] = float(FLAGS.learning_rate)
+        config['learning_rate'] = FLAGS.learning_rate
         config['optimizer'] = OPTIMIZERS[FLAGS.optimizer]
         
         return config    
@@ -254,8 +238,8 @@ class ModelTrainer():
         return evaluator
             
                 
-'''modelTrainer = ModelTrainer({})
-modelTrainer.train()'''
+modelTrainer = ModelTrainer({})
+modelTrainer.train()
             
         
         
