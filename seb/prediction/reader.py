@@ -3,7 +3,7 @@ Created on Jun 11, 2018
 
 @author: nishilab
 '''
-
+import os
 import math
 import configparser
 import pandas as pd
@@ -150,7 +150,7 @@ class Reader(object):
         
     def _connect_to_db(self):
         config = configparser.ConfigParser()
-        config.read('config.ini')
+        config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'config.ini'))
         return create_engine(config['DB']['connection_url'])
     
     def next_window(self):
@@ -194,6 +194,9 @@ class Reader(object):
     
     def unscale_sales(self, sales):
         return self._sales_scaler.inverse_transform(sales)
+    
+    def reset(self):
+        self._window_pos = -1
         
 
 

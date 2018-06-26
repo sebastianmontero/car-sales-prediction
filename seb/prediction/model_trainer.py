@@ -36,6 +36,17 @@ flags.DEFINE_string('learning_rate', "1.0", #adam requires smaller learning rate
                     "The starting learning rate to use"
                     "Default is 0.1")
 
+flags.DEFINE_string('node-ip-address', None, #adam requires smaller learning rate
+                    "Node ip address")
+flags.DEFINE_string('object-store-name', None, #adam requires smaller learning rate
+                    "Object store name")
+flags.DEFINE_string('object-store-manager-name', None, #adam requires smaller learning rate
+                    "object-store-manager-name")
+flags.DEFINE_string('local-scheduler-name', None, #adam requires smaller learning rate
+                    "local-scheduler-name")
+flags.DEFINE_string('redis-address', None, #adam requires smaller learning rate
+                    "redis-address")
+
 FLAGS = flags.FLAGS
 
 OPTIMIZERS = {
@@ -117,12 +128,18 @@ class TestConfig(object):
 
 class ModelTrainer():
     
-    def __init__(self):
+    def __init__(self, config):
         self._config = None
         self._eval_config = None
         self._reader = None
+        self._save_path = FLAGS.save_path
+        self._setup(config)
+        
+    @property
+    def save_path(self):
+        return self._save_path
     
-    def _run_epoch(self, session, model, eval_op=None, verbose=False, vocabulary=None):
+    def _run_epoch(self, session, model, eval_op=None, verbose=False):
         
         costs = 0.
         predictions = []
@@ -165,7 +182,7 @@ class ModelTrainer():
             'num_layers': 2,
             'num_steps': 12,
             'hidden_size': 100,
-            'max_epoch': 1000,
+            'max_epoch': 100,
             'keep_prob': 1,
             'lr_decay': 0.98,
             'mse_not_improved_threshold': 3,
@@ -187,7 +204,7 @@ class ModelTrainer():
         
         return config    
             
-    def setup(self, config):
+    def _setup(self, config):
         
         gpus = [
             x.name for x in device_lib.list_local_devices() if x.device_type == 'GPU'
@@ -195,6 +212,7 @@ class ModelTrainer():
         
         if FLAGS.num_gpus > len(gpus):
             raise ValueError('Your machine only has {} gpus'.format(len(gpus)))
+        
         
         line_id = 13
         window_size = 52
@@ -214,6 +232,8 @@ class ModelTrainer():
         reader = self._reader
         config = self._config
         eval_config = self._eval_config
+        
+        reader.reset()
         
         while reader.next_window():
             print()
@@ -304,11 +324,11 @@ class ModelTrainer():
         #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
         print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
         #evaluator.plot_scaled_target_vs_predicted()
+        return evaluator
             
                 
-modelTrainer = ModelTrainer()
-modelTrainer.setup({})
-modelTrainer.train()
+'''modelTrainer = ModelTrainer({})
+modelTrainer.train()'''
             
         
         
