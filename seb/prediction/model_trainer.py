@@ -18,7 +18,6 @@ from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
 flags = tf.flags
 
 flags.DEFINE_string('model', 'small', "A type of model. Possible options are: small, medium, large.")
-flags.DEFINE_string('save_path', '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/', "Model output directory")
 flags.DEFINE_string('output_file', '/home/nishilab/Documents/python/model-storage/language-modeling/test-output.txt', "File where the words produced by test will be saved")
 flags.DEFINE_bool('use_fp16', False, "Train using 16 bits floats instead of 32 bits")
 flags.DEFINE_integer('num_gpus', 1, 
@@ -132,7 +131,7 @@ class ModelTrainer():
         self._config = None
         self._eval_config = None
         self._reader = None
-        self._save_path = FLAGS.save_path
+        self._save_path = None
         self._setup(config)
         
     @property
@@ -191,6 +190,7 @@ class ModelTrainer():
             'layers': [100],
             'error_weight': 1000000,
             'data_type': tf.float32,
+            'save_path': '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/',
             'included_features': ['interest_rate', 'exchange_rate', 'consumer_confidence_index']
         }
         
@@ -225,8 +225,6 @@ class ModelTrainer():
     
     def train(self):
         
-        assert (self._config), "setup has to be called before calling train"
-        
         test_predictions = []
         #eval_config.num_steps = 1
         reader = self._reader
@@ -239,7 +237,7 @@ class ModelTrainer():
             print()
             print('Window from: {} to {}'.format(reader.get_start_month_id(), reader.get_end_month_id()))
             print()
-            save_path = os.path.join(FLAGS.save_path, reader.get_window_name())
+            save_path = os.path.join(config['save_path'], reader.get_window_name())
             save_file = os.path.join(save_path, 'model.ckpt')  
             with tf.Graph().as_default():
                 initializer = tf.random_uniform_initializer(-config['init_scale'], config['init_scale'])
