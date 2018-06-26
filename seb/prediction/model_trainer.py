@@ -47,9 +47,6 @@ class ModelTrainer():
         self._save_path = None
         self._setup(config)
         
-    @property
-    def save_path(self):
-        return self._save_path
     
     def _run_epoch(self, session, model, eval_op=None, verbose=False):
         
@@ -238,8 +235,8 @@ class ModelTrainer():
         return evaluator
             
                 
-modelTrainer = ModelTrainer({})
-modelTrainer.train()
+'''modelTrainer = ModelTrainer({})
+modelTrainer.train()'''
             
         
         
