@@ -52,78 +52,7 @@ OPTIMIZERS = {
     'adam': tf.train.AdamOptimizer,
     'adagrad': tf.train.AdagradOptimizer,
     'gradient-descent': tf.train.GradientDescentOptimizer 
-    }
-
-class SmallConfig(object):
-    """Small config."""
-    init_scale = 0.1
-    max_grad_norm = 5
-    num_layers = 2
-    num_steps = 12
-    hidden_size = 100
-    max_epoch = 1000
-    keep_prob = 1
-    lr_decay = 0.98
-    mse_not_improved_threshold = 3
-    batch_size = 1
-    rnn_mode = ModelRNNMode.BLOCK
-    layers = [100]
-    error_weight = 1000000
-    data_type = tf.float32
-    
-
-class MediumConfig(object):
-    """Medium config."""
-    init_scale = 0.05
-    max_grad_norm = 5
-    num_layers = 2
-    num_steps = 35
-    hidden_size = 650
-    max_epoch = 39
-    keep_prob = 0.5
-    lr_decay = 0.8
-    mse_not_improved_threshold = 3
-    batch_size = 20
-    rnn_mode = ModelRNNMode.BLOCK
-    layers = [650, 650]
-    error_weight = 100000
-    data_type = tf.float32
-
-class LargeConfig(object):
-    """Large config."""
-    init_scale = 0.04
-    max_grad_norm = 10
-    num_layers = 2
-    num_steps = 35
-    hidden_size = 1500
-    max_epoch = 55
-    keep_prob = 0.35
-    lr_decay = 1 / 1.15
-    mse_not_improved_threshold = 3
-    batch_size = 20
-    rnn_mode = ModelRNNMode.BLOCK
-    layers = [1500, 1500]
-    error_weight = 100000
-    data_type = tf.float32
-
-
-class TestConfig(object):
-    """Tiny config, for testing."""
-    init_scale = 0.1
-    max_grad_norm = 1
-    num_layers = 1
-    num_steps = 2
-    hidden_size = 2
-    max_epoch = 1
-    keep_prob = 1.0
-    lr_decay = 0.5
-    mse_not_improved_threshold = 3
-    batch_size = 20
-    rnn_mode = ModelRNNMode.BLOCK
-    layers = [2]
-    error_weight = 100000
-    data_type = tf.float32
-        
+    }        
 
 class ModelTrainer():
     
