@@ -128,7 +128,7 @@ class ModelTrainer():
         
         
         line_id = 13
-        window_size = 37
+        window_size = 51
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)
@@ -201,6 +201,9 @@ class ModelTrainer():
                 for model in models.values():
                     model.import_ops(FLAGS.num_gpus)
                     
+                test_absolute_error = tf.Variable(-1.0, trainable=False, name='test_absolute_error')
+                test_absolute_error_ph = tf.placeholder(tf.float32, shape=[], name='test_absolute_error_ph')
+                assign_absolute_error_op = tf.assign(test_absolute_error, test_absolute_error_ph)
                 saver = tf.train.Saver()
                 with tf.Session(config=tf.ConfigProto(allow_soft_placement=soft_placement)) as session:
                     
@@ -246,6 +249,9 @@ class ModelTrainer():
                     #evaluator.plot_scaled_target_vs_predicted()
                     #evaluator.plot_real_errors()
                     #evaluator.plot_scaled_errors()
+                    print('absolute_error', session.run(test_absolute_error))
+                    print('absolute_error_assign', session.run(assign_absolute_error_op, feed_dict={test_absolute_error_ph:2.0}))
+                    print('absolute_error2', session.run(test_absolute_error))
                     saver.save(session, save_file, tf.train.get_global_step())
         evaluator = Evaluator(reader, test_predictions, -1)
         #evaluator.plot_real_target_vs_predicted()
@@ -258,8 +264,8 @@ class ModelTrainer():
         return evaluator
             
                 
-#modelTrainer = ModelTrainer({'layer_0':10, 'layer_1':20})
-#modelTrainer.train()
+modelTrainer = ModelTrainer({'layer_0':10, 'layer_1':20})
+modelTrainer.train()
             
         
         
