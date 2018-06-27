@@ -142,7 +142,7 @@ class ModelTrainer():
         key = 'layer_0'
         layers = []
         
-        while key in config:
+        while key in config and config[key]:
             layers.append(config[key])
             i += 1
             key = 'layer_' + str(i)
@@ -258,7 +258,7 @@ class ModelTrainer():
         return evaluator
             
                 
-#modelTrainer = ModelTrainer({})
+#modelTrainer = ModelTrainer({'layer_0':10, 'layer_1':20})
 #modelTrainer.train()
             
         

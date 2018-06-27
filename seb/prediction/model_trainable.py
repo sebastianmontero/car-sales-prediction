@@ -11,6 +11,7 @@ from ray.tune.async_hyperband import AsyncHyperBandScheduler
 from ray.tune.hyperband import HyperBandScheduler 
 
 from model_trainer import ModelTrainer
+from ray.tune.variant_generator import grid_search
 
         
 class ModelTrainable(Trainable):
@@ -59,8 +60,19 @@ run_experiments({
                 'trial_resources': {'cpu': 8, 'gpu': 1},
                 'stop': {'neg_mean_loss': -2, 'training_iteration': 10},
                 'config' : {
-                    'keep_prob' : grid_search(np.arange(0.9, 1.1, 0.1).tolist()),
-                    'max_epoch' : 10
+                    'keep_prob' : grid_search(np.linspace(0.4, 1., 4).tolist()),
+                    'layer_0' : grid_search([30, 70, 110]),
+                    'layer_1' : grid_search([None, 30, 70, 110]),
+                    'max_epoch' : 70,
+                    'included_features' : ['consumer_confidence_index',
+                                           'exchange_rate',
+                                           'interest_rate',
+                                           'manufacturing_confidence_index',
+                                           'economic_activity_index',
+                                           'energy_price_index_roc_prev_month',
+                                           'energy_price_index_roc_start_year',
+                                           'inflation_index_roc_prev_month',
+                                           'inflation_index_roc_start_year']
                 },
                 'checkpoint_freq': 1
             }
