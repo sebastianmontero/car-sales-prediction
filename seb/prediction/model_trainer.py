@@ -15,7 +15,10 @@ from model import Model, ModelRNNMode, ModelStage
 import export_utils
 
 from tensorflow.python.client import device_lib
+
 from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='small', type=str, required=False, help="A type of model. Possible options are: small, medium, large.")
@@ -128,10 +131,24 @@ class ModelTrainer():
         window_size = 37
         self._config = self._get_base_config()
         self._config.update(config)
+        self._config_layers(self._config)
         self._eval_config = self._config.copy()
         self._eval_config['batch_size'] = 1
         self._reader = Reader(line_id, window_size, self._config['included_features'])
+    
+    def _config_layers(self, config):
+                
+        i = 0
+        key = 'layer_0'
+        layers = []
         
+        while key in config:
+            layers.append(config[key])
+            i += 1
+            key = 'layer_' + str(i)
+        
+        if len(layers):
+            config['layers'] = layers
     
     def train(self):
         
@@ -197,13 +214,16 @@ class ModelTrainer():
                     
                     min_mse = None
                     mse_not_improved_count = 0
-                    
+                    train_mse = 0
+                    learning_rate = 0
+                    global_step = 0
                     for i in range(config['max_epoch']):
                         
                         train_mse, predictions = self._run_epoch(session, m, eval_op=m.train_op, verbose=False)
                         learning_rate =  session.run(m.lr)
-                        print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
-                        train_writer.add_summary(session.run(merged), session.run(tf.train.get_global_step()))
+                        #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
+                        global_step = session.run(tf.train.get_global_step())
+                        train_writer.add_summary(session.run(merged), global_step)
                         
                         if min_mse is None or train_mse < min_mse:
                             min_mse = train_mse
@@ -214,7 +234,8 @@ class ModelTrainer():
                         if mse_not_improved_count > config['mse_not_improved_threshold']:
                             learning_rate = learning_rate * config['lr_decay']
                             m.assign_lr(session, learning_rate)
-                                
+                    
+                    print('Train Step: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(global_step, train_mse, learning_rate))            
                     test_mse, predictions = self._run_epoch(session, mtest)
                     test_predictions.append(predictions[-1])
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
@@ -230,13 +251,15 @@ class ModelTrainer():
         #evaluator.plot_real_target_vs_predicted()
         #evaluator.plot_real_errors()
         #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
+        print()
         print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
+        print()
         #evaluator.plot_scaled_target_vs_predicted()
         return evaluator
             
                 
-'''modelTrainer = ModelTrainer({})
-modelTrainer.train()'''
+#modelTrainer = ModelTrainer({})
+#modelTrainer.train()
             
         
         

@@ -57,10 +57,10 @@ run_experiments({
         'experiment1' : {
                 'run': 'car_sales_prediction_trainable',
                 'trial_resources': {'cpu': 8, 'gpu': 1},
-                'stop': {'neg_mean_loss': -2, 'training_iteration': 100},
+                'stop': {'neg_mean_loss': -2, 'training_iteration': 10},
                 'config' : {
-                    'keep_prob' : grid_search(np.arange(0.2, 1.1, 0.1).tolist()),
-                    'max_epoch' : 5
+                    'keep_prob' : grid_search(np.arange(0.9, 1.1, 0.1).tolist()),
+                    'max_epoch' : 10
                 },
                 'checkpoint_freq': 1
             }
