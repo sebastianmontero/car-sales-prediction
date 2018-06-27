@@ -40,11 +40,11 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
         'experiment1' : {
                 'run': 'car_sales_prediction_trainable',
                 'trial_resources': {'cpu': 8, 'gpu': 1},
-                #'stop': {'neg_mean_loss': -2, 'timesteps_total': 10},
-                'stop': {'timesteps_total': 100},
+                #'stop': {'neg_mean_loss': -2, 'training_iteration': 10},
+                'stop': {'training_iteration': 100},
                 'config' : {
                     'keep_prob' : grid_search(np.arange(0.2, 1.1, 0.1).tolist()),
-                    'max_epoch' : 10
+                    'max_epoch' : 1
                 },
                 'checkpoint_freq': 1
             }
@@ -57,11 +57,10 @@ run_experiments({
         'experiment1' : {
                 'run': 'car_sales_prediction_trainable',
                 'trial_resources': {'cpu': 8, 'gpu': 1},
-                #'stop': {'neg_mean_loss': -2, 'timesteps_total': 10},
-                'stop': {'timesteps_total': 100},
+                'stop': {'neg_mean_loss': -2, 'training_iteration': 100},
                 'config' : {
                     'keep_prob' : grid_search(np.arange(0.2, 1.1, 0.1).tolist()),
-                    'max_epoch' : 10
+                    'max_epoch' : 5
                 },
                 'checkpoint_freq': 1
             }

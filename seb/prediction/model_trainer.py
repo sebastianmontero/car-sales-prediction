@@ -125,7 +125,7 @@ class ModelTrainer():
         
         
         line_id = 13
-        window_size = 52
+        window_size = 37
         self._config = self._get_base_config()
         self._config.update(config)
         self._eval_config = self._config.copy()
@@ -217,9 +217,9 @@ class ModelTrainer():
                                 
                     test_mse, predictions = self._run_epoch(session, mtest)
                     test_predictions.append(predictions[-1])
-                    print('Test Mean Squared Error: {:.5f}'.format(test_mse))
+                    #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
-                    print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
+                    #print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
                     #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
                     #evaluator.plot_real_target_vs_predicted()
                     #evaluator.plot_scaled_target_vs_predicted()
