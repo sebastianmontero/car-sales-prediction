@@ -17,6 +17,7 @@ import export_utils
 from tensorflow.python.client import device_lib
 
 from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
+from gym.envs import kwargs
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -94,7 +95,7 @@ class ModelTrainer():
             'num_layers': 2,
             'num_steps': 12,
             'hidden_size': 100,
-            'max_epoch': 100,
+            'max_epoch': 1000,
             'keep_prob': 1,
             'lr_decay': 0.98,
             'mse_not_improved_threshold': 3,
@@ -128,7 +129,7 @@ class ModelTrainer():
         
         
         line_id = 13
-        window_size = 51
+        window_size = 52
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)
@@ -149,6 +150,7 @@ class ModelTrainer():
         
         if len(layers):
             config['layers'] = layers
+            
     
     def train(self):
         
@@ -165,7 +167,7 @@ class ModelTrainer():
             print('Window from: {} to {}'.format(reader.get_start_month_id(), reader.get_end_month_id()))
             print()
             save_path = os.path.join(config['save_path'], reader.get_window_name())
-            save_file = os.path.join(save_path, 'model.ckpt')  
+            best_save_path = os.path.join(save_path, 'best')  
             with tf.Graph().as_default():
                 initializer = tf.random_uniform_initializer(-config['init_scale'], config['init_scale'])
                 
@@ -205,6 +207,7 @@ class ModelTrainer():
                 test_absolute_error_ph = tf.placeholder(tf.float32, shape=[], name='test_absolute_error_ph')
                 assign_absolute_error_op = tf.assign(test_absolute_error, test_absolute_error_ph)
                 saver = tf.train.Saver()
+                
                 with tf.Session(config=tf.ConfigProto(allow_soft_placement=soft_placement)) as session:
                     
                     if tf.train.latest_checkpoint(save_path):
@@ -224,7 +227,7 @@ class ModelTrainer():
                         
                         train_mse, predictions = self._run_epoch(session, m, eval_op=m.train_op, verbose=False)
                         learning_rate =  session.run(m.lr)
-                        #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
+                        print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                         global_step = session.run(tf.train.get_global_step())
                         train_writer.add_summary(session.run(merged), global_step)
                         
@@ -245,14 +248,20 @@ class ModelTrainer():
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                     #print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
                     #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
-                    #evaluator.plot_real_target_vs_predicted()
+                    evaluator.plot_real_target_vs_predicted()
                     #evaluator.plot_scaled_target_vs_predicted()
                     #evaluator.plot_real_errors()
                     #evaluator.plot_scaled_errors()
-                    print('absolute_error', session.run(test_absolute_error))
-                    print('absolute_error_assign', session.run(assign_absolute_error_op, feed_dict={test_absolute_error_ph:2.0}))
-                    print('absolute_error2', session.run(test_absolute_error))
-                    saver.save(session, save_file, tf.train.get_global_step())
+                    current_test_absolute_error = evaluator.real_absolute_error_by_pos(-1)
+                    best_test_absolute_error = session.run(test_absolute_error)
+                    name_dict = {'global_step':global_step, 'error':current_test_absolute_error}
+                    if best_test_absolute_error == -1 or current_test_absolute_error < best_test_absolute_error:
+                        print('Saving best model...')
+                        session.run(assign_absolute_error_op, feed_dict={test_absolute_error_ph:current_test_absolute_error})
+                        self._checkpoint(saver, session, best_save_path, True, **name_dict)
+                    
+                    self._checkpoint(saver, session, save_path, True, **name_dict)
+                    
         evaluator = Evaluator(reader, test_predictions, -1)
         #evaluator.plot_real_target_vs_predicted()
         #evaluator.plot_real_errors()
@@ -262,10 +271,24 @@ class ModelTrainer():
         print()
         #evaluator.plot_scaled_target_vs_predicted()
         return evaluator
+    
+    def _checkpoint(self, saver, session, path, remove_current, **kwargs):
+        file_name = 'model.ckpt'
+        for key, value in kwargs.items():
+            file_name += '.' + key +'_'+ str(value)
+        
+        if remove_current and os.path.isdir(path):
+            files = os.listdir(path)
+            for file in files:
+                if file.startswith("model.ckpt") or file.startswith("checkpoint"):
+                    os.remove(os.path.join(path,file))
+        
+        save_file = os.path.join(path, file_name)    
+        saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({'layer_0':10, 'layer_1':20})
-#modelTrainer.train()
+modelTrainer = ModelTrainer({})
+modelTrainer.train()
             
         
         

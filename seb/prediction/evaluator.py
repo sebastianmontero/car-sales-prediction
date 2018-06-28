@@ -4,6 +4,7 @@ Created on Jun 15, 2018
 @author: nishilab
 '''
 
+import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -49,6 +50,10 @@ class Evaluator(object):
         plt.suptitle(title)
         plt.show()
         
+        
+    def _calculate_absolute_error_by_pos(self, targets, predictions, pos):
+        return math.fabs(targets[pos]- predictions[pos])
+    
     def _calculate_absolute_error(self, targets, predictions):
         return np.abs(targets - predictions)
     
@@ -108,6 +113,14 @@ class Evaluator(object):
     
     def scaled_relative_mean_error(self):
         return self._calculate_relative_mean_error(self._get_target_sales(scaled=True), self._get_predictions(scaled=True))
-     
-        
+    
+    def _get_absolute_error_by_pos(self, pos, scaled=False):
+        return self._calculate_absolute_error_by_pos(self._get_target_sales(scaled), self._get_predictions(scaled), pos)
+    
+    def real_absolute_error_by_pos(self, pos):
+        return self._get_absolute_error_by_pos(pos)
+    
+    def scaled_absolute_error_by_pos(self, pos):
+        return self._get_absolute_error_by_pos(pos, True)
+    
         
