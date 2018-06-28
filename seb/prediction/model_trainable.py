@@ -55,7 +55,7 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
                                          reduction_factor=3,
                                          brackets=3))'''
 run_experiments({
-        'experiment1' : {
+        'network_structure' : {
                 'run': 'car_sales_prediction_trainable',
                 'trial_resources': {'cpu': 8, 'gpu': 1},
                 'stop': {'neg_mean_loss': -2, 'training_iteration': 10},
@@ -73,8 +73,7 @@ run_experiments({
                                            'energy_price_index_roc_start_year',
                                            'inflation_index_roc_prev_month',
                                            'inflation_index_roc_start_year']
-                },
-                'checkpoint_freq': 1
+                }
             }
     })
 
