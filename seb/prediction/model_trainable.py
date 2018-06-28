@@ -16,9 +16,13 @@ from ray.tune.variant_generator import grid_search
         
 class ModelTrainable(Trainable):
     
+    BASE_PATH = '/home/nishilab/Documents/python/model-storage'
+    
     def _setup(self):
         self.timesteps = 0
-        self.config['save_path'] = self.logdir
+        experiment_path, trial_dir =  os.path.split(self.logdir)
+        _, experiment_dir =  os.path.split(experiment_path)
+        self.config['save_path'] = os.path.join(ModelTrainable.BASE_PATH, experiment_dir, trial_dir)
         self.model_trainer = ModelTrainer(self.config)
         
     def _train(self):

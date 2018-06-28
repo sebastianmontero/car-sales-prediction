@@ -264,8 +264,8 @@ class ModelTrainer():
         return evaluator
             
                 
-modelTrainer = ModelTrainer({'layer_0':10, 'layer_1':20})
-modelTrainer.train()
+#modelTrainer = ModelTrainer({'layer_0':10, 'layer_1':20})
+#modelTrainer.train()
             
         
         
