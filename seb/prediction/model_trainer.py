@@ -10,14 +10,14 @@ import numpy as np
 
 
 from reader import Reader
-from evaluator import Evaluator
 from model import Model, ModelRNNMode, ModelStage
+from utils import Utils
 import export_utils
 
 from tensorflow.python.client import device_lib
 
 from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
-from gym.envs import kwargs
+from evaluator import Evaluator, PickleAction
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -95,7 +95,7 @@ class ModelTrainer():
             'num_layers': 2,
             'num_steps': 12,
             'hidden_size': 100,
-            'max_epoch': 1000,
+            'max_epoch': 100,
             'keep_prob': 1,
             'lr_decay': 0.98,
             'mse_not_improved_threshold': 3,
@@ -129,7 +129,7 @@ class ModelTrainer():
         
         
         line_id = 13
-        window_size = 52
+        window_size = 37
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)
@@ -166,6 +166,7 @@ class ModelTrainer():
             print()
             print('Window from: {} to {}'.format(reader.get_start_month_id(), reader.get_end_month_id()))
             print()
+            tf.reset_default_graph()
             save_path = os.path.join(config['save_path'], reader.get_window_name())
             best_save_path = os.path.join(save_path, 'best')  
             with tf.Graph().as_default():
@@ -197,17 +198,20 @@ class ModelTrainer():
                 if FLAGS.num_gpus > 1:
                     soft_placement = True
                     export_utils.auto_parallel(metagraph, m)
-                
+            
+            
             with tf.Graph().as_default():
-                tf.train.import_meta_graph(metagraph)
-                for model in models.values():
-                    model.import_ops(FLAGS.num_gpus)
-                    
+                
                 test_absolute_error = tf.Variable(-1.0, trainable=False, name='test_absolute_error')
                 test_absolute_error_ph = tf.placeholder(tf.float32, shape=[], name='test_absolute_error_ph')
                 assign_absolute_error_op = tf.assign(test_absolute_error, test_absolute_error_ph)
-                saver = tf.train.Saver()
+                saver = tf.train.import_meta_graph(metagraph)
+                for model in models.values():
+                    model.import_ops(FLAGS.num_gpus)
+                    
                 
+                
+                #saver = tf.train.Saver()    
                 with tf.Session(config=tf.ConfigProto(allow_soft_placement=soft_placement)) as session:
                     
                     if tf.train.latest_checkpoint(save_path):
@@ -227,7 +231,7 @@ class ModelTrainer():
                         
                         train_mse, predictions = self._run_epoch(session, m, eval_op=m.train_op, verbose=False)
                         learning_rate =  session.run(m.lr)
-                        print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
+                        #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                         global_step = session.run(tf.train.get_global_step())
                         train_writer.add_summary(session.run(merged), global_step)
                         
@@ -241,6 +245,7 @@ class ModelTrainer():
                             learning_rate = learning_rate * config['lr_decay']
                             m.assign_lr(session, learning_rate)
                     
+                    train_writer.close()
                     print('Train Step: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(global_step, train_mse, learning_rate))            
                     test_mse, predictions = self._run_epoch(session, mtest)
                     test_predictions.append(predictions[-1])
@@ -248,7 +253,7 @@ class ModelTrainer():
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                     #print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
                     #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
-                    evaluator.plot_real_target_vs_predicted()
+                    #evaluator.plot_real_target_vs_predicted()
                     #evaluator.plot_scaled_target_vs_predicted()
                     #evaluator.plot_real_errors()
                     #evaluator.plot_scaled_errors()
@@ -257,12 +262,14 @@ class ModelTrainer():
                     name_dict = {'global_step':global_step, 'error':current_test_absolute_error}
                     if best_test_absolute_error == -1 or current_test_absolute_error < best_test_absolute_error:
                         print('Saving best model...')
+                        evaluator.pickle(best_save_path, current_test_absolute_error)
                         session.run(assign_absolute_error_op, feed_dict={test_absolute_error_ph:current_test_absolute_error})
                         self._checkpoint(saver, session, best_save_path, True, **name_dict)
                     
                     self._checkpoint(saver, session, save_path, True, **name_dict)
                     
         evaluator = Evaluator(reader, test_predictions, -1)
+        evaluator.pickle(config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
         #evaluator.plot_real_target_vs_predicted()
         #evaluator.plot_real_errors()
         #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
@@ -277,11 +284,8 @@ class ModelTrainer():
         for key, value in kwargs.items():
             file_name += '.' + key +'_'+ str(value)
         
-        if remove_current and os.path.isdir(path):
-            files = os.listdir(path)
-            for file in files:
-                if file.startswith("model.ckpt") or file.startswith("checkpoint"):
-                    os.remove(os.path.join(path,file))
+        if remove_current:
+            Utils.remove_files_from_dir(path, ["model.ckpt", "checkpoint"])
         
         save_file = os.path.join(path, file_name)    
         saver.save(session, save_file)

@@ -37,7 +37,6 @@ class Reader(object):
 
     def __init__(self, line_id, window_size, included_features, prediction_size = 1):
         assert (window_size > 0), "Window size must be greater than zero"
-        self._engine = self._connect_to_db()
         self._line_id = str(line_id) 
         self._window_size = window_size
         self._window_pos = -1
@@ -47,14 +46,32 @@ class Reader(object):
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
+        self._init_fleeting_vars()
+        
+    def _init_fleeting_vars(self):
+        self._engine = self._connect_to_db()
         self._scaler = MinMaxScaler((-1,1))
         self._sales_scaler = MinMaxScaler((-1,1))
         self._data = None
         self._start_month_id = None
         self._raw_data = None
         self._process_data()
-        self._num_windows = self._data.shape[0] - window_size 
-        
+        self._num_windows = self._data.shape[0] - self._window_size
+    
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['_engine']
+        del state['_scaler']
+        del state['_sales_scaler']
+        del state['_data']
+        del state['_raw_data']
+        del state['_start_month_id']
+        del state['_num_windows']
+        return state 
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._init_fleeting_vars()
 
     @property
     def num_features(self):

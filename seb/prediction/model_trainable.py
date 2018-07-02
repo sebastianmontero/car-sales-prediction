@@ -62,12 +62,12 @@ run_experiments({
         'network_structure' : {
                 'run': 'car_sales_prediction_trainable',
                 'trial_resources': {'cpu': 8, 'gpu': 1},
-                'stop': {'neg_mean_loss': -2, 'training_iteration': 10},
+                'stop': {'neg_mean_loss': -2, 'training_iteration': 1},
                 'config' : {
                     'keep_prob' : grid_search(np.linspace(0.4, 1., 4).tolist()),
                     'layer_0' : grid_search([30, 70, 110]),
                     'layer_1' : grid_search([None, 30, 70, 110]),
-                    'max_epoch' : 70,
+                    'max_epoch' : 1,
                     'included_features' : ['consumer_confidence_index',
                                            'exchange_rate',
                                            'interest_rate',

@@ -8,8 +8,24 @@ import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import pickle
+import os
+import glob
+import re
+from enum import Enum
+
+from utils import Utils
+
+
+class PickleAction(Enum):
+    KEEP = 'keep'
+    OVERWRITE = 'overwrite'
+    BEST = 'best'
+    NOTHING = 'nothing'
 
 class Evaluator(object):
+    
+    PICKLE_FILE_NAME_PREFIX = 'evaluator-pickle-'
 
     def __init__(self, reader, predictions, end_window_pos):
         self._reader = reader
@@ -123,4 +139,82 @@ class Evaluator(object):
     def scaled_absolute_error_by_pos(self, pos):
         return self._get_absolute_error_by_pos(pos, True)
     
+    def pickle(self, path, error, pickle_action=PickleAction.OVERWRITE):
+        Evaluator.pickle_obj(self, path, error, pickle_action)
+    
+    @classmethod
+    def _get_pickle_file_path(cls, path, error):
+        return os.path.join(path, cls.PICKLE_FILE_NAME_PREFIX + str(error) + '.bin')
+    
+    @classmethod
+    def unpickle(cls, path):
+        if os.path.isdir(path):
+            path = cls._get_pickle_file_path()
         
+        with open(path, mode='rb') as file:
+            return pickle.load(file)
+    
+    @classmethod
+    def _remove_pickles(cls, path):
+        Utils.remove_files_from_dir(path, [cls.PICKLE_FILE_NAME_PREFIX])
+        
+    @classmethod
+    def _get_pickle_file_name(cls, pickle):
+        return os.path.split(pickle)[1]
+    
+    @classmethod
+    def _sort_pickles_by_error(cls, pickles):
+        pickles.sort(key=cls._get_pickle_file_name)
+    
+    @classmethod
+    def _get_best_pickle(cls, path=None, pickles=None):
+        assert (path or pickles), "Either path or pickles must be specified"
+        
+        if path:
+            pickles = cls.get_pickles(path)
+        return None if len(pickles) == 0 else pickles[0]
+    
+    @classmethod
+    def _get_best_pickle_error(cls, path=None, pickles=None):
+        best = cls._get_best_pickle(path, pickles)
+        return cls._get_error_from_pickle(best) if best else None
+    
+    @classmethod    
+    def _get_error_from_pickle(cls, pickle):
+        name = cls._get_pickle_file_name(pickle)
+        return float(name[len(cls.PICKLE_FILE_NAME_PREFIX):-4])
+        
+    @classmethod
+    def _filter_pickles(cls, pickles, filter_, start_pos=0):
+        return list(filter(lambda pickle: re.search(filter_, pickle[start_pos:]), pickles))
+        
+    @classmethod
+    def get_pickles(cls, path, filter_=None, recursive=False, sorted_=True):
+        
+        path_wild_card = '**' if recursive else ''
+        path = os.path.join(path, path_wild_card, cls.PICKLE_FILE_NAME_PREFIX + '*.bin')
+        pickles = glob.glob(path, recursive=recursive)
+        
+        if filter_:
+            pickles = cls._filter_pickles(pickles, filter_)
+        
+        if sorted_:
+            cls._sort_pickles_by_error(pickles)
+        return pickles
+        
+    @classmethod
+    def pickle_obj(cls, obj, path, error, pickle_action=PickleAction.OVERWRITE):
+        
+        if PickleAction.BEST:
+            best_error = cls._get_best_pickle_error(path)
+            pickle_action = PickleAction.OVERWRITE if best_error is None or error < best_error else PickleAction.NOTHING
+        
+        if pickle_action == PickleAction.OVERWRITE:
+            cls._remove_pickles(path)
+            
+        if pickle_action != PickleAction.NOTHING:
+            pickle_file = cls._get_pickle_file_path(path, error)
+            os.makedirs(os.path.dirname(pickle_file), exist_ok=True)
+            with open(pickle_file, mode='wb') as file:
+                pickle.dump(obj, file)
+    

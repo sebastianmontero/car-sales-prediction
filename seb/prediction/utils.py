@@ -1,3 +1,5 @@
+import os
+
 class Utils:
     
     @staticmethod
@@ -20,4 +22,12 @@ class Utils:
             month_id +='0'
         month_id += str(month) 
         return int(month_id)
-    
+
+    @staticmethod
+    def remove_files_from_dir(path, prefixes):
+        if os.path.isdir(path):
+            files = os.listdir(path)
+            for file in files:
+                for prefix in prefixes:
+                    if file.startswith(prefix):
+                        os.remove(os.path.join(path,file))
