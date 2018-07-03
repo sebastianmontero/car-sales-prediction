@@ -251,12 +251,6 @@ class ModelTrainer():
                     test_predictions.append(predictions[-1])
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
-                    #print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
-                    #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
-                    #evaluator.plot_real_target_vs_predicted()
-                    #evaluator.plot_scaled_target_vs_predicted()
-                    #evaluator.plot_real_errors()
-                    #evaluator.plot_scaled_errors()
                     current_test_absolute_error = evaluator.real_absolute_error_by_pos(-1)
                     best_test_absolute_error = session.run(test_absolute_error)
                     name_dict = {'global_step':global_step, 'error':current_test_absolute_error}
@@ -270,13 +264,9 @@ class ModelTrainer():
                     
         evaluator = Evaluator(reader, test_predictions, -1)
         evaluator.pickle(config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
-        #evaluator.plot_real_target_vs_predicted()
-        #evaluator.plot_real_errors()
-        #print("Absolute Mean Error: {:.2f}".format(evaluator.real_absolute_mean_error()))
         print()
         print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
         print()
-        #evaluator.plot_scaled_target_vs_predicted()
         return evaluator
     
     def _checkpoint(self, saver, session, path, remove_current, **kwargs):
