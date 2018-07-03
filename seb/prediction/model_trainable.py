@@ -119,8 +119,9 @@ run_experiments({
                 'layers' : [15],
                 'max_epoch' : 1,
                 'store_window' : False,
-                'included_features' : grid_search([['consumer_confidence_index']])
-            }
+                'included_features' : grid_search([['consumer_confidence_index'],['exchange_rate']])
+            },
+            'repeat':3,
         }
 })
 
