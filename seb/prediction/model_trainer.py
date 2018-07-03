@@ -161,6 +161,7 @@ class ModelTrainer():
         config = self._config
         eval_config = self._eval_config
         evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
+        config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         reader.reset()
         
         while reader.next_window():
@@ -256,6 +257,7 @@ class ModelTrainer():
                     if best_test_absolute_error == -1 or current_test_absolute_error < best_test_absolute_error:
                         print('Saving best model...')
                         evaluator_sm.pickle(evaluator, best_save_path, current_test_absolute_error)
+                        config_sm.pickle(config, best_save_path, current_test_absolute_error)
                         session.run(assign_absolute_error_op, feed_dict={test_absolute_error_ph:current_test_absolute_error})
                         self._checkpoint(saver, session, best_save_path, True, **name_dict)
                     
@@ -263,6 +265,7 @@ class ModelTrainer():
                     
         evaluator = Evaluator(reader, test_predictions, -1)
         evaluator_sm.pickle(evaluator, config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
+        config_sm.pickle(config, config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
         print()
         print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
         print()

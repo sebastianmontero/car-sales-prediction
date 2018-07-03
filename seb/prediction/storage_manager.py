@@ -4,10 +4,6 @@ Created on Jun 15, 2018
 @author: nishilab
 '''
 
-import math
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
 import pickle
 import os
 import glob
@@ -15,7 +11,6 @@ import re
 from enum import Enum
 
 from utils import Utils
-
 
 class StorageManagerType(Enum):
     EVALUATOR = 'evaluator-pickle-'
@@ -37,7 +32,7 @@ class StorageManager(object):
     
     def unpickle(self, path):
         if os.path.isdir(path):
-            path = self._get_pickle_file_path()
+            path = self._get_best_pickle(path)
         
         with open(path, mode='rb') as file:
             return pickle.load(file)

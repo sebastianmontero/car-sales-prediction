@@ -7,6 +7,7 @@ Created on Jul 2, 2018
 import os
 import sys
 import argparse
+import pprint
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType
 
@@ -19,8 +20,11 @@ class ConsoleApp():
         self._parser = self._create_parser()
         self._evaluators = []
         self._evaluator = None
+        self._evaluator_path = None
         self._evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
-    
+        self._config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
+        self._pprint = pprint.PrettyPrinter()
+        
     def _create_parser(self):
         parser = argparse.ArgumentParser(description="Evaluate modules")
         subparser = parser.add_subparsers(help='sub-command help', dest='cmd')
@@ -64,9 +68,9 @@ class ConsoleApp():
             self._search(command)
         if cmd == 'select':
             if command.pos >= 0 and command.pos < len(self._evaluators):
-                pickle = self._evaluators[command.pos]
-                self._evaluator = self._evaluator_sm.unpickle(pickle)
-                print('Selected Evaluator:', pickle)
+                self._evaluator_path = self._evaluators[command.pos]
+                self._evaluator = self._evaluator_sm.unpickle(self._evaluator_path)
+                print('Selected Evaluator:', self._evaluator_path)
                 self._evaluator_mode()
             else:
                 print('Invalid evaluator position')
@@ -98,6 +102,7 @@ class ConsoleApp():
         print('[6] Show scaled sales absolute mean error')
         print('[7] Show real sales relative mean error')
         print('[8] Show scaled sales relative mean error')
+        print('[9] Show related configuration')
         print()
         
         
@@ -132,6 +137,12 @@ class ConsoleApp():
             print('Real sales relative mean error: {:.2f}'.format(self._evaluator.real_relative_mean_error()))
         elif action == 8:
             print('Scaled sales relative mean error: {:.2f}'.format(self._evaluator.scaled_relative_mean_error()))
+        elif action == 9:
+            path,_ = os.path.split(self._evaluator_path)
+            config = self._config_sm.unpickle(path)
+            print('Configuration: ')
+            print()
+            self._pprint.pprint(config)
             
         
     def run(self):
