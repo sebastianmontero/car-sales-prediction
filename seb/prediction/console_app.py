@@ -16,7 +16,7 @@ class ConsoleApp():
     def __init__(self):
         
         #self._base_path = os.path.dirname(os.path.realpath(__file__))
-        self._base_path = '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save'
+        self._base_path = '/home/nishilab/Documents/python/model-storage/best_feature'
         self._parser = self._create_parser()
         self._evaluators = []
         self._evaluator = None

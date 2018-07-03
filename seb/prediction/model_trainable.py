@@ -58,7 +58,7 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
                                          grace_period=3,
                                          reduction_factor=3,
                                          brackets=3))'''
-run_experiments({
+'''run_experiments({
         'network_structure' : {
                 'run': 'car_sales_prediction_trainable',
                 'trial_resources': {'cpu': 8, 'gpu': 1},
@@ -79,12 +79,52 @@ run_experiments({
                                            'inflation_index_roc_start_year']
                 }
             }
-    })
+    })'''
 
 ''', scheduler=HyperBandScheduler(time_attr='training_iteration', 
                                          reward_attr='neg_mean_loss',
                                          max_t=100))'''
         
-        
+'''run_experiments({
+    'best_feature' : {
+            'run': 'car_sales_prediction_trainable',
+            'trial_resources': {'cpu': 8, 'gpu': 1},
+            'stop': {'neg_mean_loss': -2, 'training_iteration': 1},
+            'config' : {
+                'keep_prob' : 1,
+                'layers' : [15],
+                'max_epoch' : 1,
+                'included_features' : grid_search([['consumer_confidence_index'],
+                                       ['exchange_rate'],
+                                       ['interest_rate'],
+                                       ['manufacturing_confidence_index'],
+                                       ['economic_activity_index'],
+                                       ['energy_price_index_roc_prev_month'],
+                                       ['energy_price_index_roc_start_year'],
+                                       ['inflation_index_roc_prev_month'],
+                                       ['inflation_index_roc_start_year']])
+            }
+        }
+})'''
+
+print('Experiment start')
+
+run_experiments({
+    'best_feature' : {
+            'run': 'car_sales_prediction_trainable',
+            'trial_resources': {'cpu': 8, 'gpu': 1},
+            'stop': {'neg_mean_loss': -2, 'training_iteration': 1},
+            'config' : {
+                'keep_prob' : 1,
+                'layers' : [15],
+                'max_epoch' : 1,
+                'store_window' : False,
+                'included_features' : grid_search([['consumer_confidence_index']])
+            }
+        }
+})
+
+print('Experiment end')
+          
         
         

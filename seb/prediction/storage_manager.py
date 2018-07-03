@@ -33,6 +33,7 @@ class StorageManager(object):
     def unpickle(self, path):
         if os.path.isdir(path):
             path = self._get_best_pickle(path)
+            print('Unpickle:', path)
         
         with open(path, mode='rb') as file:
             return pickle.load(file)
@@ -63,11 +64,24 @@ class StorageManager(object):
         
     def _filter_pickles(self, pickles, filter_, start_pos=0):
         return list(filter(lambda pickle: re.search(filter_, pickle[start_pos:]), pickles))
-        
+    
+    def _escape_brackets(self, str):
+        new_str = ''
+        for c in str:
+            if c == '[':
+                new_str += '[[]'
+            elif c == ']':
+                new_str += '[]]'
+            else:
+                new_str += c
+        return new_str 
+            
     def get_pickles(self, path, filter_=None, recursive=False, sorted_=True):
         
         path_wild_card = '**' if recursive else ''
+        path = self._escape_brackets(path)
         path = os.path.join(path, path_wild_card, self._file_name_prefix + '*.bin')
+        print('final_path', path)
         pickles = glob.glob(path, recursive=recursive)
         
         if filter_:
@@ -78,7 +92,7 @@ class StorageManager(object):
         return pickles
         
     def pickle(self, obj, path, error, pickle_action=PickleAction.OVERWRITE):
-        
+
         if PickleAction.BEST:
             best_error = self._get_best_pickle_error(path)
             pickle_action = PickleAction.OVERWRITE if best_error is None or error < best_error else PickleAction.NOTHING

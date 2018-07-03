@@ -95,19 +95,27 @@ class ModelTrainer():
             'max_grad_norm': 5,
             'num_layers': 2,
             'num_steps': 12,
-            'hidden_size': 100,
-            'max_epoch': 100,
+            'hidden_size': 10,
+            'max_epoch': 700,
             'keep_prob': 1,
             'lr_decay': 0.98,
             'mse_not_improved_threshold': 3,
             'batch_size': 1,
             'rnn_mode': ModelRNNMode.BLOCK,
-            'layers': [100],
+            'layers': [15],
             'error_weight': 1000000,
             'data_type': tf.float32,
             'save_path': '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/',
-            'included_features': ['interest_rate', 'exchange_rate', 'consumer_confidence_index'],
-            'store_window' : True # Wether the configuration and evaluator object should be saved for every window
+            'included_features': ['consumer_confidence_index',
+                                           'exchange_rate',
+                                           'interest_rate',
+                                           'manufacturing_confidence_index',
+                                           'economic_activity_index',
+                                           'energy_price_index_roc_prev_month',
+                                           'energy_price_index_roc_start_year',
+                                           'inflation_index_roc_prev_month',
+                                           'inflation_index_roc_start_year'],
+            'store_window' : True # Whether the configuration and evaluator object should be saved for every window
         }
         
         if FLAGS.rnn_mode:
@@ -287,8 +295,8 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = ModelTrainer({})
-modelTrainer.train()
+#modelTrainer = ModelTrainer({})
+#modelTrainer.train()
             
         
         
