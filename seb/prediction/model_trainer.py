@@ -106,7 +106,8 @@ class ModelTrainer():
             'error_weight': 1000000,
             'data_type': tf.float32,
             'save_path': '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/',
-            'included_features': ['interest_rate', 'exchange_rate', 'consumer_confidence_index']
+            'included_features': ['interest_rate', 'exchange_rate', 'consumer_confidence_index'],
+            'store_window' : True # Wether the configuration and evaluator object should be saved for every window
         }
         
         if FLAGS.rnn_mode:
@@ -256,8 +257,11 @@ class ModelTrainer():
                     name_dict = {'global_step':global_step, 'error':current_test_absolute_error}
                     if best_test_absolute_error == -1 or current_test_absolute_error < best_test_absolute_error:
                         print('Saving best model...')
-                        evaluator_sm.pickle(evaluator, best_save_path, current_test_absolute_error)
-                        config_sm.pickle(config, best_save_path, current_test_absolute_error)
+                        
+                        if config['store_window']:
+                            evaluator_sm.pickle(evaluator, best_save_path, current_test_absolute_error)
+                            config_sm.pickle(config, best_save_path, current_test_absolute_error)
+                        
                         session.run(assign_absolute_error_op, feed_dict={test_absolute_error_ph:current_test_absolute_error})
                         self._checkpoint(saver, session, best_save_path, True, **name_dict)
                     
