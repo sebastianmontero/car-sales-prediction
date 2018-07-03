@@ -43,7 +43,6 @@ class ConsoleApp():
             
     def _perform_action(self, command):
         
-        print(command)
         if not hasattr(command, 'cmd'):
             return
         
@@ -64,7 +63,9 @@ class ConsoleApp():
             self._search(command)
         if cmd == 'select':
             if command.pos >= 0 and command.pos < len(self._evaluators):
-                self._evaluator = Evaluator.unpickle(self._evaluators[command.pos])
+                pickle = self._evaluators[command.pos]
+                self._evaluator = Evaluator.unpickle(pickle)
+                print('Selected Evaluator:', pickle)
                 self._evaluator_mode()
             else:
                 print('Invalid evaluator position')
