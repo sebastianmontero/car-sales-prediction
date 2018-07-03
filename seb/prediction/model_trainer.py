@@ -17,7 +17,8 @@ import export_utils
 from tensorflow.python.client import device_lib
 
 from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
-from evaluator import Evaluator, PickleAction
+from evaluator import Evaluator
+from storage_manager import StorageManager, StorageManagerType, PickleAction 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -159,7 +160,7 @@ class ModelTrainer():
         reader = self._reader
         config = self._config
         eval_config = self._eval_config
-        
+        evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
         reader.reset()
         
         while reader.next_window():
@@ -209,8 +210,6 @@ class ModelTrainer():
                 for model in models.values():
                     model.import_ops(FLAGS.num_gpus)
                     
-                
-                
                 #saver = tf.train.Saver()    
                 with tf.Session(config=tf.ConfigProto(allow_soft_placement=soft_placement)) as session:
                     
@@ -256,14 +255,14 @@ class ModelTrainer():
                     name_dict = {'global_step':global_step, 'error':current_test_absolute_error}
                     if best_test_absolute_error == -1 or current_test_absolute_error < best_test_absolute_error:
                         print('Saving best model...')
-                        evaluator.pickle(best_save_path, current_test_absolute_error)
+                        evaluator_sm.pickle(evaluator, best_save_path, current_test_absolute_error)
                         session.run(assign_absolute_error_op, feed_dict={test_absolute_error_ph:current_test_absolute_error})
                         self._checkpoint(saver, session, best_save_path, True, **name_dict)
                     
                     self._checkpoint(saver, session, save_path, True, **name_dict)
                     
         evaluator = Evaluator(reader, test_predictions, -1)
-        evaluator.pickle(config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
+        evaluator_sm.pickle(evaluator, config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
         print()
         print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
         print()

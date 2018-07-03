@@ -8,7 +8,7 @@ import os
 import sys
 import argparse
 from evaluator import Evaluator
-
+from storage_manager import StorageManager, StorageManagerType
 
 class ConsoleApp():
     
@@ -19,6 +19,7 @@ class ConsoleApp():
         self._parser = self._create_parser()
         self._evaluators = []
         self._evaluator = None
+        self._evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
     
     def _create_parser(self):
         parser = argparse.ArgumentParser(description="Evaluate modules")
@@ -64,7 +65,7 @@ class ConsoleApp():
         if cmd == 'select':
             if command.pos >= 0 and command.pos < len(self._evaluators):
                 pickle = self._evaluators[command.pos]
-                self._evaluator = Evaluator.unpickle(pickle)
+                self._evaluator = self._evaluator_sm.unpickle(pickle)
                 print('Selected Evaluator:', pickle)
                 self._evaluator_mode()
             else:
@@ -80,7 +81,7 @@ class ConsoleApp():
     
     def _search(self, command): 
         
-        self._evaluators = Evaluator.get_pickles(self._base_path, command.filter, recursive=True)
+        self._evaluators = self._evaluator_sm.get_pickles(self._base_path, command.filter, recursive=True)
         self._display_evaluators() 
         
         
