@@ -74,7 +74,14 @@ class Evaluator(object):
         return np.abs(targets - predictions)
     
     def _calculate_relative_error(self, targets, predictions):
-        return np.abs((targets - predictions)/targets) * 100
+        errors = []
+        for target, prediction in zip(targets, predictions):
+            if target == prediction:
+                errors.append(0)
+            else:
+                errors.append(((target - prediction)/(math.fabs(target) + math.fabs(prediction))) * 200) 
+            
+        return errors
     
     def _calculate_absolute_mean_error(self, targets, predictions):
         return np.mean(self._calculate_absolute_error(targets, predictions))
