@@ -29,9 +29,8 @@ class FeatureSelector():
                 'inflation_index_roc_prev_month',
                 'inflation_index_roc_start_year']'''
     
-    '''FEATURES = ['consumer_confidence_index',
-                'energy_price_index_roc_prev_month']'''
-    FEATURES = ['consumer_confidence_index']
+    FEATURES = ['consumer_confidence_index',
+                'energy_price_index_roc_prev_month']
     
     def __init__(self, config, max_features=9, repeats = 3):        
         assert (max_features <= len(self.FEATURES)), "max_features {} should be less than the number of possible features {}".format(max_features, len(self.FEATURES))
@@ -70,7 +69,7 @@ class FeatureSelector():
         return 'feature-selection-{}-{}'.format(str(num_features), datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
     
     def _get_experiments_base_dir(self):
-        return 'feature-selection-{}'.format(datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
+        return 'feature-selection-run-{}'.format(datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
     
     def _get_best_config(self, experiment_path):
         configs_dict = {}
@@ -113,7 +112,7 @@ class FeatureSelector():
                     'run': 'car_sales_prediction_trainable',
                     'trial_resources': {'cpu': 8, 'gpu': 1},
                     #'stop': {'neg_mean_loss': 0, 'training_iteration': 200},
-                    'stop': {'training_iteration': 50},
+                    'stop': {'training_iteration': 10},
                     'config' : config,
                     'repeat':self._repeats,
                 }
@@ -151,8 +150,9 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
 feature_selector = FeatureSelector({
                 'keep_prob' : 1,
                 'layers' : [15],
-                'max_epoch' : 2
-            }, max_features=1, repeats=1)
+                'max_epoch' : 2,
+                'window_size': 37
+            }, max_features=2, repeats=2)
           
 feature_selector.run()
 

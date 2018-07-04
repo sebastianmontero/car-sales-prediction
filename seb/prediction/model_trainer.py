@@ -105,6 +105,7 @@ class ModelTrainer():
             'layers': [15],
             'error_weight': 1000000,
             'data_type': tf.float32,
+            'window_size': 52,
             'save_path': '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/',
             'included_features': ['consumer_confidence_index',
                                            'exchange_rate',
@@ -139,13 +140,12 @@ class ModelTrainer():
         
         
         line_id = 13
-        window_size = 52
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)
         self._eval_config = self._config.copy()
         self._eval_config['batch_size'] = 1
-        self._reader = Reader(line_id, window_size, self._config['included_features'])
+        self._reader = Reader(line_id, self._config['window_size'], self._config['included_features'])
     
     def _config_layers(self, config):
                 
