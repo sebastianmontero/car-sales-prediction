@@ -29,8 +29,9 @@ class FeatureSelector():
                 'inflation_index_roc_prev_month',
                 'inflation_index_roc_start_year']'''
     
-    FEATURES = ['consumer_confidence_index',
-                'energy_price_index_roc_prev_month']
+    '''FEATURES = ['consumer_confidence_index',
+                'energy_price_index_roc_prev_month']'''
+    FEATURES = ['consumer_confidence_index']
     
     def __init__(self, config, max_features=9, repeats = 3):        
         assert (max_features <= len(self.FEATURES)), "max_features {} should be less than the number of possible features {}".format(max_features, len(self.FEATURES))
@@ -112,7 +113,7 @@ class FeatureSelector():
                     'run': 'car_sales_prediction_trainable',
                     'trial_resources': {'cpu': 8, 'gpu': 1},
                     #'stop': {'neg_mean_loss': 0, 'training_iteration': 200},
-                    'stop': {'training_iteration': 400},
+                    'stop': {'training_iteration': 50},
                     'config' : config,
                     'repeat':self._repeats,
                 }
@@ -151,7 +152,7 @@ feature_selector = FeatureSelector({
                 'keep_prob' : 1,
                 'layers' : [15],
                 'max_epoch' : 2
-            }, max_features=2, repeats=2)
+            }, max_features=1, repeats=1)
           
 feature_selector.run()
 

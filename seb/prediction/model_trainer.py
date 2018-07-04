@@ -96,7 +96,7 @@ class ModelTrainer():
             'num_layers': 2,
             'num_steps': 12,
             'hidden_size': 10,
-            'max_epoch': 100,
+            'max_epoch': 10,
             'keep_prob': 1,
             'lr_decay': 0.98,
             'mse_not_improved_threshold': 3,
@@ -213,9 +213,9 @@ class ModelTrainer():
             
             with tf.Graph().as_default():
                 
-                test_absolute_error = tf.Variable(-1.0, trainable=False, name='test_absolute_error')
-                test_absolute_error_ph = tf.placeholder(tf.float32, shape=[], name='test_absolute_error_ph')
-                assign_absolute_error_op = tf.assign(test_absolute_error, test_absolute_error_ph)
+                test_absolute_error_tf = tf.Variable(-1.0, trainable=False, name='test_absolute_error')
+                mse_not_improved_count_tf = tf.Variable(0, trainable=False, name='mse_not_improved_count')
+                min_mse_tf = tf.Variable(-1, trainable=False, name='mse_not_improved_count')
                 saver = tf.train.import_meta_graph(metagraph)
                 for model in models.values():
                     model.import_ops(FLAGS.num_gpus)
@@ -231,11 +231,12 @@ class ModelTrainer():
                     merged = tf.summary.merge_all()
                     train_writer = tf.summary.FileWriter(save_path, session.graph)
                     
-                    min_mse = None
-                    mse_not_improved_count = 0
+                    min_mse = session.run(min_mse_tf)
+                    mse_not_improved_count = session.run(mse_not_improved_count_tf)
                     train_mse = 0
                     learning_rate = 0
                     global_step = 0
+                    
                     for i in range(config['max_epoch']):
                         
                         train_mse, predictions = self._run_epoch(session, m, eval_op=m.train_op, verbose=False)
@@ -244,11 +245,16 @@ class ModelTrainer():
                         global_step = session.run(tf.train.get_global_step())
                         train_writer.add_summary(session.run(merged), global_step)
                         
-                        if min_mse is None or train_mse < min_mse:
+                        if min_mse < 0 or train_mse < min_mse:
                             min_mse = train_mse
+                            min_mse_tf.load(min_mse, session)
                             mse_not_improved_count = 0
+                            
                         else:
                             mse_not_improved_count += 1
+                        
+                        mse_not_improved_count_tf.load(mse_not_improved_count, session)
+                        
                             
                         if mse_not_improved_count > config['mse_not_improved_threshold']:
                             learning_rate = learning_rate * config['lr_decay']
@@ -261,7 +267,8 @@ class ModelTrainer():
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                     current_test_absolute_error = evaluator.real_absolute_error_by_pos(-1)
-                    best_test_absolute_error = session.run(test_absolute_error)
+                    best_test_absolute_error = session.run(test_absolute_error_tf)
+                
                     name_dict = {'global_step':global_step, 'error':current_test_absolute_error}
                     if best_test_absolute_error == -1 or current_test_absolute_error < best_test_absolute_error:
                         print('Saving best model...')
@@ -270,7 +277,7 @@ class ModelTrainer():
                             evaluator_sm.pickle(evaluator, best_save_path, current_test_absolute_error)
                             config_sm.pickle(config, best_save_path, current_test_absolute_error)
                         
-                        session.run(assign_absolute_error_op, feed_dict={test_absolute_error_ph:current_test_absolute_error})
+                        test_absolute_error_tf.load(current_test_absolute_error, session)
                         self._checkpoint(saver, session, best_save_path, True, **name_dict)
                     
                     self._checkpoint(saver, session, save_path, True, **name_dict)
