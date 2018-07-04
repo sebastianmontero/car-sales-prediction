@@ -215,7 +215,7 @@ class ModelTrainer():
                 
                 test_absolute_error_tf = tf.Variable(-1.0, trainable=False, name='test_absolute_error')
                 mse_not_improved_count_tf = tf.Variable(0, trainable=False, name='mse_not_improved_count')
-                min_mse_tf = tf.Variable(-1, trainable=False, name='mse_not_improved_count')
+                min_mse_tf = tf.Variable(-1, trainable=False, name='min_mse')
                 saver = tf.train.import_meta_graph(metagraph)
                 for model in models.values():
                     model.import_ops(FLAGS.num_gpus)
