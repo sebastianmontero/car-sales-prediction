@@ -77,7 +77,7 @@ class ConsoleApp():
                 self._display_evaluators()
     
     def _display_evaluators(self):
-        base_path_pos = len(self._base_path) + 1
+        base_path_pos = len(self._base_path)
         print()
         print('Evaluators:')
         for pos, evaluator in enumerate(self._evaluators):

@@ -109,11 +109,15 @@ class Reader(object):
         fit_sales_np = sales_np[:self._window_size]
         fit_sales_np = self._add_scaler_fit_domain_values(['sales'], fit_sales_np)
         self._sales_scaler.fit(fit_sales_np)
-        fit_data_np = data_np[:self._window_size]
-        fit_data_np = self._add_scaler_fit_domain_values(self._scale_features, fit_data_np)
-        self._scaler.fit(fit_data_np)
+        
+        if len(self._scale_features) > 0:
+            fit_data_np = data_np[:self._window_size]
+            fit_data_np = self._add_scaler_fit_domain_values(self._scale_features, fit_data_np)
+            self._scaler.fit(fit_data_np)
+            data_np = self._scaler.transform(data_np)
+        
         sales_np = self._sales_scaler.transform(sales_np)
-        data_np = self._scaler.transform(data_np)
+        
         
         data_np = np.concatenate((month_np, sales_np, data_np, data_df[self._dont_scale_features].values), axis=1)
         

@@ -96,7 +96,7 @@ class ModelTrainer():
             'num_layers': 2,
             'num_steps': 12,
             'hidden_size': 10,
-            'max_epoch': 700,
+            'max_epoch': 100,
             'keep_prob': 1,
             'lr_decay': 0.98,
             'mse_not_improved_threshold': 3,
@@ -139,7 +139,7 @@ class ModelTrainer():
         
         
         line_id = 13
-        window_size = 37
+        window_size = 52
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)

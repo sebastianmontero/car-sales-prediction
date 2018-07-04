@@ -81,7 +81,6 @@ class StorageManager(object):
         path_wild_card = '**' if recursive else ''
         path = self._escape_brackets(path)
         path = os.path.join(path, path_wild_card, self._file_name_prefix + '*.bin')
-        print('final_path', path)
         pickles = glob.glob(path, recursive=recursive)
         
         if filter_:
@@ -90,6 +89,18 @@ class StorageManager(object):
         if sorted_:
             self._sort_pickles_by_error(pickles)
         return pickles
+    
+    def get_objects_errors(self, path, filter_=None, recursive=False, sorted_=True):
+        
+        pickles = self.get_pickles(path, filter_, recursive, sorted_)
+        objs = []
+        
+        for pickle in pickles:
+            objs.append({
+                'obj': self.unpickle(pickle),
+                'error': self._get_error_from_pickle(pickle)
+            })
+        return objs
         
     def pickle(self, obj, path, error, pickle_action=PickleAction.OVERWRITE):
 
