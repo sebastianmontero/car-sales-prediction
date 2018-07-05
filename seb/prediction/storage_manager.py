@@ -6,7 +6,6 @@ Created on Jun 15, 2018
 
 import pickle
 import os
-import glob
 import re
 from enum import Enum
 
@@ -63,25 +62,11 @@ class StorageManager(object):
         return float(name[len(self._file_name_prefix):-4])
         
     def _filter_pickles(self, pickles, filter_, start_pos=0):
-        return list(filter(lambda pickle: re.search(filter_, pickle[start_pos:]), pickles))
-    
-    def _escape_brackets(self, str):
-        new_str = ''
-        for c in str:
-            if c == '[':
-                new_str += '[[]'
-            elif c == ']':
-                new_str += '[]]'
-            else:
-                new_str += c
-        return new_str 
+        return list(filter(lambda pickle: re.search(filter_, pickle[start_pos:]), pickles)) 
             
     def get_pickles(self, path, filter_=None, recursive=False, sorted_=True):
         
-        path_wild_card = '**' if recursive else ''
-        path = self._escape_brackets(path)
-        path = os.path.join(path, path_wild_card, self._file_name_prefix + '*.bin')
-        pickles = glob.glob(path, recursive=recursive)
+        pickles = Utils.search_paths(path, self._file_name_prefix + '*.bin', recursive)
         
         if filter_:
             pickles = self._filter_pickles(pickles, filter_)

@@ -1,4 +1,5 @@
 import os
+import glob
 
 class Utils:
     
@@ -31,3 +32,23 @@ class Utils:
                 for prefix in prefixes:
                     if file.startswith(prefix):
                         os.remove(os.path.join(path,file))
+                      
+    @staticmethod
+    def escape_brackets(str):
+        new_str = ''
+        for c in str:
+            if c == '[':
+                new_str += '[[]'
+            elif c == ']':
+                new_str += '[]]'
+            else:
+                new_str += c
+        return new_str 
+            
+    @staticmethod
+    def search_paths(base_path, path_end, recursive=False):
+        
+        path_wild_card = '**' if recursive else ''
+        path = Utils.escape_brackets(base_path)
+        path = os.path.join(path, path_wild_card, path_end)
+        return glob.glob(path, recursive=recursive)

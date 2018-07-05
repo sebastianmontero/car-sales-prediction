@@ -10,17 +10,21 @@ import argparse
 import pprint
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType
+from feature_selector_reporter import FeatureSelectorReporter
 
 class ConsoleApp():
     
     def __init__(self):
         
         #self._base_path = os.path.dirname(os.path.realpath(__file__))
-        self._base_path = '/home/nishilab/Documents/python/model-storage/best_feature'
+        self._base_path = '/home/nishilab/Documents/python/model-storage/'
         self._parser = self._create_parser()
         self._evaluators = []
+        self._fss = []
         self._evaluator = None
+        self._fs_reporter = None
         self._evaluator_path = None
+        self._fs_path = None
         self._evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
         self._config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         self._pprint = pprint.PrettyPrinter()
@@ -33,11 +37,16 @@ class ConsoleApp():
         path_parser = subparser.add_parser('path', help='Change base path, if a path is not specified the current path is shown')
         path_parser = path_parser.add_argument('--path', '-p', required=False, help='Sets the base path to search from', dest='path')
         
-        path_parser = subparser.add_parser('search', help='Search for evaluators')
+        path_parser = subparser.add_parser('evals', help='Search for evaluators')
         path_parser = path_parser.add_argument('--filter', '-f', required=False, help='Search for evaluators relative to the base path, possibly specifying a filter', dest='filter')
         
-        path_parser = subparser.add_parser('select', help='Select an evaluator')
+        path_parser = subparser.add_parser('fs', help='Search for feature selection runs')
+        
+        path_parser = subparser.add_parser('sevals', help='Select an evaluator')
         path_parser = path_parser.add_argument('pos', help='Select an evaluator, specify position', type=int)
+        
+        path_parser = subparser.add_parser('sfs', help='Select a feature selector run')
+        path_parser = path_parser.add_argument('pos', help='Select a feature selector run, specify position', type=int)
         return parser;
         
     def _parse_action(self, action):
@@ -64,9 +73,13 @@ class ConsoleApp():
                     print('Invalid path: ', command.path)
             else:    
                 print('Base path: ', self._base_path)
-        if cmd == 'search':
-            self._search(command)
-        if cmd == 'select':
+        if cmd == 'evals':
+            self._evaluators = self._evaluator_sm.get_pickles(self._base_path, command.filter, recursive=True)
+            self._display_evaluators()
+        if cmd == 'fs':
+            self._fss = FeatureSelectorReporter.find_feature_selector_runs(self._base_path)
+            self._display_feature_selectors()
+        if cmd == 'sevals':
             if command.pos >= 0 and command.pos < len(self._evaluators):
                 self._evaluator_path = self._evaluators[command.pos]
                 self._evaluator = self._evaluator_sm.unpickle(self._evaluator_path)
@@ -75,19 +88,28 @@ class ConsoleApp():
             else:
                 print('Invalid evaluator position')
                 self._display_evaluators()
+        if cmd == 'sfs':
+            if command.pos >= 0 and command.pos < len(self._fss):
+                self._fs_path = self._fss[command.pos]
+                self._fs_reporter = FeatureSelectorReporter(run_path=self._fs_path)
+                print('Selected Feature Selector:', self._fs_path)
+                self._feature_selector_mode()
+            else:
+                print('Invalid evaluator position')
+                self._display_evaluators()
     
     def _display_evaluators(self):
+        self._display_paths(self._evaluators, 'Evaluators')
+    
+    def _display_feature_selectors(self):
+        self._display_paths(self._fss, 'Feature Selectors')
+            
+    def _display_paths(self, paths, title):
         base_path_pos = len(self._base_path)
         print()
-        print('Evaluators:')
-        for pos, evaluator in enumerate(self._evaluators):
-            print('[{}] {}'.format(pos, evaluator[base_path_pos:]))
-    
-    def _search(self, command): 
-        
-        self._evaluators = self._evaluator_sm.get_pickles(self._base_path, command.filter, recursive=True)
-        self._display_evaluators() 
-        
+        print(title + ':')
+        for pos, path in enumerate(paths):
+            print('[{}] {}'.format(pos, path[base_path_pos:]))    
         
     def _print_evaluator_menu(self):
         print()
@@ -104,6 +126,16 @@ class ConsoleApp():
         print('[8] Show scaled sales relative mean error')
         print('[9] Show related configuration')
         print()
+    
+    def _print_feature_selector_menu(self):
+        print()
+        print('Feature selector mode options:')
+        print()
+        print('[0] Exit feature selector mode')
+        print('[1] Show best configuration')
+        print('[2] Show best configuration per feature')
+        print('[3] Show configurations per feature [Specify number of features wanted]')
+        print()
         
         
     def _evaluator_mode(self):
@@ -117,6 +149,22 @@ class ConsoleApp():
                 
                 self._perform_evaluator_action(action)
             except ValueError:
+                print('Invalid option')
+    
+    def _feature_selector_mode(self):
+        while True:
+            self._print_feature_selector_menu()
+            try:
+                action = input('Select an option \n>>> ')
+                split_action = action.split()
+                action = int(split_action[0])
+
+                print()
+                if action == 0:
+                    break;
+                
+                self._perform_feature_selector_action(action, split_action)
+            except (ValueError, IndexError):
                 print('Invalid option')
                 
     def _perform_evaluator_action(self, action):
@@ -143,6 +191,19 @@ class ConsoleApp():
             print('Configuration: ')
             print()
             self._pprint.pprint(config)
+        else:
+            raise ValueError('Unknown action')
+                            
+    def _perform_feature_selector_action(self, action, params):
+        
+        if action == 1:
+            self._fs_reporter.print_best_config()
+        elif action == 2:
+            self._fs_reporter.print_best_configs()
+        elif action == 3:
+            self._fs_reporter.print_experiment_configs(int(params[1]))
+        else:
+            raise ValueError('Unknown action')
             
         
     def run(self):
