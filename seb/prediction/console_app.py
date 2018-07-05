@@ -42,7 +42,7 @@ class ConsoleApp():
         
         path_parser = subparser.add_parser('fs', help='Search for feature selection runs')
         
-        path_parser = subparser.add_parser('sevals', help='Select an evaluator')
+        path_parser = subparser.add_parser('seval', help='Select an evaluator')
         path_parser = path_parser.add_argument('pos', help='Select an evaluator, specify position', type=int)
         
         path_parser = subparser.add_parser('sfs', help='Select a feature selector run')
@@ -79,7 +79,7 @@ class ConsoleApp():
         if cmd == 'fs':
             self._fss = FeatureSelectorReporter.find_feature_selector_runs(self._base_path)
             self._display_feature_selectors()
-        if cmd == 'sevals':
+        if cmd == 'seval':
             if command.pos >= 0 and command.pos < len(self._evaluators):
                 self._evaluator_path = self._evaluators[command.pos]
                 self._evaluator = self._evaluator_sm.unpickle(self._evaluator_path)

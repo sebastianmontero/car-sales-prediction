@@ -95,10 +95,17 @@ class FeatureSelectorReporter():
                 key = str(config_error['obj']['included_features'])
                 if key not in configs_dict:
                     config_error['count'] = 1
+                    config_error['min_error'] = config_error['error']
+                    config_error['max_error'] = config_error['error']
                     configs_dict[key] = config_error
                 else:
-                    configs_dict[key]['error'] += config_error['error']
-                    configs_dict[key]['count'] += 1
+                    c = configs_dict[key]
+                    c['error'] += config_error['error']
+                    c['count'] += 1
+                    if config_error['error'] < c['min_error']:
+                        c['min_error'] = config_error['error']
+                    if config_error['error'] > c['max_error']:
+                        c['max_error'] = config_error['error']
             
             configs_list = []
             for key, obj in configs_dict.items():
