@@ -39,6 +39,7 @@ class FeatureSelector():
         self._current_selected_features = []
         self._reporter = FeatureSelectorReporter(base_path=ModelTrainable.BASE_PATH)
         self._config['save_path'] = self._reporter.run_path
+        self._ray_results_dir = os.path.join(os.path.expanduser('~'), 'ray_results', self._reporter.get_experiments_base_dir())
     
     def _feature_search_space(self, current_selected_features):
         free_features = [feature for feature in self.FEATURES if feature not in current_selected_features]
@@ -65,6 +66,7 @@ class FeatureSelector():
                     'stop': {'training_iteration': 350},
                     'config' : config,
                     'repeat':self._repeats,
+                    'local_dir': self._ray_results_dir
                 }
             })
             best_config = self._reporter.get_best_config(experiment_name)

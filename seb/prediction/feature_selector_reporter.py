@@ -22,7 +22,7 @@ class FeatureSelectorReporter():
         assert(base_path or run_path), "base_path or run_path must be specified"
         
         if base_path:
-            run_path = os.path.join(base_path, self._get_experiments_base_dir())        
+            run_path = os.path.join(base_path, self._generate_experiments_base_dir())        
         self._run_path = run_path
         self._config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         self._best_config = None
@@ -137,8 +137,12 @@ class FeatureSelectorReporter():
     def _get_experiment_path(self, experiment_name):
         return os.path.join(self.run_path, experiment_name)
     
-    def _get_experiments_base_dir(self):
+    def _generate_experiments_base_dir(self):
         return '{}{}'.format(self.BASE_DIR_PREFIX, datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
+    
+    def get_experiments_base_dir(self):
+        _,dir = os.path.split(self._run_path)
+        return dir
     
     def print_best_config(self):
         print()
