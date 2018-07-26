@@ -63,7 +63,7 @@ class FeatureSelector():
                     'run': 'car_sales_prediction_trainable',
                     'trial_resources': {'cpu': 8, 'gpu': 1},
                     #'stop': {'neg_mean_loss': 0, 'training_iteration': 200},
-                    'stop': {'training_iteration': 350},
+                    'stop': {'training_iteration': 60},
                     'config' : config,
                     'repeat':self._repeats,
                     'local_dir': self._ray_results_dir
@@ -86,7 +86,7 @@ feature_selector = FeatureSelector({
                 'layers' : [15],
                 'max_epoch' : 2,
                 'window_size': 37
-            }, max_features=9, repeats=3)
+            }, max_features=4, repeats=3)
           
 feature_selector.run()
 
