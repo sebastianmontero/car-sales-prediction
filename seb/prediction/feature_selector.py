@@ -23,9 +23,7 @@ class FeatureSelector():
                 'manufacturing_confidence_index',
                 'economic_activity_index',
                 'energy_price_index_roc_prev_month',
-                'energy_price_index_roc_start_year',
-                'inflation_index_roc_prev_month',
-                'inflation_index_roc_start_year']
+                'inflation_index_roc_prev_month']
     
     '''FEATURES = ['consumer_confidence_index',
                 'energy_price_index_roc_prev_month']'''
@@ -36,12 +34,14 @@ class FeatureSelector():
         self._max_features = max_features
         config['store_window'] = False
         self._config = config
-        self._current_selected_features = []
+        self._current_selected_features = None
         self._reporter = FeatureSelectorReporter(base_path=ModelTrainable.BASE_PATH)
         self._config['save_path'] = self._reporter.run_path
         self._ray_results_dir = os.path.join(os.path.expanduser('~'), 'ray_results', self._reporter.get_experiments_base_dir())
     
     def _feature_search_space(self, current_selected_features):
+        if current_selected_features is None:
+            return [[]]
         free_features = [feature for feature in self.FEATURES if feature not in current_selected_features]
         space = []
         for feature in free_features:

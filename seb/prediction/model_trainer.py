@@ -139,7 +139,8 @@ class ModelTrainer():
             raise ValueError('Your machine only has {} gpus'.format(len(gpus)))
         
         
-        line_id = 13
+        #line_id = 13
+        line_id = 102
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)
