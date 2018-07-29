@@ -53,7 +53,7 @@ class FeatureSelector():
     
     
     def run(self):
-        for num_features in range(1, self._max_features + 1):
+        for num_features in range(0, self._max_features + 1):
             config = self._config.copy()
             config['included_features'] = grid_search(self._feature_search_space(self._current_selected_features))
             experiment_name = self._reporter.get_experiment_name(num_features) 
@@ -82,6 +82,7 @@ ray.init()
 register_trainable('car_sales_prediction_trainable', ModelTrainable)
 
 feature_selector = FeatureSelector({
+                'line_id': 13,
                 'keep_prob' : 1,
                 'layers' : [15],
                 'max_epoch' : 2,

@@ -91,6 +91,7 @@ class ModelTrainer():
     def _get_base_config(self):
         """Get model config."""
         config = {
+            'line_id': 13,
             'init_scale': 0.1,
             'max_grad_norm': 5,
             'num_layers': 2,
@@ -140,13 +141,14 @@ class ModelTrainer():
         
         
         #line_id = 13
-        line_id = 102
+        #line_id = 102
+        #line_id=201
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)
         self._eval_config = self._config.copy()
         self._eval_config['batch_size'] = 1
-        self._reader = Reader(line_id, self._config['window_size'], self._config['included_features'])
+        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'])
     
     def _config_layers(self, config):
                 
