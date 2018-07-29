@@ -91,6 +91,7 @@ class ModelTrainer():
     def _get_base_config(self):
         """Get model config."""
         config = {
+            'line_id': 13,
             'init_scale': 0.1,
             'max_grad_norm': 5,
             'num_layers': 2,
@@ -139,13 +140,15 @@ class ModelTrainer():
             raise ValueError('Your machine only has {} gpus'.format(len(gpus)))
         
         
-        line_id = 13
+        #line_id = 13
+        #line_id = 102
+        #line_id=201
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)
         self._eval_config = self._config.copy()
         self._eval_config['batch_size'] = 1
-        self._reader = Reader(line_id, self._config['window_size'], self._config['included_features'])
+        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'])
     
     def _config_layers(self, config):
                 
@@ -266,6 +269,7 @@ class ModelTrainer():
                     test_predictions.append(predictions[-1])
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
+                    #evaluator.plot_real_target_vs_predicted()
                     current_test_absolute_error = evaluator.real_absolute_error_by_pos(-1)
                     best_test_absolute_error = session.run(test_absolute_error_tf)
                 
@@ -302,7 +306,7 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({})
+#modelTrainer = ModelTrainer({'max_epoch' : 125})
 #modelTrainer.train()
             
         

@@ -23,9 +23,7 @@ class FeatureSelector():
                 'manufacturing_confidence_index',
                 'economic_activity_index',
                 'energy_price_index_roc_prev_month',
-                'energy_price_index_roc_start_year',
-                'inflation_index_roc_prev_month',
-                'inflation_index_roc_start_year']
+                'inflation_index_roc_prev_month']
     
     '''FEATURES = ['consumer_confidence_index',
                 'energy_price_index_roc_prev_month']'''
@@ -36,12 +34,14 @@ class FeatureSelector():
         self._max_features = max_features
         config['store_window'] = False
         self._config = config
-        self._current_selected_features = []
+        self._current_selected_features = None
         self._reporter = FeatureSelectorReporter(base_path=ModelTrainable.BASE_PATH)
         self._config['save_path'] = self._reporter.run_path
         self._ray_results_dir = os.path.join(os.path.expanduser('~'), 'ray_results', self._reporter.get_experiments_base_dir())
     
     def _feature_search_space(self, current_selected_features):
+        if current_selected_features is None:
+            return [[]]
         free_features = [feature for feature in self.FEATURES if feature not in current_selected_features]
         space = []
         for feature in free_features:
@@ -53,7 +53,7 @@ class FeatureSelector():
     
     
     def run(self):
-        for num_features in range(1, self._max_features + 1):
+        for num_features in range(0, self._max_features + 1):
             config = self._config.copy()
             config['included_features'] = grid_search(self._feature_search_space(self._current_selected_features))
             experiment_name = self._reporter.get_experiment_name(num_features) 
@@ -63,7 +63,7 @@ class FeatureSelector():
                     'run': 'car_sales_prediction_trainable',
                     'trial_resources': {'cpu': 8, 'gpu': 1},
                     #'stop': {'neg_mean_loss': 0, 'training_iteration': 200},
-                    'stop': {'training_iteration': 350},
+                    'stop': {'training_iteration': 60},
                     'config' : config,
                     'repeat':self._repeats,
                     'local_dir': self._ray_results_dir
@@ -82,11 +82,12 @@ ray.init()
 register_trainable('car_sales_prediction_trainable', ModelTrainable)
 
 feature_selector = FeatureSelector({
+                'line_id': 13,
                 'keep_prob' : 1,
                 'layers' : [15],
                 'max_epoch' : 2,
                 'window_size': 37
-            }, max_features=9, repeats=3)
+            }, max_features=4, repeats=3)
           
 feature_selector.run()
 
