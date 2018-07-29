@@ -34,7 +34,9 @@ class FeatureSelector():
         self._max_features = max_features
         config['store_window'] = False
         self._config = config
-        self._current_selected_features = None
+        self._current_selected_features = [ 'exchange_rate',
+                'manufacturing_confidence_index',
+                'inflation_index_roc_prev_month']
         self._reporter = FeatureSelectorReporter(base_path=ModelTrainable.BASE_PATH)
         self._config['save_path'] = self._reporter.run_path
         self._ray_results_dir = os.path.join(os.path.expanduser('~'), 'ray_results', self._reporter.get_experiments_base_dir())
@@ -53,7 +55,8 @@ class FeatureSelector():
     
     
     def run(self):
-        for num_features in range(0, self._max_features + 1):
+        num_features = 0 if self._current_selected_features is None else  len(self._current_selected_features) + 1
+        while num_features <= self._max_features:
             config = self._config.copy()
             config['included_features'] = grid_search(self._feature_search_space(self._current_selected_features))
             experiment_name = self._reporter.get_experiment_name(num_features) 
@@ -71,7 +74,8 @@ class FeatureSelector():
             })
             best_config = self._reporter.get_best_config(experiment_name)
             self._current_selected_features = best_config['obj']['included_features']
-        
+            num_features = len(self._current_selected_features) + 1
+            
         print('Finished feature search!')
         
         self._reporter.print_best_config()
@@ -82,7 +86,7 @@ ray.init()
 register_trainable('car_sales_prediction_trainable', ModelTrainable)
 
 feature_selector = FeatureSelector({
-                'line_id': 13,
+                'line_id': 102,
                 'keep_prob' : 1,
                 'layers' : [15],
                 'max_epoch' : 2,
