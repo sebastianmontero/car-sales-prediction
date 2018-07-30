@@ -1,5 +1,6 @@
 import os
 import glob
+import re
 
 class Utils:
     
@@ -46,12 +47,15 @@ class Utils:
         return new_str 
             
     @staticmethod
-    def search_paths(base_path, path_end, recursive=False, sort=False):
+    def search_paths(base_path, path_end, recursive=False, sort=False, filter_=None):
         
         path_wild_card = '**' if recursive else ''
         path = Utils.escape_brackets(base_path)
         path = os.path.join(path, path_wild_card, path_end)
         paths = glob.glob(path, recursive=recursive)
+        if filter_ is not None:
+            paths = [p for p in paths if re.search(filter_,p) is None]
+            
         if sort:
             paths.sort(reverse=True)
         return paths

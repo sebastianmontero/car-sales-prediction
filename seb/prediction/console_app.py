@@ -39,6 +39,7 @@ class ConsoleApp():
         
         path_parser = subparser.add_parser('evals', help='Search for evaluators')
         path_parser = path_parser.add_argument('--filter', '-f', required=False, help='Search for evaluators relative to the base path, possibly specifying a filter', dest='filter')
+        path_parser = path_parser.add_argument('--show-windows', '-w', required=False, help='Indicates if it should show paths for window evaluators', dest='show-windows')
         
         path_parser = subparser.add_parser('fs', help='Search for feature selection runs')
         
