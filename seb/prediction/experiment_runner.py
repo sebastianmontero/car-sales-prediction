@@ -89,10 +89,10 @@ run_experiments({
     'network_structure' : {
         'run': 'car_sales_prediction_trainable',
         'trial_resources': {'cpu': 8, 'gpu': 1},
-        'stop': {'training_iteration': 60},
+        'stop': {'training_iteration': 50},
         'config' : {
             'line_id': 201,
-            'keep_prob' : grid_search(np.linspace(0.4, 1., 4).tolist()),
+            'keep_prob' : grid_search([0.5, 0.75, 1.0]),
             'layer_0' : grid_search([5, 15, 25]),
             'layer_1' : grid_search([None, 5, 15, 25]),
             'max_epoch' : 2,
