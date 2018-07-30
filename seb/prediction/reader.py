@@ -83,8 +83,7 @@ class Reader(object):
     
     def _get_raw_data(self):
         
-        included_features_str = (',' if len(self._included_features) else '') + ','.join(self._included_features) 
-        
+        included_features_str = (',' if len(self._included_features) else '') + ','.join(self._included_features)
         sql = ("select mif.month_id, " + 
                        "mls.sales " +
                        included_features_str + " "

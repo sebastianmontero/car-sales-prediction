@@ -8,6 +8,7 @@ import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from multiprocessing import Process
 
 from utils import Utils
 
@@ -21,6 +22,13 @@ class Evaluator(object):
         self._window_length = len(predictions)
         sns.set()
         
+    def _run_in_new_process(self, target, args=()):
+        p = Process(target=target, args=args)
+        p.start()
+    
+    def _plot_target_vs_predicted_new_process(self, real, predictions, ylabel, title):
+        self._run_in_new_process(target=self._plot_target_vs_predicted, args=(real, predictions, ylabel, title))
+        
     def _plot_target_vs_predicted(self, real, predictions, ylabel, title):
         months = self._get_months()
         plt.plot(real, label=('Real'))
@@ -30,7 +38,10 @@ class Evaluator(object):
         plt.title(title)
         plt.legend()
         plt.show()
-        
+    
+    def _plot_errors_new_process(self, absolute, relative, ylabel_absolute, ylabel_relative, title):
+        self._run_in_new_process(target=self._plot_errors, args=(absolute, relative, ylabel_absolute, ylabel_relative, title))
+            
     def _plot_errors(self, absolute, relative, ylabel_absolute, ylabel_relative, title):
         months = self._get_months()
         color = 'tab:blue'
@@ -73,7 +84,7 @@ class Evaluator(object):
         return np.mean(self._calculate_absolute_error(targets, predictions))
     
     def _calculate_relative_mean_error(self, targets, predictions):
-        return np.mean(self._calculate_relative_error(targets, predictions))
+        return np.mean(np.absolute(self._calculate_relative_error(targets, predictions)))
         
     def _get_real_sales_from_predictions(self, predictions):
         unscaled = np.reshape(self._reader.unscale_sales(predictions), [-1])
@@ -88,7 +99,7 @@ class Evaluator(object):
         absolute = self._calculate_absolute_error(targets, predictions)
         relative = self._calculate_relative_error(targets, predictions)
         title = 'Target vs Prediction Errors' + (' (Scaled)' if scaled else '')
-        self._plot_errors(absolute, relative, 'Absolute Error', 'Relative Error', title)
+        self._plot_errors_new_process(absolute, relative, 'Absolute Error', 'Relative Error', title)
     
     def _get_months(self):
         return self._get_data()['month_id'].values
@@ -100,10 +111,10 @@ class Evaluator(object):
         return self._predictions if scaled else self._unscaled_predictions
     
     def plot_real_target_vs_predicted(self):
-        self._plot_target_vs_predicted(self._get_target_sales(), self._get_predictions(), 'Sales', 'Real vs Predicted Sales')
+        self._plot_target_vs_predicted_new_process(self._get_target_sales(), self._get_predictions(), 'Sales', 'Real vs Predicted Sales')
         
     def plot_scaled_target_vs_predicted(self):
-        self._plot_target_vs_predicted(self._get_target_sales(scaled=True), self._get_predictions(scaled=True), 'Sales', 'Scaled Real vs Predicted Sales')
+        self._plot_target_vs_predicted_new_process(self._get_target_sales(scaled=True), self._get_predictions(scaled=True), 'Sales', 'Scaled Real vs Predicted Sales')
     
     def plot_real_errors(self):
         return self._calculate_and_plot_errors()

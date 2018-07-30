@@ -86,18 +86,21 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
 print('Experiment start')
 
 run_experiments({
-    'best_feature' : {
+    'num_steps_coarse_nationwide' : {
             'run': 'car_sales_prediction_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 1},
-            'stop': {'neg_mean_loss': -2, 'training_iteration': 1},
+            'stop': {'training_iteration': 60},
             'config' : {
+                'line_id': 201,
                 'keep_prob' : 1,
                 'layers' : [15],
-                'max_epoch' : 1,
+                'max_epoch' : 2,
+                'window_size': 37,
                 'store_window' : False,
-                'included_features' : grid_search([['consumer_confidence_index'],['exchange_rate']])
+                'included_features' : ['energy_price_index_roc_prev_month'],
+                'num_steps': grid_search([12,24,36])
             },
-            'repeat':1
+            'repeat':3
         }
 })
 

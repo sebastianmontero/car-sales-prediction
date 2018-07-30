@@ -306,7 +306,7 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({'max_epoch' : 125})
+#modelTrainer = ModelTrainer({'max_epoch' : 125, 'line_id':102})
 #modelTrainer.train()
             
         

@@ -182,9 +182,9 @@ class ConsoleApp():
         elif action == 6:
             print('Scaled sales absolute mean error: {:.5f}'.format(self._evaluator.scaled_absolute_mean_error()))
         elif action == 7:
-            print('Real sales relative mean error: {:.2f}'.format(self._evaluator.real_relative_mean_error()))
+            print('Real sales relative mean error: {:.2f}%'.format(self._evaluator.real_relative_mean_error()))
         elif action == 8:
-            print('Scaled sales relative mean error: {:.2f}'.format(self._evaluator.scaled_relative_mean_error()))
+            print('Scaled sales relative mean error: {:.2f}%'.format(self._evaluator.scaled_relative_mean_error()))
         elif action == 9:
             path,_ = os.path.split(self._evaluator_path)
             config = self._config_sm.unpickle(path)

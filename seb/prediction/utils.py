@@ -46,9 +46,12 @@ class Utils:
         return new_str 
             
     @staticmethod
-    def search_paths(base_path, path_end, recursive=False):
+    def search_paths(base_path, path_end, recursive=False, sort=False):
         
         path_wild_card = '**' if recursive else ''
         path = Utils.escape_brackets(base_path)
         path = os.path.join(path, path_wild_card, path_end)
-        return glob.glob(path, recursive=recursive)
+        paths = glob.glob(path, recursive=recursive)
+        if sort:
+            paths.sort(reverse=True)
+        return paths
