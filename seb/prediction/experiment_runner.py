@@ -94,7 +94,7 @@ run_experiments({
             'config' : {
                 'line_id': 201,
                 'keep_prob' : 1,
-                'layers' : [15],
+                'layer_0' : grid_search([15, 20]),
                 'max_epoch' : 2,
                 'window_size': 37,
                 'store_window' : False,
