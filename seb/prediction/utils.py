@@ -35,9 +35,9 @@ class Utils:
                         os.remove(os.path.join(path,file))
                       
     @staticmethod
-    def escape_brackets(str):
+    def escape_brackets(str_):
         new_str = ''
-        for c in str:
+        for c in str_:
             if c == '[':
                 new_str += '[[]'
             elif c == ']':
@@ -48,10 +48,10 @@ class Utils:
     
     @staticmethod
     def filter_list(list_, filter_=None, exclude_filter=None):        
-        if filter_ is not None:
-            list_ = [p for p in list_ if re.search(filter_,p) is not None]
+        if filter_:
+            list_ = [p for p in list_ if re.search(filter_,p)]
         
-        if exclude_filter is not None:
+        if exclude_filter:
             list_ = [p for p in list_ if re.search(exclude_filter,p) is None]
             
         return list_

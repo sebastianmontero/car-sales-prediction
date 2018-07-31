@@ -125,6 +125,9 @@ class Evaluator(object):
     def real_absolute_mean_error(self):
         return self._calculate_absolute_mean_error(self._get_target_sales(), self._get_predictions())
     
+    def window_real_absolute_mean_error(self):
+        return (self.real_absolute_mean_error() + self.real_absolute_error_by_pos(-1)) / 2
+    
     def scaled_absolute_mean_error(self):
         return self._calculate_absolute_mean_error(self._get_target_sales(scaled=True), self._get_predictions(scaled=True))
     

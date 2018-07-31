@@ -60,16 +60,10 @@ class StorageManager(object):
     def _get_error_from_pickle(self, pickle):
         name = self._get_pickle_file_name(pickle)
         return float(name[len(self._file_name_prefix):-4])
-        
-    def _filter_pickles(self, pickles, filter_, start_pos=0):
-        return list(filter(lambda pickle: re.search(filter_, pickle[start_pos:]), pickles)) 
             
-    def get_pickles(self, path, filter_=None, recursive=False, sorted_=True):
+    def get_pickles(self, path, filter_=None, recursive=False, sorted_=True, exclude_filter=None):
         
-        pickles = Utils.search_paths(path, self._file_name_prefix + '*.bin', recursive)
-        
-        if filter_:
-            pickles = self._filter_pickles(pickles, filter_)
+        pickles = Utils.search_paths(path, self._file_name_prefix + '*.bin', recursive, filter_=filter_, exclude_filter=exclude_filter)
         
         if sorted_:
             self._sort_pickles_by_error(pickles)

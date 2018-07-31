@@ -35,19 +35,19 @@ class ConsoleApp():
         subparser.add_parser('exit', help='Exit application')
         
         path_parser = subparser.add_parser('path', help='Change base path, if a path is not specified the current path is shown')
-        path_parser = path_parser.add_argument('--path', '-p', required=False, help='Sets the base path to search from', dest='path')
+        path_parser.add_argument('--path', '-p', required=False, help='Sets the base path to search from', dest='path')
         
         path_parser = subparser.add_parser('evals', help='Search for evaluators')
-        path_parser = path_parser.add_argument('--filter', '-f', required=False, help='Search for evaluators relative to the base path, possibly specifying a filter', dest='filter')
-        path_parser = path_parser.add_argument('--show-windows', '-w', required=False, help='Indicates if it should show paths for window evaluators', dest='show-windows')
+        path_parser.add_argument('--filter', '-f', required=False, help='Search for evaluators relative to the base path, possibly specifying a filter', dest='filter')
+        path_parser.add_argument('--show-windows', '-w', required=False, help='Indicates if it should show paths for window evaluators', dest='show_windows', action='store_true')
         
         path_parser = subparser.add_parser('fs', help='Search for feature selection runs')
         
         path_parser = subparser.add_parser('seval', help='Select an evaluator')
-        path_parser = path_parser.add_argument('pos', help='Select an evaluator, specify position', type=int)
+        path_parser.add_argument('pos', help='Select an evaluator, specify position', type=int)
         
         path_parser = subparser.add_parser('sfs', help='Select a feature selector run')
-        path_parser = path_parser.add_argument('pos', help='Select a feature selector run, specify position', type=int)
+        path_parser.add_argument('pos', help='Select a feature selector run, specify position', type=int)
         return parser;
         
     def _parse_action(self, action):
@@ -75,7 +75,8 @@ class ConsoleApp():
             else:    
                 print('Base path: ', self._base_path)
         if cmd == 'evals':
-            self._evaluators = self._evaluator_sm.get_pickles(self._base_path, command.filter, recursive=True)
+            exclude_filter = None if command.show_windows else 'w-\d{6}-\d{6}'
+            self._evaluators = self._evaluator_sm.get_pickles(self._base_path, command.filter, recursive=True, exclude_filter=exclude_filter)
             self._display_evaluators()
         if cmd == 'fs':
             self._fss = FeatureSelectorReporter.find_feature_selector_runs(self._base_path)

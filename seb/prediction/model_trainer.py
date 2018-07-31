@@ -270,7 +270,7 @@ class ModelTrainer():
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                     #evaluator.plot_real_target_vs_predicted()
-                    current_test_absolute_error = evaluator.real_absolute_error_by_pos(-1)
+                    current_test_absolute_error = evaluator.window_real_absolute_mean_error()
                     best_test_absolute_error = session.run(test_absolute_error_tf)
                 
                     name_dict = {'global_step':global_step, 'error':current_test_absolute_error}
