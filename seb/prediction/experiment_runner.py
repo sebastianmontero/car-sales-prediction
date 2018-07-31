@@ -85,7 +85,29 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
 
 print('Experiment start')
 
+
 run_experiments({
+    'network_structure_complement' : {
+        'run': 'car_sales_prediction_trainable',
+        'trial_resources': {'cpu': 8, 'gpu': 1},
+        'stop': {'training_iteration': 50},
+        'config' : {
+            'line_id': 201,
+            'keep_prob' : grid_search([0.5, 0.75, 1.0]),
+            'layer_0' : 15,
+            'layer_1' : 15,
+            'max_epoch' : 2,
+            'window_size': 37,
+            'store_window' : False,
+            'included_features' : ['inflation_index_roc_prev_month',
+                                   'consumer_confidence_index',
+                                   'energy_price_index_roc_prev_month']
+        },
+        'repeat':1
+    }
+})
+
+'''run_experiments({
     'network_structure' : {
         'run': 'car_sales_prediction_trainable',
         'trial_resources': {'cpu': 8, 'gpu': 1},
@@ -104,7 +126,8 @@ run_experiments({
         },
         'repeat':3
     }
-})
+})'''
+
 
 '''run_experiments({
     'num_steps_coarse_nationwide' : {
