@@ -45,16 +45,25 @@ class Utils:
             else:
                 new_str += c
         return new_str 
-            
+    
     @staticmethod
-    def search_paths(base_path, path_end, recursive=False, sort=False, filter_=None):
+    def filter_list(list_, filter_=None, exclude_filter=None):        
+        if filter_ is not None:
+            list_ = [p for p in list_ if re.search(filter_,p) is not None]
+        
+        if exclude_filter is not None:
+            list_ = [p for p in list_ if re.search(exclude_filter,p) is None]
+            
+        return list_
+
+    @staticmethod
+    def search_paths(base_path, path_end, recursive=False, sort=False, filter_=None, exclude_filter=None):
         
         path_wild_card = '**' if recursive else ''
         path = Utils.escape_brackets(base_path)
         path = os.path.join(path, path_wild_card, path_end)
         paths = glob.glob(path, recursive=recursive)
-        if filter_ is not None:
-            paths = [p for p in paths if re.search(filter_,p) is None]
+        paths = Utils.filter_list(paths, filter_, exclude_filter)
             
         if sort:
             paths.sort(reverse=True)
