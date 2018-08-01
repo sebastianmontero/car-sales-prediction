@@ -93,7 +93,7 @@ run_experiments({
             'stop': {'training_iteration': 50},
             'config' : {
                 'line_id': 201,
-                'keep_prob' : 1,
+                'keep_prob' : grid_search([0.7, 8.5, 1.0]),
                 'layer_0' : grid_search([15, 18, 21, 24]),
                 'max_epoch' : 2,
                 'window_size': 37,
