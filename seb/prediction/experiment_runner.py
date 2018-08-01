@@ -90,17 +90,17 @@ run_experiments({
     'num_steps_coarse_nationwide_cfs' : {
             'run': 'car_sales_prediction_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 1},
-            'stop': {'training_iteration': 60},
+            'stop': {'training_iteration': 50},
             'config' : {
                 'line_id': 201,
                 'keep_prob' : 1,
-                'layer_0' : grid_search([15, 20]),
+                'layer_0' : grid_search([15, 18, 21, 24]),
                 'max_epoch' : 2,
                 'window_size': 37,
                 'store_window' : False,
                 'included_features' : ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index'],
-                'num_steps': grid_search([12,24,36])
+                'num_steps': grid_search([12, 24, 36])
             },
             'repeat':3
         }
