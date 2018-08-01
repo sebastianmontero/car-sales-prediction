@@ -88,20 +88,19 @@ print('Experiment start')
 
 
 run_experiments({
-    'network_structure_fine' : {
+    'network_structure_fine_nationwide' : {
         'run': 'car_sales_prediction_trainable',
         'trial_resources': {'cpu': 8, 'gpu': 1},
         'stop': {'training_iteration': 50},
         'config' : {
             'line_id': 201,
-            'keep_prob' : grid_search([0.9, 1.0]),
-            'layer_0' : grid_search([15, 17, 19]),
+            'keep_prob' : grid_search([0.8, 0.9, 1.0]),
+            'layer_0' : grid_search([12, 15, 18, 21]),
             'max_epoch' : 2,
             'window_size': 37,
             'store_window' : False,
             'included_features' : ['inflation_index_roc_prev_month',
-                                   'consumer_confidence_index',
-                                   'energy_price_index_roc_prev_month']
+                                   'consumer_confidence_index']
         },
         'repeat':3
     }
