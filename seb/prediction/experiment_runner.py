@@ -87,6 +87,27 @@ print('Experiment start')
 
 
 run_experiments({
+    'network_structure_2_layers_nationwide' : {
+        'run': 'car_sales_prediction_trainable',
+        'trial_resources': {'cpu': 8, 'gpu': 1},
+        'stop': {'training_iteration': 60},
+        'config' : {
+            'line_id': 201,
+            'keep_prob' : grid_search([0.5, 0.75, 1.0]),
+            'layer_0' : grid_search([8, 12, 16]),
+            'layer_1' : grid_search([8, 12, 16]),
+            'num_steps': 12,
+            'max_epoch' : 2,
+            'window_size': 37,
+            'store_window' : False,
+            'included_features' : ['inflation_index_roc_prev_month',
+                                   'consumer_confidence_index']
+        },
+        'repeat':3
+    }
+})
+
+'''run_experiments({
     'num_steps_coarse_nationwide_cfs' : {
             'run': 'car_sales_prediction_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 1},
@@ -104,7 +125,7 @@ run_experiments({
             },
             'repeat':3
         }
-})
+})'''
 
 '''run_experiments({
     'network_structure_fine_nationwide' : {
