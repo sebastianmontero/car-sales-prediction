@@ -181,11 +181,16 @@ class Reader(object):
         return self._get_window_data(self._data, self._window_pos, for_test) 
     
     def get_data(self, end_window_pos, length, scaled = False):
-        return self._get_window_data_by_end_pos(self._data if scaled else self._raw_data, end_window_pos, length)
+        return self._get_window_data_by_end_pos(self.get_all_data(scaled), end_window_pos, length)
+    
+    def get_all_data(self, scaled=False):
+        return self._data if scaled else self._raw_data
     
     def _get_window_data_by_end_pos(self, source, end_window_pos, length):
         if end_window_pos < 0:
             end_window_pos = source.shape[0] + end_window_pos + 1
+        if length < 0:
+            length = end_window_pos
         assert (end_window_pos <= source.shape[0]), "end_window_pos index out of bounds"
         assert (length <= end_window_pos), "length must be lower than end_window_pos"
         return source[end_window_pos - length: end_window_pos]

@@ -119,14 +119,16 @@ class ConsoleApp():
         print()
         print('[0] Exit evaluator mode')
         print('[1] Plot target vs predicted real sales')
-        print('[2] Plot target vs predicted scaled sales')
-        print('[3] Plot real sales errors')
-        print('[4] Plot scaled sales errors')
-        print('[5] Show real sales absolute mean error')
-        print('[6] Show scaled sales absolute mean error')
-        print('[7] Show real sales relative mean error')
-        print('[8] Show scaled sales relative mean error')
-        print('[9] Show related configuration')
+        print('[2] Plot target vs predicted real sales with tail')
+        print('[3] Plot target vs predicted scaled sales')
+        print('[4] Plot target vs predicted scaled sales with tail')
+        print('[5] Plot real sales errors')
+        print('[6] Plot scaled sales errors')
+        print('[7] Show real sales absolute mean error')
+        print('[8] Show scaled sales absolute mean error')
+        print('[9] Show real sales relative mean error')
+        print('[10] Show scaled sales relative mean error')
+        print('[11] Show related configuration')
         print()
     
     def _print_feature_selector_menu(self):
@@ -173,21 +175,25 @@ class ConsoleApp():
         
         if action == 1:
             self._evaluator.plot_real_target_vs_predicted()
-        elif action == 2:
-            self._evaluator.plot_scaled_target_vs_predicted()
+        if action == 2:
+            self._evaluator.plot_real_target_vs_predicted(tail=True)
         elif action == 3:
-            self._evaluator.plot_real_errors()
+            self._evaluator.plot_scaled_target_vs_predicted()
         elif action == 4:
-            self._evaluator.plot_scaled_errors()
+            self._evaluator.plot_scaled_target_vs_predicted(tail=True)
         elif action == 5:
-            print('Real sales absolute mean error: {:.2f}'.format(self._evaluator.real_absolute_mean_error()))
+            self._evaluator.plot_real_errors()
         elif action == 6:
-            print('Scaled sales absolute mean error: {:.5f}'.format(self._evaluator.scaled_absolute_mean_error()))
+            self._evaluator.plot_scaled_errors()
         elif action == 7:
-            print('Real sales relative mean error: {:.2f}%'.format(self._evaluator.real_relative_mean_error()))
+            print('Real sales absolute mean error: {:.2f}'.format(self._evaluator.real_absolute_mean_error()))
         elif action == 8:
-            print('Scaled sales relative mean error: {:.2f}%'.format(self._evaluator.scaled_relative_mean_error()))
+            print('Scaled sales absolute mean error: {:.5f}'.format(self._evaluator.scaled_absolute_mean_error()))
         elif action == 9:
+            print('Real sales relative mean error: {:.2f}%'.format(self._evaluator.real_relative_mean_error()))
+        elif action == 10:
+            print('Scaled sales relative mean error: {:.2f}%'.format(self._evaluator.scaled_relative_mean_error()))
+        elif action == 11:
             path,_ = os.path.split(self._evaluator_path)
             config = self._config_sm.unpickle(path)
             print('Configuration: ')

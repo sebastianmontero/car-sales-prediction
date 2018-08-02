@@ -30,11 +30,12 @@ class Evaluator(object):
         self._run_in_new_process(target=self._plot_target_vs_predicted, args=(real, predictions, ylabel, title))
         
     def _plot_target_vs_predicted(self, real, predictions, ylabel, title):
-        months = self._get_months()
-        plt.plot(real, label=('Real'))
-        plt.plot(predictions, label=('Predicted'))
+        months = self._get_months(len(real))
+        num_months = len(months)
+        plt.plot(range(num_months), real, label=('Real'))
+        plt.plot(range(num_months - len(predictions), num_months), predictions, label=('Predicted'))
         plt.ylabel(ylabel)
-        plt.xticks(range(len(months)), months, rotation='vertical')
+        plt.xticks(range(num_months), months, rotation='vertical')
         plt.title(title)
         plt.legend()
         plt.show()
@@ -90,8 +91,8 @@ class Evaluator(object):
         unscaled = np.reshape(self._reader.unscale_sales(predictions), [-1])
         return [round(max(prediction,0)) for prediction in unscaled]
         
-    def _get_target_sales(self, scaled=False):
-        return self._get_data(scaled)['sales'].values
+    def _get_target_sales(self, scaled=False, length=None):
+        return self._get_data(scaled, length)['sales'].values
 
     def _calculate_and_plot_errors(self, scaled=False):
         targets = self._get_target_sales(scaled)
@@ -101,20 +102,24 @@ class Evaluator(object):
         title = 'Target vs Prediction Errors' + (' (Scaled)' if scaled else '')
         self._plot_errors_new_process(absolute, relative, 'Absolute Error', 'Relative Error', title)
     
-    def _get_months(self):
-        return self._get_data()['month_id'].values
+    def _get_months(self, length=None):
+        return self._get_data(length=length)['month_id'].values
     
-    def _get_data(self, scaled=False):
-        return self._reader.get_data(self._end_window_pos, self._window_length, scaled)
+    def _get_data(self, scaled=False, length=None):
+        length = length if length else self._window_length
+        return self._reader.get_data(self._end_window_pos, length, scaled)
     
     def _get_predictions(self, scaled=False):
         return self._predictions if scaled else self._unscaled_predictions
     
-    def plot_real_target_vs_predicted(self):
-        self._plot_target_vs_predicted_new_process(self._get_target_sales(), self._get_predictions(), 'Sales', 'Real vs Predicted Sales')
+    def _get_target_data_length(self, tail=False):
+        return self._end_window_pos if tail else self._window_length
         
-    def plot_scaled_target_vs_predicted(self):
-        self._plot_target_vs_predicted_new_process(self._get_target_sales(scaled=True), self._get_predictions(scaled=True), 'Sales', 'Scaled Real vs Predicted Sales')
+    def plot_real_target_vs_predicted(self, tail=False):
+        self._plot_target_vs_predicted_new_process(self._get_target_sales(length=self._get_target_data_length(tail)), self._get_predictions(), 'Sales', 'Real vs Predicted Sales')
+        
+    def plot_scaled_target_vs_predicted(self, tail=False):
+        self._plot_target_vs_predicted_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self._get_predictions(scaled=True), 'Sales', 'Scaled Real vs Predicted Sales')
     
     def plot_real_errors(self):
         return self._calculate_and_plot_errors()
