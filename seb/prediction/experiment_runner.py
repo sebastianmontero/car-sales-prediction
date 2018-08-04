@@ -107,7 +107,7 @@ print('Experiment start')
     }
 })'''
 
-run_experiments({
+'''run_experiments({
     'num_steps_coarse_nationwide_bigger_layers_cfs' : {
             'run': 'car_sales_prediction_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 1},
@@ -116,6 +116,26 @@ run_experiments({
                 'line_id': 201,
                 'keep_prob' : grid_search([0.7, 8.5, 1.0]),
                 'layer_0' : grid_search([25, 30, 35, 40]),
+                'max_epoch' : 2,
+                'window_size': 37,
+                'store_window' : False,
+                'included_features' : ['inflation_index_roc_prev_month',
+                                   'consumer_confidence_index'],
+                'num_steps': grid_search([12, 24, 36])
+            },
+            'repeat':3
+        }
+})'''
+
+run_experiments({
+    'num_steps_coarse_nationwide_bigger_layers_cfs_2' : {
+            'run': 'car_sales_prediction_trainable',
+            'trial_resources': {'cpu': 8, 'gpu': 1},
+            'stop': {'training_iteration': 60},
+            'config' : {
+                'line_id': 201,
+                'keep_prob' : grid_search([0.7, 8.5, 1.0]),
+                'layer_0' : grid_search([45, 50, 55, 60]),
                 'max_epoch' : 2,
                 'window_size': 37,
                 'store_window' : False,
