@@ -87,7 +87,7 @@ print('Experiment start')
 
 
 run_experiments({
-    'num_steps_coarse_model_bigger_layers_cfs' : {
+    'num_steps_coarse_model_bigger_layers_cfs_w25' : {
             'run': 'car_sales_prediction_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 1},
             'stop': {'training_iteration': 60},
@@ -96,10 +96,10 @@ run_experiments({
                 'keep_prob' : grid_search([0.7, 0.85, 1.0]),
                 'layer_0' : grid_search([25, 30, 35, 40]),
                 'max_epoch' : 2,
-                'window_size': 37,
+                'window_size': 25,
                 'store_window' : False,
                 'included_features' : ['energy_price_index_roc_prev_month'],
-                'num_steps': grid_search([12, 24, 36])
+                'num_steps': grid_search([12, 24])
             },
             'repeat':3
         }
