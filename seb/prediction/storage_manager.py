@@ -69,9 +69,13 @@ class StorageManager(object):
             self._sort_pickles_by_error(pickles)
         return pickles
     
-    def get_objects_errors(self, path, filter_=None, recursive=False, sorted_=True):
+    def get_objects_errors(self, path, filter_=None, recursive=False, sorted_=True, max_= None):
         
         pickles = self.get_pickles(path, filter_, recursive, sorted_)
+        
+        if max_:
+            pickles = pickles[:max]
+        
         objs = []
         
         for pickle in pickles:
