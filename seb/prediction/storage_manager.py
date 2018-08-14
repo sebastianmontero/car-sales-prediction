@@ -6,7 +6,6 @@ Created on Jun 15, 2018
 
 import pickle
 import os
-import re
 from enum import Enum
 
 from utils import Utils
@@ -14,6 +13,7 @@ from utils import Utils
 class StorageManagerType(Enum):
     EVALUATOR = 'evaluator-pickle-'
     CONFIG = 'config-pickle-'
+    ENSEMBLE_EVALUATOR = 'ensemble-evaluator-pickle-'
 
 class PickleAction(Enum):
     KEEP = 'keep'
@@ -68,6 +68,13 @@ class StorageManager(object):
         if sorted_:
             self._sort_pickles_by_error(pickles)
         return pickles
+    
+    def get_pickle(self, path, filter_=None, recursive=False, sorted_=True, exclude_filter=None):
+        pickles = self.get_pickles(path, filter_, recursive, sorted_, exclude_filter)
+        if len(pickles) > 0:
+            return pickles[0]
+        else:
+            return None
     
     def get_objects_errors(self, path, filter_=None, recursive=False, sorted_=True, max_= None):
         

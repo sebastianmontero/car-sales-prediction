@@ -19,13 +19,13 @@ class EnsembleTrainer():
         self._config = config
         config['store_window'] = False
         self._config = config
-        self._ensembleConfig = EnsembleConfig(description=description, base_path=ModelTrainable.BASE_PATH)
-        self._ray_results_dir = os.path.join(os.path.expanduser('~'), 'ray_results', self._ensembleConfig.get_ensemble_base_dir())
+        self._ensemble_config = EnsembleConfig(description=description, base_path=ModelTrainable.BASE_PATH)
+        self._ray_results_dir = os.path.join(os.path.expanduser('~'), 'ray_results', self._ensemble_config.get_ensemble_base_dir())
          
     
     def run(self):
         
-        experiment_name = self._ensembleConfig.get_ensemble_base_dir() 
+        experiment_name = self._ensemble_config.get_ensemble_base_dir() 
             
         run_experiments({
             experiment_name : {
@@ -46,10 +46,10 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
 ensemble_trainer = EnsembleTrainer({
                 'line_id': 102,
                 'keep_prob' : 1,
-                'layers' : [15],
+                'layers' : [30],
                 'max_epoch' : 2,
                 'window_size': 37
-            }, repeats=3)
+            }, repeats=3, description='Test')
           
 ensemble_trainer.run()
 

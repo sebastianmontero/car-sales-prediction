@@ -218,7 +218,14 @@ class Reader(object):
         return Utils.add_months_to_month_id(self._start_month_id, self.get_end_window_pos(for_test))
     
     def unscale_sales(self, sales):
-        return self._sales_scaler.inverse_transform(sales)
+        if not isinstance(sales[0], list):
+            sales = np.reshape(sales,[-1,1])
+            
+        unscaled = self._sales_scaler.inverse_transform(sales)
+        unscaled = np.reshape(unscaled, [-1])
+        return [round(max(prediction,0)) for prediction in unscaled]
+        
+        
     
     def reset(self):
         self._window_pos = -1
