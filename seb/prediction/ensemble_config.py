@@ -9,7 +9,7 @@ import datetime
 
 class EnsembleConfig():
     
-    BASE_DIR_PREFIX = 'enseblme-run-'
+    BASE_DIR_PREFIX = 'ensemble-run-'
     
     def __init__(self, description='', base_path = None, run_path = None):
         assert(base_path or run_path), "base_path or run_path must be specified"
