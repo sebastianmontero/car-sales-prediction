@@ -48,7 +48,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._std = self._calculate_std(predictions)
         self._min = self._get_min(predictions)
         self._max = self._get_max(predictions)
-        self._lower, self._upper = self._calculate_boundries(self._mean, self._std)
+        self._lower, self._upper = self._calculate_interval(self._mean, self._std)
         self._mean_u = self._unscale_sales(self._mean)
         self._std_u = self._unscale_sales(self._std)
         self._min_u = self._unscale_sales(self._min)
@@ -72,7 +72,7 @@ class EnsembleEvaluator(BaseEvaluator):
     def _calculate_std(self, predictions):
         return np.std(predictions, axis=0, ddof=1)
     
-    def _calculate_boundries(self, mean, std):
+    def _calculate_interval(self, mean, std):
         range_ = np.array(std) * t.ppf(self._quantile, self._num_networks - 1)
         return mean - range_, mean + range_ 
     
@@ -93,6 +93,12 @@ class EnsembleEvaluator(BaseEvaluator):
     
     def get_max(self, scaled=False):
         return self._max if scaled else self._max_u
+    
+    def get_lower(self, scaled=False):
+        return self._lower if scaled else self._lower_u
+    
+    def get_upper(self, scaled=False):
+        return self._upper if scaled else self._upper_u
     
     def _plot_target_vs_mean_best_new_process(self, real, mean, best, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_best, args=(real, mean, best, ylabel, title))
@@ -118,6 +124,18 @@ class EnsembleEvaluator(BaseEvaluator):
         
     def plot_scaled_target_vs_mean_min_max(self, tail=False):
         self._plot_target_vs_mean_min_max_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self.get_min(scaled=True), self.get_max(scaled=True), 'Scaled Sales', 'Scaled Real vs Ensemble Mean, Min and Max Sales')
+        
+    def _plot_target_vs_mean_interval_process(self, real, mean, lower, upper, ylabel, title):
+        self._run_in_new_process(target=self._plot_target_vs_mean_interval, args=(real, mean, lower, upper, ylabel, title))
+        
+    def _plot_target_vs_mean_interval(self, real, mean, lower, upper, ylabel, title):
+        self._plot_target_vs(real,{'Ensemble Mean':mean, 'Lower Limit': lower, 'Upper Limit': upper}, ylabel, title)
+        
+    def plot_real_target_vs_mean_interval(self, tail=False):
+        self._plot_target_vs_mean_interval_new_process(self._get_target_sales(length=self._get_target_data_length(tail)), self.get_predictions(), self.get_lower(), self.get_upper() , 'Sales', 'Real vs Ensemble Mean and Interval Sales')
+        
+    def plot_scaled_target_vs_mean_interval(self, tail=False):
+        self._plot_target_vs_mean_interval_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self.get_lower(scaled=True), self.get_upper(scaled=False), 'Scaled Sales', 'Scaled Real vs Ensemble Mean and Interval Saless')    
     
     
     
