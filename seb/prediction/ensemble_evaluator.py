@@ -8,6 +8,7 @@ import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import pandas as pd
 
 from utils import Utils
 from base_evaluator import BaseEvaluator
@@ -111,7 +112,10 @@ class EnsembleEvaluator(BaseEvaluator):
         return self._upper if scaled else self._upper_u
     
     def get_noise_variance_dataset(self):
-        return self._reader.get_data(self._end_window_pos, self._window_length, scaled=True)
+        data = self._reader.get_data(self._end_window_pos, self._window_length, scaled=True).reset_index(drop=True)
+        data = data.join(pd.DataFrame({'variance':self._noise_variance}))
+        return data;
+    
     
     def _plot_target_vs_mean_best_new_process(self, real, mean, best, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_best, args=(real, mean, best, ylabel, title))
