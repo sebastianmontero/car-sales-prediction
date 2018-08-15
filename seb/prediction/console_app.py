@@ -11,6 +11,7 @@ import pprint
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType
 from feature_selector_reporter import FeatureSelectorReporter
+from ensemble_reporter import EnsembleReporter
 
 class ConsoleApp():
     
@@ -90,7 +91,7 @@ class ConsoleApp():
             self._evaluators = self._evaluator_sm.get_pickles(self._base_path, command.filter, recursive=True, exclude_filter=exclude_filter)
             self._display_evaluators()
         if cmd == 'enevals':
-            self._ensemble_evaluators = self._ensemble_evaluator_sm.get_pickles(self._base_path, command.filter, recursive=True)
+            self._ensemble_evaluators = EnsembleReporter.find_ensemble_runs(self._base_path)
             self._display_ensemble_evaluators()
         if cmd == 'fs':
             self._fss = FeatureSelectorReporter.find_feature_selector_runs(self._base_path)
@@ -107,7 +108,7 @@ class ConsoleApp():
         if cmd == 'seneval':
             if command.pos >= 0 and command.pos < len(self._ensemble_evaluators):
                 self._ensemble_evaluator_path = self._ensemble_evaluators[command.pos]
-                self._ensemble_evaluator = self._ensemble_evaluator_sm.unpickle(self._ensemble_evaluator_path)
+                self._ensemble_evaluator = EnsembleReporter(self._ensemble_evaluator_path).get_ensemble_evaluator()
                 print('Selected Ensemble Evaluator:', self._ensemble_evaluator_path)
                 self._ensemble_evaluator_mode()
             else:
