@@ -43,7 +43,7 @@ class EnsembleReporter():
         
     def _get_evaluators(self):
         evaluators_errors = self._eval_sm.get_objects_errors(self._run_path, recursive=True, sorted_=True, max_=self._num_networks) 
-        return [evaluator_error.obj for evaluator_error in evaluators_errors]
+        return [evaluator_error['obj'] for evaluator_error in evaluators_errors]
             
     @classmethod
     def find_ensemble_runs(cls, path):
