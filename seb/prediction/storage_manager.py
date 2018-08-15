@@ -81,7 +81,7 @@ class StorageManager(object):
         pickles = self.get_pickles(path, filter_, recursive, sorted_)
         
         if max_:
-            pickles = pickles[:max]
+            pickles = pickles[:max_]
         
         objs = []
         
