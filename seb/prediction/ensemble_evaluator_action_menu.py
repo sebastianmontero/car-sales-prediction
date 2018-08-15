@@ -4,7 +4,7 @@ Created on Jul 2, 2018
 @author: nishilab
 '''
 import os
-from ensemble_evaluator import EnsembleReporter
+from ensemble_reporter import EnsembleReporter
 from storage_manager import StorageManager, StorageManagerType
 from action_menu import ActionMenu
 
