@@ -43,7 +43,19 @@ class EnsembleTrainer():
 ray.init()
 register_trainable('car_sales_prediction_trainable', ModelTrainable)
 
+
 ensemble_trainer = EnsembleTrainer({
+                'line_id': 13,
+                'keep_prob' : grid_search([0.8, 0.9, 1.0]),
+                'layer_0' : grid_search([26, 29, 31, 34, 37]),
+                'max_epoch' : 2,
+                'window_size': 37,
+                'store_window' : False,
+                'included_features' : ['energy_price_index_roc_prev_month'],
+                'num_steps': grid_search([12, 24])
+            }, repeats=3, description='model')
+
+'''ensemble_trainer = EnsembleTrainer({
                 'line_id': 201,
                 'keep_prob' : grid_search([0.8, 0.9, 1.0]),
                 'layer_0' : grid_search([26, 29, 31, 34, 37]),
@@ -53,7 +65,7 @@ ensemble_trainer = EnsembleTrainer({
                 'included_features' : ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index'],
                 'num_steps': grid_search([12, 24])
-            }, repeats=3, description='nationwide')
+            }, repeats=3, description='nationwide')'''
           
 ensemble_trainer.run()
 
