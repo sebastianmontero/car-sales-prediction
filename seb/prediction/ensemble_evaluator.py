@@ -27,7 +27,8 @@ class EnsembleEvaluator(BaseEvaluator):
         self._reader = best_network.reader
         self._mean = None
         self._mean_u = None
-        self._variance = None
+        self._model_variance = None
+        self._noise_variance = None
         self._std = None
         self._std_u = None
         self._min = None
@@ -44,7 +45,8 @@ class EnsembleEvaluator(BaseEvaluator):
     def _process_evaluators(self, evaluators):
         predictions = self._generate_predictions_array(evaluators)
         self._mean = self._calculate_mean(predictions)
-        self._variance = self._calculate_variance(predictions)
+        self._model_variance = self._calculate_model_variance(predictions)
+        self._noise_variance = self._calculate_noise_variance(self._get_target_sales(scaled=True),self._mean, self._model_variance)
         self._std = self._calculate_std(predictions)
         self._min = self._get_min(predictions)
         self._max = self._get_max(predictions)
@@ -70,8 +72,11 @@ class EnsembleEvaluator(BaseEvaluator):
     def _calculate_mean(self, predictions):
         return np.mean(predictions, axis=0)
     
-    def _calculate_variance(self, predictions):
+    def _calculate_model_variance(self, predictions):
         return np.var(predictions, axis=0, ddof=1)
+    
+    def _calculate_noise_variance(self, targets, mean, model_variance):
+        return [max((t - m) ** 2 - v, 0) for t, m, v in zip(targets, mean, model_variance)]
     
     def _calculate_std(self, predictions):
         return np.std(predictions, axis=0, ddof=1)

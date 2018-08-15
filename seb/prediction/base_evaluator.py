@@ -41,16 +41,19 @@ class BaseEvaluator(object):
     
     
     def _plot_target_vs(self, real, vs, ylabel, title):
-        months = self._get_months(len(real))
+        self._plot_by_month('Real', vs, ylabel, title)
+        
+    def _plot_by_month(self, ref_key, series, ylabel, title):
+        months = self._get_months(len(series[ref_key]))
         num_months = len(months)
-        plt.plot(range(num_months), real, label=('Real'))
-        for label, vals in vs.items():
+        for label, vals in series.items():
             plt.plot(range(num_months - len(vals), num_months), vals, label=(label))
         plt.ylabel(ylabel)
         plt.xticks(range(num_months), months, rotation='vertical')
         plt.title(title)
         plt.legend()
         plt.show()
+        
         
     def _plot_target_vs_predicted(self, real, predictions, ylabel, title):
         self._plot_target_vs(real, {'Predicted' : predictions}, ylabel, title)
