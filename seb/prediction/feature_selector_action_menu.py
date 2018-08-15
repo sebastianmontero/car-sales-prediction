@@ -22,6 +22,7 @@ class FeatureSelectorActionMenu(ActionMenu):
         if cmd == 'fs':
             self._paths = FeatureSelectorReporter.find_feature_selector_runs(base_path)
             self._display_paths(base_path)
+            return True
         elif cmd == 'sfs':
             self._select_actor(command, base_path)
             return True
