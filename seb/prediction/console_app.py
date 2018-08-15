@@ -20,8 +20,8 @@ class ConsoleApp():
         
         #self._base_path = os.path.dirname(os.path.realpath(__file__))
         self._base_path = '/home/nishilab/Documents/python/model-storage/'
-        self._parser = self._create_parser()
         self._evaluator_am = EvaluatorActionMenu()
+        self._parser = self._create_parser()
         self._fss = []
         self._ensemble_evaluators = []
         self._ensemble_evaluator = None
