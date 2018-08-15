@@ -41,6 +41,7 @@ class BaseEvaluator(object):
     
     
     def _plot_target_vs(self, real, vs, ylabel, title):
+        vs['Real'] = real
         self._plot_by_month('Real', vs, ylabel, title)
         
     def _plot_by_month(self, ref_key, series, ylabel, title):
@@ -53,7 +54,6 @@ class BaseEvaluator(object):
         plt.title(title)
         plt.legend()
         plt.show()
-        
         
     def _plot_target_vs_predicted(self, real, predictions, ylabel, title):
         self._plot_target_vs(real, {'Predicted' : predictions}, ylabel, title)
