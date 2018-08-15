@@ -55,6 +55,10 @@ class EnsembleEvaluator(BaseEvaluator):
         self._max_u = self._unscale_sales(self._max)
         self._lower_u = self._unscale_sales(self._lower)
         self._upper_u = self._unscale_sales(self._upper)
+        
+    @property
+    def best_network(self):
+        return self._best_network
     
     def _generate_predictions_array(self, evaluators):
         predictions = []

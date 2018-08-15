@@ -286,13 +286,13 @@ class ConsoleApp():
         elif action == 6:
             self._ensemble_evaluator.plot_scaled_errors()
         elif action == 7:
-            print('Real sales absolute mean error: {:.2f}'.format(self._ensemble_evaluator.real_absolute_mean_error()))
+            print('Real sales absolute mean error: {:.2f} Best Network: {:.2f}'.format(self._ensemble_evaluator.real_absolute_mean_error(), self._ensemble_evaluator.best_network.real_absolute_mean_error()))
         elif action == 8:
-            print('Scaled sales absolute mean error: {:.5f}'.format(self._ensemble_evaluator.scaled_absolute_mean_error()))
+            print('Scaled sales absolute mean error: {:.5f} Best Network: {:.5f}'.format(self._ensemble_evaluator.scaled_absolute_mean_error(), self._ensemble_evaluator.best_network.scaled_absolute_mean_error()))
         elif action == 9:
-            print('Real sales relative mean error: {:.2f}%'.format(self._ensemble_evaluator.real_relative_mean_error()))
+            print('Real sales relative mean error: {:.2f}% Best Network: {:.2f}'.format(self._ensemble_evaluator.real_relative_mean_error()), self._ensemble_evaluator.best_network.real_relative_mean_error())
         elif action == 10:
-            print('Scaled sales relative mean error: {:.2f}%'.format(self._ensemble_evaluator.scaled_relative_mean_error()))
+            print('Scaled sales relative mean error: {:.2f}% Best Network: {:.2f}%'.format(self._ensemble_evaluator.scaled_relative_mean_error(), self._ensemble_evaluator.best_network.scaled_relative_mean_error()))
         elif action == 11:
             self._ensemble_evaluator.plot_real_target_vs_mean_best()
         elif action == 12:
