@@ -29,7 +29,7 @@ class EvaluatorActionMenu(ActionMenu):
             self._display_paths(base_path)
             return True
         elif cmd == 'seval':
-            self._select_actor()
+            self._select_actor(command, base_path)
             return True
         
     def _get_actor(self):
