@@ -135,7 +135,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._plot_target_vs_mean_interval_new_process(self._get_target_sales(length=self._get_target_data_length(tail)), self.get_predictions(), self.get_lower(), self.get_upper() , 'Sales', 'Real vs Ensemble Mean and Interval Sales')
         
     def plot_scaled_target_vs_mean_interval(self, tail=False):
-        self._plot_target_vs_mean_interval_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self.get_lower(scaled=True), self.get_upper(scaled=False), 'Scaled Sales', 'Scaled Real vs Ensemble Mean and Interval Saless')    
+        self._plot_target_vs_mean_interval_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self.get_lower(scaled=True), self.get_upper(scaled=True), 'Scaled Sales', 'Scaled Real vs Ensemble Mean and Interval Saless')    
     
     
     
