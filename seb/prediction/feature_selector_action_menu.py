@@ -7,7 +7,7 @@ from storage_manager import StorageManager, StorageManagerType
 from feature_selector_reporter import FeatureSelectorReporter
 from action_menu import ActionMenu
 
-class FeatureSelectorActionMenu():
+class FeatureSelectorActionMenu(ActionMenu):
     
     def __init__(self, config_sm):
         ActionMenu.__init__(self, 'Feature Selector',config_sm, config_sm)
