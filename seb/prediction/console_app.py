@@ -160,7 +160,7 @@ class ConsoleApp():
         
     def _print_ensemble_evaluator_menu(self):
         print()
-        print('Evaluator mode options:')
+        print('Ensemble Evaluator mode options:')
         print()
         print('[0] Exit evaluator mode')
         print('[1] Plot target vs predicted real sales')
