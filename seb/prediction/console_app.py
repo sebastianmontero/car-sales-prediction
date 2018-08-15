@@ -290,7 +290,7 @@ class ConsoleApp():
         elif action == 8:
             print('Scaled sales absolute mean error: {:.5f} Best Network: {:.5f}'.format(self._ensemble_evaluator.scaled_absolute_mean_error(), self._ensemble_evaluator.best_network.scaled_absolute_mean_error()))
         elif action == 9:
-            print('Real sales relative mean error: {:.2f}% Best Network: {:.2f}'.format(self._ensemble_evaluator.real_relative_mean_error()), self._ensemble_evaluator.best_network.real_relative_mean_error())
+            print('Real sales relative mean error: {:.2f}% Best Network: {:.2f}%'.format(self._ensemble_evaluator.real_relative_mean_error(), self._ensemble_evaluator.best_network.real_relative_mean_error()))
         elif action == 10:
             print('Scaled sales relative mean error: {:.2f}% Best Network: {:.2f}%'.format(self._ensemble_evaluator.scaled_relative_mean_error(), self._ensemble_evaluator.best_network.scaled_relative_mean_error()))
         elif action == 11:
