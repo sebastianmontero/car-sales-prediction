@@ -13,6 +13,7 @@ from storage_manager import StorageManager, StorageManagerType
 from feature_selector_reporter import FeatureSelectorReporter
 from ensemble_reporter import EnsembleReporter
 from evaluator_action_menu import EvaluatorActionMenu
+from feature_selector_action_menu import FeatureSelectorActionMenu
 
 class ConsoleApp():
     
@@ -22,12 +23,10 @@ class ConsoleApp():
         self._base_path = '/home/nishilab/Documents/python/model-storage/'
         self._config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         self._evaluator_am = EvaluatorActionMenu(self._config_sm)
+        self._feature_selector_am = FeatureSelectorActionMenu(self._config_sm)
         self._parser = self._create_parser()
-        self._fss = []
         self._ensemble_evaluators = []
         self._ensemble_evaluator = None
-        self._fs_reporter = None
-        self._fs_path = None
         self._ensemble_evaluator_path = None
         self._ensemble_evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.ENSEMBLE_EVALUATOR)
         self._pprint = pprint.PrettyPrinter()
@@ -41,14 +40,11 @@ class ConsoleApp():
         path_parser.add_argument('--path', '-p', required=False, help='Sets the base path to search from', dest='path')        
         
         self._evaluator_am.add_main_menu_actions(subparser)
-        
-        path_parser = subparser.add_parser('fs', help='Search for feature selection runs')
+        self._feature_selector_am.add_main_menu_actions(subparser)
         
         path_parser = subparser.add_parser('enevals', help='Search for ensemble evaluators')
         path_parser.add_argument('--filter', '-f', required=False, help='Search for ensemble evaluators relative to the base path, possibly specifying a filter', dest='filter')
         
-        path_parser = subparser.add_parser('sfs', help='Select a feature selector run')
-        path_parser.add_argument('pos', help='Select a feature selector run, specify position', type=int)
         
         path_parser = subparser.add_parser('seneval', help='Select an ensemble evaluator')
         path_parser.add_argument('pos', help='Select an ensemble evaluator, specify position', type=int)
@@ -80,12 +76,10 @@ class ConsoleApp():
             else:    
                 print('Base path: ', self._base_path)
         self._evaluator_am.handle_command(cmd, command, self._base_path)
+        self._feature_selector_am.handle_command(cmd, command, self._base_path)
         if cmd == 'enevals':
             self._ensemble_evaluators = EnsembleReporter.find_ensemble_runs(self._base_path)
             self._display_ensemble_evaluators()
-        if cmd == 'fs':
-            self._fss = FeatureSelectorReporter.find_feature_selector_runs(self._base_path)
-            self._display_feature_selectors()
         if cmd == 'seneval':
             if command.pos >= 0 and command.pos < len(self._ensemble_evaluators):
                 self._ensemble_evaluator_path = self._ensemble_evaluators[command.pos]
@@ -95,21 +89,9 @@ class ConsoleApp():
             else:
                 print('Invalid evaluator position')
                 self._display_ensemble_evaluators()
-        if cmd == 'sfs':
-            if command.pos >= 0 and command.pos < len(self._fss):
-                self._fs_path = self._fss[command.pos]
-                self._fs_reporter = FeatureSelectorReporter(run_path=self._fs_path)
-                print('Selected Feature Selector:', self._fs_path)
-                self._feature_selector_mode()
-            else:
-                print('Invalid evaluator position')
-                self._display_evaluators()
         
     def _display_ensemble_evaluators(self):
         self._display_paths(self._ensemble_evaluators, 'Ensemble Evaluators')
-    
-    def _display_feature_selectors(self):
-        self._display_paths(self._fss, 'Feature Selectors')
             
     def _display_paths(self, paths, title):
         base_path_pos = len(self._base_path)
@@ -146,16 +128,6 @@ class ConsoleApp():
         print('[21] Plot target vs ensemble mean and interval scaled sales')
         print('[22] Plot target vs ensemble mean and interval scaled sales with tail')
         print()
-    
-    def _print_feature_selector_menu(self):
-        print()
-        print('Feature selector mode options:')
-        print()
-        print('[0] Exit feature selector mode')
-        print('[1] Show best configuration')
-        print('[2] Show best configuration per feature')
-        print('[3] Show configurations per feature [Specify number of features wanted]')
-        print()
         
                 
     def _ensemble_evaluator_mode(self):
@@ -170,23 +142,7 @@ class ConsoleApp():
                 self._perform_ensemble_evaluator_action(action)
             except ValueError:
                 print('Invalid option')
-    
-    def _feature_selector_mode(self):
-        while True:
-            self._print_feature_selector_menu()
-            try:
-                action = input('Select an option \n>>> ')
-                split_action = action.split()
-                action = int(split_action[0])
-
-                print()
-                if action == 0:
-                    break;
-                
-                self._perform_feature_selector_action(action, split_action)
-            except (ValueError, IndexError):
-                print('Invalid option')
-        
+            
     def _perform_ensemble_evaluator_action(self, action):
         
         if action == 1:
@@ -235,18 +191,7 @@ class ConsoleApp():
             self._ensemble_evaluator.plot_scaled_target_vs_mean_interval(tail=True)
         else:
             raise ValueError('Unknown action')
-                            
-    def _perform_feature_selector_action(self, action, params):
-        
-        if action == 1:
-            self._fs_reporter.print_best_config()
-        elif action == 2:
-            self._fs_reporter.print_best_configs()
-        elif action == 3:
-            self._fs_reporter.print_experiment_configs(int(params[1]))
-        else:
-            raise ValueError('Unknown action')
-            
+                                    
         
     def run(self):
         action = ''
