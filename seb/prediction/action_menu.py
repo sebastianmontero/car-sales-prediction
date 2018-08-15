@@ -15,13 +15,14 @@ from ensemble_reporter import EnsembleReporter
 
 class ActionMenu():
     
-    def __init__(self, title, storage_manager):
+    def __init__(self, title, sm, config_sm):
         
         self._title = title
         self._paths = []
         self._actor = None
         self._path = None
-        self._sm = storage_manager
+        self._sm = sm
+        self._config_sm = config_sm
         self._pprint = pprint.PrettyPrinter()
    
     def add_main_menu_actions(self, subparser):

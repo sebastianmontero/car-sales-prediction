@@ -20,7 +20,8 @@ class ConsoleApp():
         
         #self._base_path = os.path.dirname(os.path.realpath(__file__))
         self._base_path = '/home/nishilab/Documents/python/model-storage/'
-        self._evaluator_am = EvaluatorActionMenu()
+        self._config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
+        self._evaluator_am = EvaluatorActionMenu(self._config_sm)
         self._parser = self._create_parser()
         self._fss = []
         self._ensemble_evaluators = []
@@ -28,7 +29,6 @@ class ConsoleApp():
         self._fs_reporter = None
         self._fs_path = None
         self._ensemble_evaluator_path = None
-        self._config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         self._ensemble_evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.ENSEMBLE_EVALUATOR)
         self._pprint = pprint.PrettyPrinter()
         

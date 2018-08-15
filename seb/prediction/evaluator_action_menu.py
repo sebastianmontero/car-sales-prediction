@@ -10,8 +10,8 @@ from action_menu import ActionMenu
 
 class EvaluatorActionMenu(ActionMenu):
     
-    def __init__(self):
-        ActionMenu.__init__(self, 'Evaluator',StorageManager.get_storage_manager(StorageManagerType.EVALUATOR))
+    def __init__(self, config_sm):
+        ActionMenu.__init__(self, 'Evaluator',StorageManager.get_storage_manager(StorageManagerType.EVALUATOR), config_sm)
    
     def add_main_menu_actions(self, subparser):
         path_parser = subparser.add_parser('evals', help='Search for evaluators')
@@ -25,7 +25,7 @@ class EvaluatorActionMenu(ActionMenu):
     def handle_command(self, cmd, command, base_path):
         if cmd == 'evals':
             exclude_filter = None if command.show_windows else 'w-\d{6}-\d{6}'
-            self._paths = self._evaluator_sm.get_pickles(base_path, command.filter, recursive=True, exclude_filter=exclude_filter)
+            self._paths = self._sm.get_pickles(base_path, command.filter, recursive=True, exclude_filter=exclude_filter)
             self._display_paths(base_path)
             return True
         elif cmd == 'seval':
@@ -50,27 +50,27 @@ class EvaluatorActionMenu(ActionMenu):
                                     
     def _perform_action(self, action, params):
         if action == 1:
-            self._evaluator.plot_real_target_vs_predicted()
+            self._actor.plot_real_target_vs_predicted()
         if action == 2:
-            self._evaluator.plot_real_target_vs_predicted(tail=True)
+            self._actor.plot_real_target_vs_predicted(tail=True)
         elif action == 3:
-            self._evaluator.plot_scaled_target_vs_predicted()
+            self._actor.plot_scaled_target_vs_predicted()
         elif action == 4:
-            self._evaluator.plot_scaled_target_vs_predicted(tail=True)
+            self._actor.plot_scaled_target_vs_predicted(tail=True)
         elif action == 5:
-            self._evaluator.plot_real_errors()
+            self._actor.plot_real_errors()
         elif action == 6:
-            self._evaluator.plot_scaled_errors()
+            self._actor.plot_scaled_errors()
         elif action == 7:
-            print('Real sales absolute mean error: {:.2f}'.format(self._evaluator.real_absolute_mean_error()))
+            print('Real sales absolute mean error: {:.2f}'.format(self._actor.real_absolute_mean_error()))
         elif action == 8:
-            print('Scaled sales absolute mean error: {:.5f}'.format(self._evaluator.scaled_absolute_mean_error()))
+            print('Scaled sales absolute mean error: {:.5f}'.format(self._actor.scaled_absolute_mean_error()))
         elif action == 9:
-            print('Real sales relative mean error: {:.2f}%'.format(self._evaluator.real_relative_mean_error()))
+            print('Real sales relative mean error: {:.2f}%'.format(self._actor.real_relative_mean_error()))
         elif action == 10:
-            print('Scaled sales relative mean error: {:.2f}%'.format(self._evaluator.scaled_relative_mean_error()))
+            print('Scaled sales relative mean error: {:.2f}%'.format(self._actor.scaled_relative_mean_error()))
         elif action == 11:
-            path,_ = os.path.split(self._evaluator_path)
+            path,_ = os.path.split(self._actor_path)
             config = self._config_sm.unpickle(path)
             print('Configuration: ')
             print()
