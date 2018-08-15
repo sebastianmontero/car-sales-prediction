@@ -11,7 +11,7 @@ from action_menu import ActionMenu
 class EvaluatorActionMenu(ActionMenu):
     
     def __init__(self):
-        ActionMenu.__init__('Evaluator',StorageManager.get_storage_manager(StorageManagerType.EVALUATOR))
+        ActionMenu.__init__(self, 'Evaluator',StorageManager.get_storage_manager(StorageManagerType.EVALUATOR))
    
     def add_main_menu_actions(self, subparser):
         path_parser = subparser.add_parser('evals', help='Search for evaluators')
