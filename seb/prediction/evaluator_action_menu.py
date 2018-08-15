@@ -70,7 +70,7 @@ class EvaluatorActionMenu(ActionMenu):
         elif action == 10:
             print('Scaled sales relative mean error: {:.2f}%'.format(self._actor.scaled_relative_mean_error()))
         elif action == 11:
-            path,_ = os.path.split(self._actor_path)
+            path,_ = os.path.split(self._path)
             config = self._config_sm.unpickle(path)
             print('Configuration: ')
             print()
