@@ -41,6 +41,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._upper_u = None
         
         self._process_evaluators(evaluators)
+        print(self.get_noise_variance_dataset())
         
     def _process_evaluators(self, evaluators):
         predictions = self._generate_predictions_array(evaluators)
@@ -108,6 +109,9 @@ class EnsembleEvaluator(BaseEvaluator):
     
     def get_upper(self, scaled=False):
         return self._upper if scaled else self._upper_u
+    
+    def get_noise_variance_dataset(self):
+        return self._reader.get_data(self._end_window_pos, self._window_length, scaled=True)
     
     def _plot_target_vs_mean_best_new_process(self, real, mean, best, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_best, args=(real, mean, best, ylabel, title))
