@@ -14,7 +14,7 @@ class EnsembleReporter():
     
     def __init__(self, run_path, num_networks=None, overwrite=False):
                 
-        self._ensemble_config = EnsembleConfig(run_path)
+        self._ensemble_config = EnsembleConfig(run_path=run_path)
         self._run_path = run_path
         self._num_networks = num_networks
         self._eval_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
