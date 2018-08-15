@@ -146,5 +146,13 @@ class EnsembleEvaluator(BaseEvaluator):
     def plot_scaled_target_vs_mean_interval(self, tail=False):
         self._plot_target_vs_mean_interval_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self.get_lower(scaled=True), self.get_upper(scaled=True), 'Scaled Sales', 'Scaled Real vs Ensemble Mean and Interval Saless')    
     
+    def _plot_variance_errors_new_process(self, model_variance, noise_variance, ylabel, title):
+        self._run_in_new_process(target=self._plot_variance_errors, args=(model_variance, noise_variance, ylabel, title))
+        
+    def _plot_variance_errors(self, model_variance, noise_variance, ylabel, title):
+        self._plot_by_month('Model Variance',{'Model Variance':model_variance, 'Noise Variance': noise_variance}, ylabel, title)
+        
+    def plot_variance_errors(self):
+        self._plot_variance_errors_new_process(self._model_variance, self._noise_variance, 'variance', 'Model and Noise Variance')
     
     

@@ -56,6 +56,7 @@ class EnsembleEvaluatorActionMenu(ActionMenu):
         print('[20] Plot target vs ensemble mean and interval real sales with tail')
         print('[21] Plot target vs ensemble mean and interval scaled sales')
         print('[22] Plot target vs ensemble mean and interval scaled sales with tail')
+        print('[23] Plot variance errors')
                                     
     def _perform_action(self, action, params):
         if action == 1:
@@ -102,6 +103,8 @@ class EnsembleEvaluatorActionMenu(ActionMenu):
             self._actor.plot_scaled_target_vs_mean_interval()
         elif action == 22:
             self._actor.plot_scaled_target_vs_mean_interval(tail=True)
+        elif action == 23:
+            self._actor.plot_variance_errors()
         else:
             raise ValueError('Unknown action')
             
