@@ -113,7 +113,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._plot_target_vs_mean_best_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self._best_network.get_predictions(scaled=True), 'Scaled Sales', 'Scaled Real vs Ensemble Mean and Best Network Sales')
     
     
-    def _plot_target_vs_mean_min_max_process(self, real, mean, min_, max_, ylabel, title):
+    def _plot_target_vs_mean_min_max_new_process(self, real, mean, min_, max_, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_min_max, args=(real, mean, min_, max_, ylabel, title))
         
     def _plot_target_vs_mean_min_max(self, real, mean, min_, max_, ylabel, title):
@@ -125,7 +125,7 @@ class EnsembleEvaluator(BaseEvaluator):
     def plot_scaled_target_vs_mean_min_max(self, tail=False):
         self._plot_target_vs_mean_min_max_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self.get_min(scaled=True), self.get_max(scaled=True), 'Scaled Sales', 'Scaled Real vs Ensemble Mean, Min and Max Sales')
         
-    def _plot_target_vs_mean_interval_process(self, real, mean, lower, upper, ylabel, title):
+    def _plot_target_vs_mean_interval_new_process(self, real, mean, lower, upper, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_interval, args=(real, mean, lower, upper, ylabel, title))
         
     def _plot_target_vs_mean_interval(self, real, mean, lower, upper, ylabel, title):
