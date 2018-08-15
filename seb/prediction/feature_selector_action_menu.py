@@ -20,7 +20,7 @@ class FeatureSelectorActionMenu():
         
     def handle_command(self, cmd, command, base_path):
         if cmd == 'fs':
-            self._paths = FeatureSelectorReporter.find_feature_selector_runs(self._base_path)
+            self._paths = FeatureSelectorReporter.find_feature_selector_runs(base_path)
             self._display_paths(base_path)
         elif cmd == 'sfs':
             self._select_actor(command, base_path)
