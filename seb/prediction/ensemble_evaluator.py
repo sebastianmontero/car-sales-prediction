@@ -42,7 +42,6 @@ class EnsembleEvaluator(BaseEvaluator):
         self._upper_u = None
         
         self._process_evaluators(evaluators)
-        print(self.get_noise_variance_dataset())
         
     def _process_evaluators(self, evaluators):
         predictions = self._generate_predictions_array(evaluators)
