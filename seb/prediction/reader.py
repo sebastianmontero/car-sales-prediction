@@ -3,16 +3,13 @@ Created on Jun 11, 2018
 
 @author: nishilab
 '''
-import os
 import math
-import configparser
 import pandas as pd
-from sqlalchemy import create_engine
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 from utils import Utils
 from generator import Generator
-
+from db_manager import DBManager
 
 
 class Reader(object):
@@ -49,7 +46,7 @@ class Reader(object):
         self._init_fleeting_vars()
         
     def _init_fleeting_vars(self):
-        self._engine = self._connect_to_db()
+        self._engine = DBManager.get_engine()
         self._scaler = MinMaxScaler((-1,1))
         self._sales_scaler = MinMaxScaler((-1,1))
         self._data = None
@@ -167,11 +164,6 @@ class Reader(object):
         data_df['month_of_year_sin'] = data_df['month_of_year'].apply(lambda x: math.sin(x))
         data_df['month_of_year_cos'] = data_df['month_of_year'].apply(lambda x: math.cos(x))
         return data_df.values[:,-2:]
-        
-    def _connect_to_db(self):
-        config = configparser.ConfigParser()
-        config.read(os.path.join(os.path.dirname(os.path.realpath(__file__)) , 'config.ini'))
-        return create_engine(config['DB']['connection_url'])
     
     def next_window(self):
         self._window_pos += 1
