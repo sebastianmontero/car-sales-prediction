@@ -68,7 +68,7 @@ class NoiseVarianceModelTrainer():
             'layer_size': 15,
             'max_epoch': 200,
             'keep_prob': 1.0,
-            'learning_rate': 1.0,
+            'learning_rate': 0.1,
             'lr_decay': 0.98,
             'mse_not_improved_threshold': 3,
             'batch_size': 5,
@@ -171,7 +171,7 @@ class NoiseVarianceModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = NoiseVarianceModelTrainer({'max_epoch' : 20, 'batch_size':20})
+modelTrainer = NoiseVarianceModelTrainer({'max_epoch' : 200, 'batch_size':20})
 modelTrainer.train()
             
         
