@@ -18,7 +18,6 @@ class NoiseVarianceModel(object):
     
     def __init__(self, config, inputs, targets, num_features):
         self._num_features = num_features
-        self._inputs = inputs;
         
         output = self._build_model(inputs, config)
         self._predictions = output
@@ -29,12 +28,17 @@ class NoiseVarianceModel(object):
         
     def _build_model(self, inputs, config):
         
+        self._keep_prob = tf.placeholder_with_default(tf.constant(1.0, dtype=tf.float64), shape=())
+        
         w1 = tf.Variable(tf.truncated_normal([self._num_features, config['layer_size']], dtype=tf.float64), name='WeightsLayer1')
         b1 = tf.Variable(tf.zeros([config['layer_size']],dtype=tf.float64), name='BiasesLayer1')
-        h1 = tf.nn.dropout(tf.nn.relu(tf.matmul(inputs, w1) + b1), config['keep_prob'])
-        w2 = tf.Variable(tf.truncated_normal([config['layer_size'], 1], dtype=tf.float64), name='WeightsLayer2')
-        b2 = tf.Variable(tf.zeros([1], dtype=tf.float64), name='BiasesLayer1')
-        output = tf.nn.sigmoid(tf.matmul(h1, w2) + b2)
+        h = tf.nn.dropout(tf.nn.relu(tf.matmul(inputs, w1) + b1), self._keep_prob)
+        w2 = tf.Variable(tf.truncated_normal([config['layer_size'], config['layer_size']], dtype=tf.float64), name='WeightsLayer1')
+        b2 = tf.Variable(tf.zeros([config['layer_size']],dtype=tf.float64), name='BiasesLayer1')
+        h = tf.nn.dropout(tf.nn.relu(tf.matmul(h, w2) + b2), self._keep_prob)
+        w3 = tf.Variable(tf.truncated_normal([config['layer_size'], 1], dtype=tf.float64), name='WeightsLayer2')
+        b3 = tf.Variable(tf.zeros([1], dtype=tf.float64), name='BiasesLayer1')
+        output = tf.nn.sigmoid(tf.matmul(h, w3) + b3)
         output = tf.reshape(output, [-1])
         return output
     
@@ -44,7 +48,11 @@ class NoiseVarianceModel(object):
         optimizer = tfestimator.clip_gradients_by_norm(optimizer, config['max_grad_norm'])
         self._train_op = optimizer.minimize(cost, global_step=tf.train.get_or_create_global_step())
             
-
+    
+    @property
+    def keep_prob(self):
+        return self._keep_prob
+    
     @property
     def cost(self):
         return self._cost
@@ -61,7 +69,3 @@ class NoiseVarianceModel(object):
     def predictions(self):
         return self._predictions
     
-    @property
-    def inputs(self):
-        return self._inputs
-        

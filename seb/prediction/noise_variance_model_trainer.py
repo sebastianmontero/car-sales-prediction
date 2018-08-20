@@ -80,8 +80,8 @@ class NoiseVarianceModelTrainer():
             
             with tf.variable_scope("Model", reuse=None, initializer=initializer): 
                 m = NoiseVarianceModel(config=config, inputs=inputs, targets=targets, num_features=reader.num_features)
-            tf.summary.scalar('Training Loss', m.cost)
-            tf.summary.scalar('Learning Rate', m.lr)
+            #tf.summary.scalar('Training Loss', m.cost)
+            #tf.summary.scalar('Learning Rate', m.lr)
                             
             saver = tf.train.Saver()    
             with tf.Session(config=tf.ConfigProto(allow_soft_placement=False)) as session:
@@ -91,7 +91,7 @@ class NoiseVarianceModelTrainer():
                 else:
                     session.run(tf.global_variables_initializer())
                 
-                merged = tf.summary.merge_all()
+                #merged = tf.summary.merge_all()
                 train_writer = tf.summary.FileWriter(save_path, session.graph)
                 
                 train_error = 0
@@ -104,15 +104,21 @@ class NoiseVarianceModelTrainer():
                     learning_rate =  session.run(m.lr)
                     #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                     global_step = session.run(tf.train.get_global_step())
+                    summary = tf.Summary(value=[tf.Summary.Value(tag='train_cost', simple_value=train_error)])
+                    train_writer.add_summary(summary, global_step)
                     #train_writer.add_summary(session.run(merged), global_step)
                     #print('train predictions: ', predictions)
                     print('Train Step: {:d} Maximum likelihood cost: {:.5f} Learning rate: {:.5f}'.format(global_step, train_error, learning_rate))
-                
+                    
+                    if (i + 1) % 50 == 0:
+                        test_error, predictions = self._run_epoch(session, m, iterator_init_op=test_iterator_init_op)
+                        #print('test predictions: ', predictions)
+                        summary = tf.Summary(value=[tf.Summary.Value(tag='test_cost', simple_value=test_error)])
+                        train_writer.add_summary(summary, global_step)
+                        print('Test Step: {:d} Maximum likelihood cost: {:.5f}'.format(global_step, test_error))
+                    
                 train_writer.close()
-                test_error, predictions = self._run_epoch(session, m, iterator_init_op=test_iterator_init_op)
                 
-                #print('test predictions: ', predictions)
-                print('Test Step: {:d} Maximum likelihood cost: {:.5f}'.format(global_step, test_error))
                 
             
                 name_dict = {'global_step':global_step, 'error':test_error}
@@ -123,21 +129,22 @@ class NoiseVarianceModelTrainer():
         
         
         fetches ={
-            'inputs': model.inputs,
             'cost': model.cost,
             'predictions': model.predictions
         }
         
+        feed_dict={}
+        
         if eval_op is not None:
             fetches['eval_op'] = eval_op
-        
+            feed_dict={model.keep_prob:self._config['keep_prob']}
         try:
             session.run(iterator_init_op)
             step = 1
             costs = 0.
             predictions = []
             while(True):
-                vals = session.run(fetches)
+                vals = session.run(fetches, feed_dict=feed_dict)
                 cost = vals['cost']
                 predictions.append(vals['predictions'])
                 costs += cost
@@ -164,7 +171,7 @@ class NoiseVarianceModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = NoiseVarianceModelTrainer({'max_epoch' : 2000, 'batch_size':20})
+modelTrainer = NoiseVarianceModelTrainer({'max_epoch' : 10000, 'batch_size':20})
 modelTrainer.train()
             
         
