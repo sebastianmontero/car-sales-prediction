@@ -15,6 +15,7 @@ import export_utils
 
 from tensorflow.python.client import device_lib
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"  
 
 OPTIMIZERS = {
     'adam': tf.train.AdamOptimizer,
@@ -73,7 +74,7 @@ class NoiseVarianceModelTrainer():
             'mse_not_improved_threshold': 3,
             'batch_size': 5,
             'optimizer': OPTIMIZERS['adagrad'],
-            'save_path': '/home/sebastian/Documents/python/model-storage/noise-variance-model/'
+            'save_path': '/home/nishilab/Documents/python/model-storage/noise-variance-model/'
         }    
         return config    
             
