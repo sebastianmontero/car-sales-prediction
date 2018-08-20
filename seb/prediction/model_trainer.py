@@ -18,7 +18,8 @@ from tensorflow.python.client import device_lib
 
 from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
 from evaluator import Evaluator
-from storage_manager import StorageManager, StorageManagerType, PickleAction 
+from storage_manager import StorageManager, StorageManagerType, PickleAction
+from tensorflow_utils import TensorflowUtils
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -82,7 +83,7 @@ class ModelTrainer():
             if verbose:
                 print('{:.3f} Mean Squared Error: {:.5f}'.format(
                     step * 1.0 / epoch_size, 
-                     np.exp(costs/step)))
+                     costs/step))
         
         predictions = np.split(np.concatenate(predictions), model.batch_size,axis=1)
         predictions = np.reshape(np.concatenate(predictions), [-1,1])       
@@ -191,8 +192,6 @@ class ModelTrainer():
                     with tf.variable_scope("Model", reuse=None, initializer=initializer):
                         generator = reader.get_generator(config['batch_size'], config['num_steps']) 
                         m = Model(stage=ModelStage.TRAIN, config=config, generator=generator)
-                    tf.summary.scalar('Training Loss', m.cost)
-                    tf.summary.scalar('Learning Rate', m.lr)
                 
                 with tf.name_scope('Test'):
                     generator = reader.get_generator(eval_config['batch_size'], eval_config['num_steps'], for_test=True)
@@ -231,7 +230,6 @@ class ModelTrainer():
                     else:
                         session.run(tf.global_variables_initializer())
                     
-                    merged = tf.summary.merge_all()
                     train_writer = tf.summary.FileWriter(save_path, session.graph)
                     
                     min_mse = session.run(min_mse_tf)
@@ -246,7 +244,8 @@ class ModelTrainer():
                         learning_rate =  session.run(m.lr)
                         #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                         global_step = session.run(tf.train.get_global_step())
-                        train_writer.add_summary(session.run(merged), global_step)
+                        train_writer.add_summary(TensorflowUtils.summary_value('Train Loss', train_mse), global_step)
+                        train_writer.add_summary(TensorflowUtils.summary_value('Learning Rate', train_mse), global_step)
                         
                         if min_mse < 0 or train_mse < min_mse:
                             min_mse = train_mse
@@ -262,11 +261,14 @@ class ModelTrainer():
                         if mse_not_improved_count > config['mse_not_improved_threshold']:
                             learning_rate = learning_rate * config['lr_decay']
                             m.assign_lr(session, learning_rate)
+                            
                     
-                    train_writer.close()
+                    
                     print('Train Step: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(global_step, train_mse, learning_rate))            
                     test_mse, predictions = self._run_epoch(session, mtest)
                     test_predictions.append(predictions[-1])
+                    train_writer.add_summary(TensorflowUtils.summary_value('Test Loss', test_mse), global_step)
+                    train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True))
                     #evaluator.plot_real_target_vs_predicted()
