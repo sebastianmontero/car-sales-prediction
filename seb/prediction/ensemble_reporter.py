@@ -44,8 +44,6 @@ class EnsembleReporter():
     
     def store_noise_variance_dataset(self, suffix):
         dataset = self.get_ensemble_evaluator().get_noise_variance_dataset()
-        print(dataset)
-        print(dataset.dtypes)
         dataset.to_sql(name='month_noise_variance_' + suffix, con=DBManager.get_engine(), if_exists='replace', index=False)
         
         
