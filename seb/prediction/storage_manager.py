@@ -44,7 +44,7 @@ class StorageManager(object):
         return os.path.split(pickle)[1]
     
     def _sort_pickles_by_error(self, pickles):
-        pickles.sort(key=self._get_pickle_file_name)
+        pickles.sort(key=self._get_error_from_pickle)
     
     def _get_best_pickle(self, path=None, pickles=None):
         assert (path or pickles), "Either path or pickles must be specified"
