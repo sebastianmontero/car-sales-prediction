@@ -73,18 +73,8 @@ class BaseEvaluator(object):
             else:
                 plt.plot(range(num_months - len(vals), num_months), vals, label=(label))
         
-        '''y_show = math.fabs(((max_val - min_val) / max_val)) * 2    
-        
-        if y_show < 0.9:
-            y_range = math.fabs(max_val - min_val) * y_show
-            
-            if max_val <= 0:
-                plt.ylim(ymax=(min_val + y_range))
-            else:
-                plt.ylim(ymin=(max_val - y_range))'''
-        
         if yfix:
-            plt.ylim([math.ceil(min_val-0.5*(max_val-min_val)), math.ceil(max_val+0.5*(max_val-min_val))])
+            plt.ylim([min_val-0.5*(max_val-min_val), max_val+0.5*(max_val-min_val)])
         
         plt.ylabel(ylabel)
         plt.xticks(range(num_months), months, rotation='vertical')
