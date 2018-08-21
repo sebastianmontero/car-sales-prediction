@@ -49,12 +49,13 @@ ensemble_trainer = EnsembleTrainer({
                 'keep_prob' : grid_search([0.8, 0.9, 1.0]),
                 'layer_0' : grid_search([26, 29, 31, 34, 37]),
                 'max_epoch' : 2,
-                'window_size': 37,
+                'train_months': 36,
+                'prediction_size': 2,
                 'store_window' : False,
                 'included_features' : ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index'],
                 'num_steps': grid_search([12, 24])
-            }, repeats=3, description='nationwide_gs')
+            }, repeats=3, description='nationwide_2n')
 
 '''ensemble_trainer = EnsembleTrainer({
                 'line_id': 102,
