@@ -69,7 +69,8 @@ class EvaluatorActionMenu(ActionMenu):
         try:
             for path in self.paths:
                 evaluator = self._unpickle(path)
-                vals.append(getattr(evaluator, fn)())
+                attr = getattr(evaluator, fn)
+                vals.append(attr() if callable(attr) else attr)
         except AttributeError:
             print('Evaluator values do not have the requested value')
             return None
