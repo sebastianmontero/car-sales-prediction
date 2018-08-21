@@ -93,7 +93,7 @@ class Reader(object):
     def _process_data(self):
         
         self._raw_data = data_df = self._get_raw_data()
-        assert (data_df.shape[0] >= (self._window_size + self._prediction_size)), 'Data length: {} is smaller than window size + prediction_size: {}'.format(data_df.shape[0], (self._window_size + 1))
+        assert (data_df.shape[0] >= (self._window_size + 1)), 'Data length: {} is smaller than window size + 1 (Test Value): {}'.format(data_df.shape[0], (self._window_size + 1))
          
         self._start_month_id = int(data_df['month_id'][0])
         sales_np = data_df[['sales']].values.astype('float')
@@ -201,7 +201,7 @@ class Reader(object):
         return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(for_test))
     
     def get_end_window_pos(self, for_test=False):
-        return self._window_pos + self._window_size + (self._prediction_size if for_test else 0)
+        return self._window_pos + self._window_size + (1 if for_test else 0)
     
     def get_start_month_id(self):
         return Utils.add_months_to_month_id(self._start_month_id, self._window_pos)
