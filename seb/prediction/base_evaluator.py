@@ -8,6 +8,7 @@ import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import collections
 from multiprocessing import Process
 
 from utils import Utils
@@ -29,8 +30,8 @@ class BaseEvaluator(object):
     def reader(self):
         return self._reader
     
-    def _unscale_sales(self, sales):
-        return self._reader.unscale_sales(sales)
+    def _unscale_sales(self, sales, round_=True):
+        return self._reader.unscale_sales(sales, round_)
     
     def _run_in_new_process(self, target, args=()):
         p = Process(target=target, args=args)
@@ -44,11 +45,47 @@ class BaseEvaluator(object):
         vs['Real'] = real
         self._plot_by_month('Real', vs, ylabel, title)
         
-    def _plot_by_month(self, ref_key, series, ylabel, title):
-        months = self._get_months(len(series[ref_key]))
+    def _plot_by_month(self, ref_key, series, ylabel, title, yfix=False):
+        ref_vals = series[ref_key]
+        if isinstance(ref_vals, dict):
+            ref_vals = ref_vals['values']
+        months = self._get_months(len(ref_vals))
         num_months = len(months)
-        for label, vals in series.items():
-            plt.plot(range(num_months - len(vals), num_months), vals, label=(label))
+        
+        min_val = None
+        max_val = None
+        for label, obj in series.items():
+            vals = obj
+            plt_type = 'line'
+            if isinstance(obj, dict):
+                vals = obj['values']
+                plt_type = obj.get('type', 'line')
+            
+            tmin=min(vals)
+            tmax=max(vals)
+            if min_val is None or tmin < min_val:
+                min_val = tmin
+            if max_val is None or tmax > max_val:
+                max_val = tmax
+            
+            if plt_type == 'bar':
+                plt.bar(range(num_months - len(vals), num_months), vals, label=(label))
+            else:
+                plt.plot(range(num_months - len(vals), num_months), vals, label=(label))
+        
+        '''y_show = math.fabs(((max_val - min_val) / max_val)) * 2    
+        
+        if y_show < 0.9:
+            y_range = math.fabs(max_val - min_val) * y_show
+            
+            if max_val <= 0:
+                plt.ylim(ymax=(min_val + y_range))
+            else:
+                plt.ylim(ymin=(max_val - y_range))'''
+        
+        if yfix:
+            plt.ylim([math.ceil(min_val-0.5*(max_val-min_val)), math.ceil(max_val+0.5*(max_val-min_val))])
+        
         plt.ylabel(ylabel)
         plt.xticks(range(num_months), months, rotation='vertical')
         plt.title(title)

@@ -53,7 +53,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._max = self._get_max(predictions)
         self._lower, self._upper = self._calculate_interval(self._mean, self._std)
         self._mean_u = self._unscale_sales(self._mean)
-        self._std_u = self._unscale_sales(self._std, round=False)
+        self._std_u = self._unscale_sales(self._std, round_=False)
         self._min_u = self._unscale_sales(self._min)
         self._max_u = self._unscale_sales(self._max)
         self._lower_u = self._unscale_sales(self._lower)
@@ -160,5 +160,17 @@ class EnsembleEvaluator(BaseEvaluator):
         
     def plot_variance_errors(self):
         self._plot_variance_errors_new_process(self._model_variance, self._noise_variance, 'variance', 'Model and Noise Variance')
+    
+    def _plot_std_new_process(self, std, ylabel, title):
+        self._run_in_new_process(target=self._plot_std, args=(std, ylabel, title))
+        
+    def _plot_std(self, std, ylabel, title):
+        self._plot_by_month('Standard Deviation',{'Standard Deviation':{'values': std, 'type': 'bar'}}, ylabel, title, yfix=True)
+        
+    def plot_scaled_std(self):
+        self._plot_std_new_process(self.get_std(scaled=True),'Standard Deviation', 'Scaled Standard Deviation')
+    
+    def plot_real_std(self):
+        self._plot_std_new_process(self.get_std(scaled=False),'Standard Deviation', 'Real Standard Deviation')
     
     
