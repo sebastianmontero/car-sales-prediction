@@ -53,6 +53,6 @@ class EnsembleReporter():
             
     @classmethod
     def find_ensemble_runs(cls, path):
-        return Utils.search_paths(path, EnsembleConfig.BASE_DIR_PREFIX + '*', recursive=True, sort=True)
+        return Utils.search_paths(path, EnsembleConfig.BASE_DIR_PREFIX + '*', recursive=False, sort=True)
 
 

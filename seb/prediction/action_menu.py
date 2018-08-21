@@ -24,6 +24,10 @@ class ActionMenu():
         self._sm = sm
         self._config_sm = config_sm
         self._pprint = pprint.PrettyPrinter()
+        
+    @property
+    def paths(self):
+        return self._paths
    
     def add_main_menu_actions(self, subparser):
         raise NotImplementedError("Subclasses must implement this method")

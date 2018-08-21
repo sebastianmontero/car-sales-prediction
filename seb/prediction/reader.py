@@ -93,7 +93,7 @@ class Reader(object):
     def _process_data(self):
         
         self._raw_data = data_df = self._get_raw_data()
-        assert (data_df.shape[0] >= (self._window_size + self._prediction_size)), 'Data length: {} is smaller than window size + 1: {}'.format(data_df.shape[0], (self._window_size + 1))
+        assert (data_df.shape[0] >= (self._window_size + self._prediction_size)), 'Data length: {} is smaller than window size + prediction_size: {}'.format(data_df.shape[0], (self._window_size + 1))
          
         self._start_month_id = int(data_df['month_id'][0])
         sales_np = data_df[['sales']].values.astype('float')

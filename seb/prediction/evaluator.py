@@ -11,7 +11,7 @@ from base_evaluator import BaseEvaluator
 
 class Evaluator(BaseEvaluator):
 
-    def __init__(self, reader, predictions, end_window_pos, global_step=-1):
+    def __init__(self, reader, predictions, end_window_pos, global_step=None):
         BaseEvaluator.__init__(self)
         self._reader = reader
         self._unscaled_predictions = self._reader.unscale_sales(predictions)
@@ -23,6 +23,10 @@ class Evaluator(BaseEvaluator):
     @property
     def predictions(self):
         return self._predictions
+    
+    @property
+    def global_step(self):
+        return self._global_step
     
     @property
     def unscaled_predictions(self):

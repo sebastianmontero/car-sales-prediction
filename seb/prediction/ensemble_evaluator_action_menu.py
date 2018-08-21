@@ -19,7 +19,7 @@ class EnsembleEvaluatorActionMenu(ActionMenu):
                 
         path_parser = subparser.add_parser('seneval', help='Select an ensemble evaluator')
         path_parser.add_argument('pos', help='Select an ensemble evaluator, specify position', type=int)
-        
+        path_parser.add_argument('--networks', '-n', required=False, help='Specifies the number of networks to use', dest='networks', type=int)
         
     def handle_command(self, cmd, command, base_path):
         if cmd == 'enevals':
@@ -27,11 +27,18 @@ class EnsembleEvaluatorActionMenu(ActionMenu):
             self._display_paths(base_path)
             return True
         elif cmd == 'seneval':
+            if command.networks:
+                if command.networks < 2:
+                    print('At least two networks must be selected')
+                    return
+                self._networks = command.networks
+            else:
+                self._networks = None         
             self._select_actor(command, base_path)
             return True
         
     def _get_actor(self):
-        return EnsembleReporter(self._path, overwrite=True).get_ensemble_evaluator()
+        return EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator()
     
     def _print_menu_options(self):
         print('[1] Plot target vs predicted real sales')

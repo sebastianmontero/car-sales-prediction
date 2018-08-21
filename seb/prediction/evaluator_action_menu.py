@@ -4,6 +4,7 @@ Created on Jul 2, 2018
 @author: nishilab
 '''
 import os
+import matplotlib.pyplot as plt
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType
 from action_menu import ActionMenu
@@ -21,6 +22,9 @@ class EvaluatorActionMenu(ActionMenu):
         path_parser = subparser.add_parser('seval', help='Select an evaluator')
         path_parser.add_argument('pos', help='Select an evaluator, specify position', type=int)
         
+        path_parser = subparser.add_parser('vevals', help='Plot value for all evals')
+        path_parser.add_argument('value', help='Value to plot ', type=str)
+        
         
     def handle_command(self, cmd, command, base_path):
         if cmd == 'evals':
@@ -31,9 +35,51 @@ class EvaluatorActionMenu(ActionMenu):
         elif cmd == 'seval':
             self._select_actor(command, base_path)
             return True
+        elif cmd == 'vevals':
+            self._evals_plot(command.value)
+            return True
+    
+    def _evals_plot(self, value):
         
+        if len(self.paths) == 0:
+            print('No evals. evals command must be used before fevals command')
+            return
+        
+        
+        value_map = {
+            'gs': {'fn':'global_step', 'name':'Global Step'},
+            'rme': {'fn':'real_relative_mean_error', 'name':'Real Relative Mean Error'},
+            'srme': {'fn':'scaled_relative_mean_error', 'name':'Scaled Relative Mean Error'},
+            'ame': {'fn':'real_absolute_mean_error', 'name':'Real Absolute Mean Error'},
+            'same': {'fn':'scaled_absolute_mean_error', 'name': 'Scaled Absolute Mean Error'}
+        }
+        
+        obj = value_map[value]
+        values = self._get_evals_value(obj['fn'])
+        
+        if values:
+            plt.plot(values)
+            plt.title(obj['name'])
+            plt.show()
+        
+        
+    def _get_evals_value(self, fn):
+        vals = []
+        
+        try:
+            for path in self.paths:
+                evaluator = self._unpickle(path)
+                vals.append(getattr(evaluator, fn)())
+        except AttributeError:
+            print('Evaluator values do not have the requested value')
+            return None
+        return vals
+            
+    def _unpickle(self, path):
+        return self._sm.unpickle(path)
+    
     def _get_actor(self):
-        return self._sm.unpickle(self._path)
+        return self._unpickle(self._path)
     
     def _print_menu_options(self):
         print('[1] Plot target vs predicted real sales')

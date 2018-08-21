@@ -8,7 +8,6 @@ import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-import collections
 from multiprocessing import Process
 
 from utils import Utils
