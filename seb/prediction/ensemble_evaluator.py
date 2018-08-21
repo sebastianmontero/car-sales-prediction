@@ -53,7 +53,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._max = self._get_max(predictions)
         self._lower, self._upper = self._calculate_interval(self._mean, self._std)
         self._mean_u = self._unscale_sales(self._mean)
-        self._std_u = self._unscale_sales(self._std)
+        self._std_u = self._unscale_sales(self._std, round=False)
         self._min_u = self._unscale_sales(self._min)
         self._max_u = self._unscale_sales(self._max)
         self._lower_u = self._unscale_sales(self._lower)
@@ -114,7 +114,6 @@ class EnsembleEvaluator(BaseEvaluator):
         data = self._reader.get_data(self._end_window_pos, self._window_length, scaled=True).reset_index(drop=True)
         data = data.join(pd.DataFrame({'variance':self._noise_variance}))
         return data;
-    
     
     def _plot_target_vs_mean_best_new_process(self, real, mean, best, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_best, args=(real, mean, best, ylabel, title))
