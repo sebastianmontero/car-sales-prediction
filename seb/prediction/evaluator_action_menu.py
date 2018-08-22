@@ -29,7 +29,7 @@ class EvaluatorActionMenu(ActionMenu):
     def handle_command(self, cmd, command, base_path):
         if cmd == 'evals':
             exclude_filter = None if command.show_windows else 'w-\d{6}-\d{6}'
-            self._paths = self._sm.get_pickles(base_path, command.filter, recursive=True, exclude_filter=exclude_filter)
+            self._paths = self._sm.get_pickles(base_path, command.filter, recursive=1, exclude_filter=exclude_filter)
             self._display_paths(base_path)
             return True
         elif cmd == 'seval':

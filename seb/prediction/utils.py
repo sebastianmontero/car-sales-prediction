@@ -56,13 +56,27 @@ class Utils:
             
         return list_
 
+    '''
+        recursive can be boolean or an int if int it indicates the number of subdirs to explore under
+        the current path
+    ''' 
     @staticmethod
     def search_paths(base_path, path_end, recursive=False, sort=False, filter_=None, exclude_filter=None):
         
-        path_wild_card = '**' if recursive else ''
-        path = Utils.escape_brackets(base_path)
-        path = os.path.join(path, path_wild_card, path_end)
-        paths = glob.glob(path, recursive=recursive)
+        base_path = Utils.escape_brackets(base_path)
+        if isinstance(recursive, bool):    
+            path_wild_card = '**' if recursive else ''
+            path = os.path.join(base_path, path_wild_card, path_end)
+            paths = glob.glob(path, recursive=recursive)
+        else:
+            paths = []
+            path_wild_card = ''
+            for _ in range(recursive + 1):
+                path = os.path.join(base_path, path_wild_card, path_end)
+                paths += glob.glob(path)
+                path_wild_card +='*/'
+            
+        
         paths = Utils.filter_list(paths, filter_, exclude_filter)
             
         if sort:
