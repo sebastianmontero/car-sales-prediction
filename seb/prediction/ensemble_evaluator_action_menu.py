@@ -38,7 +38,7 @@ class EnsembleEvaluatorActionMenu(ActionMenu):
             return True
         
     def _get_actor(self):
-        return EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator()
+        return EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(find_best_ensemble=True)
     
     def _print_menu_options(self):
         print('[1] Plot target vs predicted real sales')

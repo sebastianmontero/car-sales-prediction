@@ -4,9 +4,6 @@ Created on Jun 15, 2018
 @author: nishilab
 '''
 
-import math
-import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import pandas as pd
 
@@ -16,9 +13,11 @@ from scipy.stats import t
 
 class EnsembleEvaluator(BaseEvaluator):
 
-    def __init__(self, evaluators):
+    def __init__(self, evaluators, find_best_ensemble=False):
         BaseEvaluator.__init__(self)
-        assert (len(evaluators) > 0), "There must be at least one evaluator in the ensemble"
+        if find_best_ensemble:
+            evaluators = self._find_best_ensemble(evaluators)
+        assert (len(evaluators) > 1), "There must be at least two evaluators in the ensemble"
         best_network = evaluators[0]
         self._quantile = 0.975 #0.95 confidence interval 
         self._best_network = best_network
@@ -42,6 +41,25 @@ class EnsembleEvaluator(BaseEvaluator):
         self._upper_u = None
         
         self._process_evaluators(evaluators)
+        
+    def _find_best_ensemble(self, evaluators):
+        best = []
+        candidate_pos = 0
+        rme = evaluators[0].real_relative_mean_error()
+        while len(evaluators) > 0 and candidate_pos is not None:
+            best.append(evaluators[candidate_pos])
+            del evaluators[candidate_pos]
+            print('Chosen: ', candidate_pos)
+            candidate_pos = None
+            print('Current best relative mean error: {}, networks: {}'.format(rme, len(best)))
+            for pos, evaluator in enumerate(evaluators):
+                ensemble = EnsembleEvaluator([evaluator] + best)
+                erme = ensemble.real_relative_mean_error()
+                if erme < rme:
+                    candidate_pos = pos
+                    rme = erme
+                    
+        return best
         
     def _process_evaluators(self, evaluators):
         predictions = self._generate_predictions_array(evaluators)
