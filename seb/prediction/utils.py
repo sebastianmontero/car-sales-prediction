@@ -63,6 +63,8 @@ class Utils:
     @staticmethod
     def search_paths(base_path, path_end, recursive=False, sort=False, filter_=None, exclude_filter=None):
         
+        max_subdirs = 5
+        
         base_path = Utils.escape_brackets(base_path)
         if isinstance(recursive, bool):    
             path_wild_card = '**' if recursive else ''
@@ -71,11 +73,17 @@ class Utils:
         else:
             paths = []
             path_wild_card = ''
-            for _ in range(recursive + 1):
+            for i in range(max_subdirs):
                 path = os.path.join(base_path, path_wild_card, path_end)
-                paths += glob.glob(path)
+                tpaths = glob.glob(path)
+                paths += tpaths
+                if isinstance(recursive, int):
+                    if i >= recursive:
+                        break;
+                else:
+                    if len(tpaths) > 0 and tpaths[0].find(recursive):
+                        break;
                 path_wild_card +='*/'
-            
         
         paths = Utils.filter_list(paths, filter_, exclude_filter)
             
