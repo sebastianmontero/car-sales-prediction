@@ -49,9 +49,9 @@ class EnsembleEvaluator(BaseEvaluator):
         while len(evaluators) > 0 and candidate_pos is not None:
             best.append(evaluators[candidate_pos])
             del evaluators[candidate_pos]
-            print('Chosen: ', candidate_pos)
+            #print('Chosen: ', candidate_pos)
             candidate_pos = None
-            print('Current best relative mean error: {}, networks: {}'.format(rme, len(best)))
+            #print('Current best relative mean error: {}, networks: {}'.format(rme, len(best)))
             for pos, evaluator in enumerate(evaluators):
                 ensemble = EnsembleEvaluator([evaluator] + best)
                 erme = ensemble.real_relative_mean_error()
