@@ -54,7 +54,7 @@ ensemble_trainer = EnsembleTrainer({
                 'store_window' : False,
                 'included_features' : ['inflation_index_roc_prev_month',
                                       'manufacturing_confidence_index'],
-                'num_steps': [12, 24]
+                'num_steps': grid_search([12, 24])
             }, repeats=4, description='platform_26_37')
 
 '''ensemble_trainer = EnsembleTrainer({
