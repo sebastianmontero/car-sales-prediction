@@ -13,6 +13,7 @@ class Evaluator(BaseEvaluator):
 
     def __init__(self, reader, predictions, end_window_pos, global_step=None):
         BaseEvaluator.__init__(self)
+        #print(predictions)
         self._reader = reader
         self._unscaled_predictions = self._reader.unscale_sales(predictions)
         self._predictions = np.reshape(predictions, [-1])

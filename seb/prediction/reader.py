@@ -6,6 +6,7 @@ Created on Jun 11, 2018
 import math
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+import tensorflow as tf
 import numpy as np
 from utils import Utils
 from generator import Generator
@@ -43,6 +44,7 @@ class Reader(object):
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
+        self._num_predicted_vars = len(self._included_features) + 1
         self._init_fleeting_vars()
         
     def _init_fleeting_vars(self):
@@ -195,7 +197,7 @@ class Reader(object):
         return self._window_pos < self._num_windows
     
     def get_generator(self, batch_size, num_steps, for_test=False):
-        return Generator(self._get_data(for_test).values, batch_size, num_steps, self._prediction_size)
+        return Generator(self._get_data(for_test).values, batch_size, num_steps, self._num_predicted_vars, self._prediction_size)
     
     def get_window_name(self, for_test=False):
         return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(for_test))
@@ -233,7 +235,7 @@ reader = Reader(13, 36, features)
 
 reader.next_window()
 
-generator = reader.get_generator(2, 3, False)
+generator = reader.get_generator(1, 3, False)
 x, y = generator.get_data()
 
 with tf.Session() as sess:

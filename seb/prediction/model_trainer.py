@@ -22,11 +22,12 @@ from storage_manager import StorageManager, StorageManagerType, PickleAction
 from tensorflow_utils import TensorflowUtils
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='small', type=str, required=False, help="A type of model. Possible options are: small, medium, large.")
 parser.add_argument('--use_fp16', default=False, type=bool, required=False, help="Train using 16 bits floats instead of 32 bits")
-parser.add_argument('--num_gpus', default=1, type=int, required=False, help="If larger than 1, Grappler AutoParallel optimizer "
+parser.add_argument('--num_gpus', default=0, type=int, required=False, help="If larger than 1, Grappler AutoParallel optimizer "
                      "will create multiple training replicas with each GPU "
                      "running one replica.")
 parser.add_argument('--rnn_mode', default=None, type=str, required=False, help="The low level implementation of lstm cell: one of CUDNN, "
@@ -78,7 +79,8 @@ class ModelTrainer():
             vals = session.run(fetches, feed_dict)
             cost = vals['cost']
             state = vals['final_state']
-            predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size]))
+            predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size, model.generator.num_predicted_vars]))
+            
             costs += cost
             if verbose:
                 print('{:.3f} Mean Squared Error: {:.5f}'.format(
@@ -86,7 +88,8 @@ class ModelTrainer():
                      costs/step))
         
         predictions = np.split(np.concatenate(predictions), model.batch_size,axis=1)
-        predictions = np.reshape(np.concatenate(predictions), [-1,1])       
+        print(predictions)
+        predictions = np.reshape(np.concatenate(predictions), [-1,model.generator.num_predicted_vars])       
         return costs, predictions
 
     def _get_base_config(self):
@@ -273,8 +276,8 @@ class ModelTrainer():
                     train_writer.add_summary(TensorflowUtils.summary_value('Test Loss', test_mse), global_step)
                     train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
-                    evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True), global_step)
-                    #evaluator.plot_real_target_vs_predicted()
+                    evaluator = Evaluator(reader, np.take(predictions,[0], axis=1), reader.get_end_window_pos(True), global_step)
+                    evaluator.plot_real_target_vs_predicted()
                     current_test_absolute_error = evaluator.window_real_absolute_mean_error()
                     best_test_absolute_error = session.run(test_absolute_error_tf)
                 
@@ -311,8 +314,8 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({'max_epoch' : 300, 'line_id':13, 'train_months':49, 'prediction_size':3})
-#modelTrainer.train()
+modelTrainer = ModelTrainer({'max_epoch' : 300, 'line_id':13, 'train_months':51, 'prediction_size':1})
+modelTrainer.train()
             
         
         
