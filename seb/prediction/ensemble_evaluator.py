@@ -77,6 +77,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._lower_u = self._unscale_sales(self._lower)
         self._upper_u = self._unscale_sales(self._upper)
         
+        
     @property
     def best_network(self):
         return self._best_network
@@ -121,6 +122,9 @@ class EnsembleEvaluator(BaseEvaluator):
     
     def get_max(self, scaled=False):
         return self._max if scaled else self._max_u
+    
+    def get_min_max_range(self, scaled=False):
+        return np.subtract(self.get_max(scaled), self.get_min(scaled))
     
     def get_lower(self, scaled=False):
         return self._lower if scaled else self._lower_u
@@ -191,4 +195,15 @@ class EnsembleEvaluator(BaseEvaluator):
     def plot_real_std(self):
         self._plot_std_new_process(self.get_std(scaled=False),'Standard Deviation', 'Real Standard Deviation')
     
+    def _plot_min_max_range_new_process(self, mm_range, ylabel, title):
+        self._run_in_new_process(target=self._plot_min_max_range, args=(mm_range, ylabel, title))
+        
+    def _plot_min_max_range(self, mm_range, ylabel, title):
+        self._plot_by_month('Min Max Range',{'Min Max Range':{'values': mm_range, 'type': 'bar'}}, ylabel, title, yfix=True)
+        
+    def plot_scaled_min_max_range(self):
+        self._plot_min_max_range_new_process(self.get_min_max_range(scaled=True),'Min Max Range', 'Scaled Min Max Range')
+    
+    def plot_real_min_max_range(self):
+        self._plot_min_max_range_new_process(self.get_min_max_range(scaled=False),'Min Max Range', 'Real Min Max Range')
     

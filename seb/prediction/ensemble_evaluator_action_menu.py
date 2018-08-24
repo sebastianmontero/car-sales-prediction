@@ -66,6 +66,8 @@ class EnsembleEvaluatorActionMenu(ActionMenu):
         print('[23] Plot real standard deviation')
         print('[24] Plot scaled standard deviation')
         print('[25] Plot variance errors')
+        print('[26] Plot real min max range')
+        print('[27] Plot scaled min max range')
                                     
     def _perform_action(self, action, params):
         if action == 1:
@@ -118,6 +120,10 @@ class EnsembleEvaluatorActionMenu(ActionMenu):
             self._actor.plot_scaled_std()
         elif action == 25:
             self._actor.plot_variance_errors()
+        elif action == 26:
+            self._actor.plot_real_min_max_range()
+        elif action == 27:
+            self._actor.plot_scaled_min_max_range()
         else:
             raise ValueError('Unknown action')
             
