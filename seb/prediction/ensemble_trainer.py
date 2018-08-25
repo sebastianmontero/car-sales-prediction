@@ -31,7 +31,7 @@ class EnsembleTrainer():
             experiment_name : {
                 'run': 'car_sales_prediction_trainable',
                 'trial_resources': {'cpu': 8, 'gpu': 1},
-                'stop': {'training_iteration': 70},
+                'stop': {'training_iteration': 80},
                 'config' : self._config,
                 'repeat':self._repeats,
                 'local_dir': self._ray_results_dir
@@ -47,7 +47,7 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
 ensemble_trainer = EnsembleTrainer({
                 'line_id': 102,
                 'keep_prob' : grid_search([0.9, 1.0]),
-                'layer_0' : grid_search([26, 29, 31, 34, 37]),
+                'layer_0' : grid_search([23, 26, 29, 31, 34, 37]),
                 'max_epoch' : 2,
                 'train_months': 36,
                 'prediction_size': 1,
@@ -55,7 +55,7 @@ ensemble_trainer = EnsembleTrainer({
                 'included_features' : ['inflation_index_roc_prev_month',
                                       'manufacturing_confidence_index'],
                 'num_steps': grid_search([12, 24])
-            }, repeats=4, description='platform_26_37')
+            }, repeats=5, description='platform_23_37')
 
 '''ensemble_trainer = EnsembleTrainer({
                 'line_id': 102,
