@@ -41,6 +41,7 @@ class Reader(object):
         self._prediction_size = prediction_size
         self._scale_features, self._dont_scale_features = self._group_included_features(included_features)
         self._included_features = np.concatenate((self._scale_features, self._dont_scale_features))
+        self._scale_features = ['sales'] + self._scale_features
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
@@ -50,7 +51,6 @@ class Reader(object):
     def _init_fleeting_vars(self):
         self._engine = DBManager.get_engine()
         self._scaler = MinMaxScaler((-1,1))
-        self._sales_scaler = MinMaxScaler((-1,1))
         self._data = None
         self._start_month_id = None
         self._raw_data = None
@@ -61,7 +61,6 @@ class Reader(object):
         state = self.__dict__.copy()
         del state['_engine']
         del state['_scaler']
-        del state['_sales_scaler']
         del state['_data']
         del state['_raw_data']
         del state['_start_month_id']
@@ -98,31 +97,22 @@ class Reader(object):
         assert (data_df.shape[0] >= (self._window_size + 1)), 'Data length: {} is smaller than window size + 1 (Test Value): {}'.format(data_df.shape[0], (self._window_size + 1))
          
         self._start_month_id = int(data_df['month_id'][0])
-        sales_np = data_df[['sales']].values.astype('float')
         
-        data_np = data_df[self._scale_features].values #get non month cols 
+        data_np = data_df[self._scale_features].values.astype('float') #get non month cols 
         
         month_np = self._process_month(data_df[['month_id']].copy())
         
-        fit_sales_np = sales_np[:self._window_size]
-        fit_sales_np = self._add_scaler_fit_domain_values(['sales'], fit_sales_np)
-        self._sales_scaler.fit(fit_sales_np)
+        fit_data_np = data_np[:self._window_size]
+        fit_data_np = self._add_scaler_fit_domain_values(self._scale_features, fit_data_np)
+        self._scaler.fit(fit_data_np)
+        data_np = self._scaler.transform(data_np)
         
-        if len(self._scale_features) > 0:
-            fit_data_np = data_np[:self._window_size]
-            fit_data_np = self._add_scaler_fit_domain_values(self._scale_features, fit_data_np)
-            self._scaler.fit(fit_data_np)
-            data_np = self._scaler.transform(data_np)
-        
-        sales_np = self._sales_scaler.transform(sales_np)
-        
-        
-        data_np = np.concatenate((month_np, sales_np, data_np, data_df[self._dont_scale_features].values), axis=1)
+        data_np = np.concatenate((month_np, data_np, data_df[self._dont_scale_features].values), axis=1)
         
         self._data = pd.DataFrame(data_np, columns=self._features, dtype=np.float32)
         
     def _group_included_features(self, included_features):
-        scale = ['sales']
+        scale = []
         dont_scale = []
         for feature in included_features:
             if feature in self.scale_features:
@@ -211,16 +201,14 @@ class Reader(object):
     def get_end_month_id(self, for_test=False):
         return Utils.add_months_to_month_id(self._start_month_id, self.get_end_window_pos(for_test))
     
-    def unscale_sales(self, sales, round_=True):
-        if not isinstance(sales[0], list):
-            sales = np.reshape(sales,[-1,1])
-            
-        unscaled = self._sales_scaler.inverse_transform(sales)
-        unscaled = np.reshape(unscaled, [-1])
-        
-        if round_:
-            unscaled = [round(max(prediction,0)) for prediction in unscaled]
-        return unscaled
+    def unscale_features(self, features, round_sales=True):
+        features = np.array(features)
+        scaled_features = features[:,:len(self._scale_features)]
+        unscaled = self._scaler.inverse_transform(scaled_features)
+        if round_sales:
+            for l in unscaled:
+                l[0] = round(max(l[0],0))
+        return np.concatenate((unscaled, features[:,len(self._scale_features):]), axis=1).tolist()
         
         
     
@@ -232,10 +220,11 @@ class Reader(object):
 '''features = ['interest_rate', 'exchange_rate', 'energy_price_index_roc_prev_month','energy_price_index_roc_start_year']
 reader = Reader(13, 36, features)
 
+print(reader.get_data(36, 36))
 
 reader.next_window()
 
-generator = reader.get_generator(1, 3, False)
+generator = reader.get_generator(1, 40, False)
 x, y = generator.get_data()
 
 with tf.Session() as sess:
@@ -243,6 +232,10 @@ with tf.Session() as sess:
         vals = sess.run({'x':x, 'y': y})
         print('x value:')
         print(vals['x'])
+        print('')
+        print('')
+        x_vals = np.reshape(vals['x'], (-1, 7))
+        print(np.array(reader.unscale_features(np.take(x_vals, [2,3,4,5,6], axis=1), round_sales=True)))
         print('')
         print('')
         print('y value:')
