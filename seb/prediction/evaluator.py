@@ -15,8 +15,8 @@ class Evaluator(BaseEvaluator):
         BaseEvaluator.__init__(self)
         #print(predictions)
         self._reader = reader
-        self._unscaled_predictions = self._reader.unscale_sales(predictions)
-        self._predictions = np.reshape(predictions, [-1])
+        self._unscaled_predictions = self._unscale_features(predictions)
+        self._predictions = predictions
         self._end_window_pos = end_window_pos
         self._window_length = len(predictions)
         self._global_step = global_step
@@ -33,5 +33,5 @@ class Evaluator(BaseEvaluator):
     def unscaled_predictions(self):
         return self._unscaled_predictions
     
-    def get_predictions(self, scaled=False):
-        return self._predictions if scaled else self._unscaled_predictions
+    def get_predictions(self, feature_pos, scaled=False):
+        return self._predictions[feature_pos] if scaled else self._unscaled_predictions[feature_pos]

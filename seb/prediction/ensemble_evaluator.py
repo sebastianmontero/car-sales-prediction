@@ -111,8 +111,8 @@ class EnsembleEvaluator(BaseEvaluator):
     def _get_max(self, predictions):
         return np.amax(predictions, axis=0)
         
-    def get_predictions(self, scaled=False):
-        return self._mean if scaled else self._mean_u
+    def get_predictions(self, feature_pos=0, scaled=False):
+        return self._mean[feature_pos] if scaled else self._mean_u[feature_pos]
     
     def get_std(self, scaled=False):
         return self._std if scaled else self._std_u

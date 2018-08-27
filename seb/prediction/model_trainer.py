@@ -275,8 +275,8 @@ class ModelTrainer():
                     train_writer.add_summary(TensorflowUtils.summary_value('Test Loss', test_mse), global_step)
                     train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
-                    evaluator = Evaluator(reader, np.take(predictions,[0], axis=1), reader.get_end_window_pos(True), global_step)
-                    evaluator.plot_real_target_vs_predicted()
+                    evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True), global_step)
+                    evaluator.plot_target_vs_predicted()
                     current_test_absolute_error = evaluator.window_real_absolute_mean_error()
                     best_test_absolute_error = session.run(test_absolute_error_tf)
                 
@@ -294,10 +294,10 @@ class ModelTrainer():
                     self._checkpoint(saver, session, save_path, True, **name_dict)
                     
         evaluator = Evaluator(reader, test_predictions, -1, global_step)
-        evaluator_sm.pickle(evaluator, config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
-        config_sm.pickle(config, config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
+        evaluator_sm.pickle(evaluator, config['save_path'], evaluator.absolute_mean_error(), PickleAction.BEST)
+        config_sm.pickle(config, config['save_path'], evaluator.absolute_mean_error(), PickleAction.BEST)
         print()
-        print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
+        print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.absolute_mean_error(), evaluator.relative_mean_error()))
         print()
         return evaluator
     

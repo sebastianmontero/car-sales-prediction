@@ -45,7 +45,8 @@ class Reader(object):
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
-        self._num_predicted_vars = len(self._included_features) + 1
+        self._predicted_vars = np.concatenate((self._scale_features, self._dont_scale_features))
+        self._num_predicted_vars = len(self._predicted_vars) + 1
         self._init_fleeting_vars()
         
     def _init_fleeting_vars(self):
@@ -78,6 +79,13 @@ class Reader(object):
     @property
     def window_pos(self):
         return self._window_pos
+    
+    @property
+    def predicted_vars(self):
+        return self._predicted_vars
+    
+    def get_predicted_var_name(self, pos):
+        return self._predicted_vars[pos]
     
     def _get_raw_data(self):
         
