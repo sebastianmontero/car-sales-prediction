@@ -46,16 +46,16 @@ register_trainable('car_sales_prediction_trainable', ModelTrainable)
 
 ensemble_trainer = EnsembleTrainer({
                 'line_id': 102,
-                'keep_prob' : grid_search([0.9, 1.0]),
-                'layer_0' : grid_search([23, 26, 29, 31, 34, 37]),
+                'keep_prob' : grid_search([0.8, 0.9, 1.0]),
+                'layer_0' : grid_search([26, 29, 31, 34, 37]),
                 'max_epoch' : 2,
                 'train_months': 36,
                 'prediction_size': 1,
                 'store_window' : False,
                 'included_features' : ['inflation_index_roc_prev_month',
                                       'manufacturing_confidence_index'],
-                'num_steps': grid_search([12, 24])
-            }, repeats=5, description='platform_23_37')
+                'num_steps': 40
+            }, repeats=5, description='platform_26_37_steps_40')
 
 '''ensemble_trainer = EnsembleTrainer({
                 'line_id': 102,
