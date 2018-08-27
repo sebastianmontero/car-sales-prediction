@@ -122,7 +122,7 @@ class Reader(object):
         self._data = pd.DataFrame(data_np, columns=self._features, dtype=np.float32)
         
     def _group_included_features(self, included_features):
-        scale = []
+        scale = ['sales']
         dont_scale = []
         for feature in included_features:
             if feature in self.scale_features:

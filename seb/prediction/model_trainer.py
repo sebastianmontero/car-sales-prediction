@@ -88,7 +88,6 @@ class ModelTrainer():
                      costs/step))
         
         predictions = np.split(np.concatenate(predictions), model.batch_size,axis=1)
-        print(predictions)
         predictions = np.reshape(np.concatenate(predictions), [-1,model.generator.num_predicted_vars])       
         return costs, predictions
 
@@ -101,7 +100,7 @@ class ModelTrainer():
             'init_scale': 0.1,
             'max_grad_norm': 5,
             'num_layers': 2,
-            'num_steps': 12,
+            'num_steps': 72,
             'hidden_size': 10,
             'max_epoch': 10,
             'keep_prob': 1,
@@ -109,7 +108,7 @@ class ModelTrainer():
             'mse_not_improved_threshold': 3,
             'batch_size': 1,
             'rnn_mode': ModelRNNMode.BLOCK,
-            'layers': [15],
+            'layers': [30],
             'error_weight': 1000000,
             'data_type': tf.float32,
             'save_path': '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/',
@@ -314,7 +313,7 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = ModelTrainer({'max_epoch' : 300, 'line_id':13, 'train_months':51, 'prediction_size':1})
+modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1})
 modelTrainer.train()
             
         
