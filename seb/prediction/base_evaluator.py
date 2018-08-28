@@ -29,6 +29,10 @@ class BaseEvaluator(object):
     def reader(self):
         return self._reader
     
+    @property
+    def predicted_vars(self):
+        return self.reader.predicted_vars
+    
     def _unscale_features(self, features, round_=True):
         return self._reader.unscale_features(features, round_)
     
@@ -132,7 +136,7 @@ class BaseEvaluator(object):
         return np.mean(np.absolute(self._calculate_relative_error(targets, predictions)))
         
     def _get_target_by_pos(self, target_pos, scaled=False, length=None):
-        return self._get_target_by_name(self.reader.get_predicted_var_name(target_pos), scaled, length)
+        return self._get_target(self.reader.get_predicted_var_name(target_pos), scaled, length)
 
     def _get_target(self, target, scaled=False, length=None):
         return self._get_data(scaled, length)[target].values
@@ -170,14 +174,14 @@ class BaseEvaluator(object):
         fname = ''
         
         for n in ns:
-            fname = n[0].capitalize() + n[1:] + ' '
+            fname += n[0].capitalize() + n[1:] + ' '
             
         return fname  
     
     def plot_target_vs_predicted(self, feature_pos=0, scaled=False, tail=False):
         feature_name = self.reader.get_predicted_var_name(feature_pos)
         self._plot_target_vs_predicted_new_process(self._get_target(feature_name, scaled=scaled, length=self._get_target_data_length(tail)), 
-                                                   self.get_predictions(), 
+                                                   self.get_predictions(feature_pos), 
                                                    self._format_name(feature_name), 'Real vs Predicted ' + self._generate_feature_name(feature_name, scaled)) 
     
     def plot_errors(self, feature_pos=0, scaled=False):

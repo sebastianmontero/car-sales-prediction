@@ -46,7 +46,7 @@ class Reader(object):
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
         self._predicted_vars = np.concatenate((self._scale_features, self._dont_scale_features))
-        self._num_predicted_vars = len(self._predicted_vars) + 1
+        self._num_predicted_vars = len(self._predicted_vars)
         self._init_fleeting_vars()
         
     def _init_fleeting_vars(self):

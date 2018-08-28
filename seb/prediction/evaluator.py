@@ -21,17 +21,13 @@ class Evaluator(BaseEvaluator):
         self._window_length = len(predictions)
         self._global_step = global_step
         
-    @property
-    def predictions(self):
-        return self._predictions
     
     @property
     def global_step(self):
         return self._global_step
     
-    @property
-    def unscaled_predictions(self):
-        return self._unscaled_predictions
+    def predictions(self, scaled=False):
+        return self._predictions if scaled else self._unscaled_predictions
     
     def get_predictions(self, feature_pos, scaled=False):
-        return self._predictions[feature_pos] if scaled else self._unscaled_predictions[feature_pos]
+        return np.take(self.predictions(scaled), feature_pos, axis=1)

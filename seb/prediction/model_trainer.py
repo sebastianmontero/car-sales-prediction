@@ -108,19 +108,13 @@ class ModelTrainer():
             'mse_not_improved_threshold': 3,
             'batch_size': 1,
             'rnn_mode': ModelRNNMode.BLOCK,
-            'layers': [30],
+            'layers': [70],
             'error_weight': 1000000,
             'data_type': tf.float32,
             'save_path': '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/',
-            'included_features': ['consumer_confidence_index',
-                                           'exchange_rate',
-                                           'interest_rate',
-                                           'manufacturing_confidence_index',
-                                           'economic_activity_index',
-                                           'energy_price_index_roc_prev_month',
-                                           'energy_price_index_roc_start_year',
-                                           'inflation_index_roc_prev_month',
-                                           'inflation_index_roc_start_year'],
+            'included_features': ['inflation_index_roc_prev_month',
+                                  'consumer_confidence_index',
+                                  'energy_price_index_roc_prev_month'],
             'store_window' : True # Whether the configuration and evaluator object should be saved for every window
         }
         
@@ -276,7 +270,9 @@ class ModelTrainer():
                     train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True), global_step)
-                    evaluator.plot_target_vs_predicted()
+                    #for pos,_ in enumerate(evaluator.predicted_vars):
+                    #    evaluator.plot_target_vs_predicted(pos)
+                    #print(evaluator.predicted_vars)
                     current_test_absolute_error = evaluator.window_real_absolute_mean_error()
                     best_test_absolute_error = session.run(test_absolute_error_tf)
                 
