@@ -84,6 +84,10 @@ class Reader(object):
     def predicted_vars(self):
         return self._predicted_vars
     
+    @property
+    def num_predicted_vars(self):
+        return self._num_predicted_vars
+    
     def get_predicted_var_name(self, pos):
         return self._predicted_vars[pos]
     

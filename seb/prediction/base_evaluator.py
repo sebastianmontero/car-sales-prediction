@@ -33,6 +33,16 @@ class BaseEvaluator(object):
     def predicted_vars(self):
         return self.reader.predicted_vars
     
+    @property
+    def num_predicted_vars(self):
+        return self.reader.num_predicted_vars
+    
+    def _get_predicted_var_name(self, feature_pos):
+        return self.reader.get_predicted_var_name(feature_pos)
+    
+    def _get_feature_values(self, data, feature_pos):
+        return np.take(data, feature_pos, axis=1)
+    
     def _unscale_features(self, features, round_=True):
         return self._reader.unscale_features(features, round_)
     
@@ -42,7 +52,6 @@ class BaseEvaluator(object):
     
     def _plot_target_vs_predicted_new_process(self, real, predictions, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_predicted, args=(real, predictions, ylabel, title))
-    
     
     def _plot_target_vs(self, real, vs, ylabel, title):
         vs['Real'] = real
@@ -153,6 +162,9 @@ class BaseEvaluator(object):
     def _get_months(self, length=None):
         return self._get_data(length=length)['month_id'].values
     
+    def get_predicted_targets(self, scaled=False):
+        return self._get_data(scaled)[self.predicted_vars].values
+    
     def _get_data(self, scaled=False, length=None):
         length = length if length else self._window_length
         return self._reader.get_data(self._end_window_pos, length, scaled)
@@ -183,10 +195,11 @@ class BaseEvaluator(object):
         return fname  
     
     def plot_target_vs_predicted(self, feature_pos=0, scaled=False, tail=False):
-        feature_name = self.reader.get_predicted_var_name(feature_pos)
+        feature_name = self._get_predicted_var_name(feature_pos)
+        formatted_feature_name = self._generate_feature_name(feature_name, scaled) 
         self._plot_target_vs_predicted_new_process(self._get_target(feature_name, scaled=scaled, length=self._get_target_data_length(tail)), 
-                                                   self.get_predictions(feature_pos), 
-                                                   self.format_name(feature_name), 'Real vs Predicted ' + self._generate_feature_name(feature_name, scaled)) 
+                                                   self.get_predictions(feature_pos, scaled), 
+                                                   formatted_feature_name, 'Real vs Predicted ' + formatted_feature_name) 
     
     def plot_errors(self, feature_pos=0, scaled=False):
         return self._calculate_and_plot_errors(feature_pos, scaled)

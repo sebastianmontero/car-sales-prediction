@@ -65,17 +65,17 @@ class EnsembleEvaluator(BaseEvaluator):
         predictions = self._generate_predictions_array(evaluators)
         self._mean = self._calculate_mean(predictions)
         self._model_variance = self._calculate_model_variance(predictions)
-        self._noise_variance = self._calculate_noise_variance(self._get_target_sales(scaled=True),self._mean, self._model_variance)
+        self._noise_variance = self._calculate_noise_variance(self._get_predicted_targets(scaled=True),self._mean, self._model_variance)
         self._std = self._calculate_std(predictions)
         self._min = self._get_min(predictions)
         self._max = self._get_max(predictions)
         self._lower, self._upper = self._calculate_interval(self._mean, self._std)
-        self._mean_u = self._unscale_sales(self._mean)
-        self._std_u = self._unscale_sales(self._std, round_=False)
-        self._min_u = self._unscale_sales(self._min)
-        self._max_u = self._unscale_sales(self._max)
-        self._lower_u = self._unscale_sales(self._lower)
-        self._upper_u = self._unscale_sales(self._upper)
+        self._mean_u = self._unscale_features(self._mean)
+        self._std_u = self._unscale_features(self._std, round_=False)
+        self._min_u = self._unscale_features(self._min)
+        self._max_u = self._unscale_features(self._max)
+        self._lower_u = self._unscale_features(self._lower)
+        self._upper_u = self._unscale_features(self._upper)
         
         
     @property
@@ -85,59 +85,80 @@ class EnsembleEvaluator(BaseEvaluator):
     def _generate_predictions_array(self, evaluators):
         predictions = []
         for e in evaluators:
-            predictions.append(e.predictions(scaled=True))
+            predictions.append(np.reshape(e.predictions(scaled=True), [-1, 1, e.num_predicted_vars]))
         
-        return np.array(predictions)
+        return np.concatenate(predictions, axis=1)
     
     def _calculate_mean(self, predictions):
-        return np.mean(predictions, axis=0)
+        return np.mean(predictions, axis=1)
     
     def _calculate_model_variance(self, predictions):
-        return np.var(predictions, axis=0, ddof=1)
+        return np.var(predictions, axis=1, ddof=1)
     
     def _calculate_noise_variance(self, targets, mean, model_variance):
-        return [max((t - m) ** 2 - v, 0) for t, m, v in zip(targets, mean, model_variance)]
+        return [np.maximum((t - m) ** 2 - v, np.zeros(t.shape)) for t, m, v in zip(targets, mean, model_variance)]
     
     def _calculate_std(self, predictions):
-        return np.std(predictions, axis=0, ddof=1)
+        return np.std(predictions, axis=1, ddof=1)
     
     def _calculate_interval(self, mean, std):
-        range_ = np.array(std) * t.ppf(self._quantile, self._num_networks - 1)
+        range_ = std * t.ppf(self._quantile, self._num_networks - 1)
         return mean - range_, mean + range_ 
     
     def _get_min(self, predictions):
-        return np.amin(predictions, axis=0)
+        return np.amin(predictions, axis=1)
     
     def _get_max(self, predictions):
-        return np.amax(predictions, axis=0)
+        return np.amax(predictions, axis=1)
     
     def mean(self, scaled=False):
         return self._mean if scaled else self._mean_u
-        
-    def get_predictions(self, feature_pos=0, scaled=False):
-        return np.take(self.mean(scaled), feature_pos, axis=1)
     
-    def get_std(self, scaled=False):
+    def std(self, scaled=False):
         return self._std if scaled else self._std_u
     
-    def get_min(self, scaled=False):
+    def min(self, scaled=False):
         return self._min if scaled else self._min_u
     
-    def get_max(self, scaled=False):
+    def max(self, scaled=False):
         return self._max if scaled else self._max_u
     
-    def get_min_max_range(self, scaled=False):
-        return np.subtract(self.get_max(scaled), self.get_min(scaled))
+    def min_max_range(self, scaled=False):
+        return self.get_max(scaled) - self.get_min(scaled)
     
-    def get_lower(self, scaled=False):
+    def lower(self, scaled=False):
         return self._lower if scaled else self._lower_u
     
-    def get_upper(self, scaled=False):
+    def upper(self, scaled=False):
         return self._upper if scaled else self._upper_u
+    
+    def get_predictions(self, feature_pos=0, scaled=False):
+        return self._get_feature_values(self.mean(scaled), feature_pos)
+    
+    def get_std(self, feature_pos=0, scaled=False):
+        return self._get_feature_values(self.std(scaled), feature_pos)
+    
+    def get_min(self, feature_pos=0, scaled=False):
+        return self._get_feature_values(self.min(scaled), feature_pos)
+    
+    def get_max(self, feature_pos=0, scaled=False):
+        return self._get_feature_values(self.max(scaled), feature_pos)
+    
+    def get_min_max_range(self, feature_pos=0, scaled=False):
+        return self._get_feature_values(self.min_max_range(scaled), feature_pos)
+    
+    def get_lower(self, feature_pos=0, scaled=False):
+        return self._get_feature_values(self.lower(scaled), feature_pos)
+    
+    def get_upper(self, feature_pos=0, scaled=False):
+        return self._get_feature_values(self.upper(scaled), feature_pos)
+    
+    def get_noise_variance(self, feature_pos=0):
+        return self._get_feature_values(self._noise_variance, feature_pos)
     
     def get_noise_variance_dataset(self):
         data = self._reader.get_data(self._end_window_pos, self._window_length, scaled=True).reset_index(drop=True)
-        data = data.join(pd.DataFrame({'variance':self._noise_variance}))
+        data = data.join(pd.DataFrame({'variance':self.get_noise_variance()}))
         return data;
     
     def _plot_target_vs_mean_best_new_process(self, real, mean, best, ylabel, title):
@@ -146,12 +167,15 @@ class EnsembleEvaluator(BaseEvaluator):
     def _plot_target_vs_mean_best(self, real, mean, best, ylabel, title):
         self._plot_target_vs(real,{'Ensemble Mean':mean, 'Best Network': best},ylabel, title)
         
-    def plot_real_target_vs_mean_best(self, tail=False):
-        self._plot_target_vs_mean_best_new_process(self._get_target_sales(length=self._get_target_data_length(tail)), self.get_predictions(), self._best_network.get_predictions(), 'Sales', 'Real vs Ensemble Mean and Best Network Sales')
+    def plot_target_vs_mean_best(self, feature_pos=0, scaled=False, tail=False):
+        feature_name = self._get_predicted_var_name(feature_pos)
+        formatted_feature_name = self._generate_feature_name(feature_name, scaled)
+        self._plot_target_vs_mean_best_new_process(self._get_target(feature_name, scaled=scaled,length=self._get_target_data_length(tail)), 
+                                                   self.get_predictions(feature_pos, scaled), 
+                                                   self._best_network.get_predictions(feature_pos, scaled), 
+                                                   formatted_feature_name, 
+                                                   'Target vs Ensemble Mean and Best Network ' + formatted_feature_name)
         
-    def plot_scaled_target_vs_mean_best(self, tail=False):
-        self._plot_target_vs_mean_best_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self._best_network.get_predictions(scaled=True), 'Scaled Sales', 'Scaled Real vs Ensemble Mean and Best Network Sales')
-    
     
     def _plot_target_vs_mean_min_max_new_process(self, real, mean, min_, max_, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_min_max, args=(real, mean, min_, max_, ylabel, title))
@@ -159,11 +183,15 @@ class EnsembleEvaluator(BaseEvaluator):
     def _plot_target_vs_mean_min_max(self, real, mean, min_, max_, ylabel, title):
         self._plot_target_vs(real,{'Ensemble Mean':mean, 'Min': min_, 'Max': max_},ylabel, title)
         
-    def plot_real_target_vs_mean_min_max(self, tail=False):
-        self._plot_target_vs_mean_min_max_new_process(self._get_target_sales(length=self._get_target_data_length(tail)), self.get_predictions(), self.get_min(), self.get_max() , 'Sales', 'Real vs Ensemble Mean, Min and Max Sales')
-        
-    def plot_scaled_target_vs_mean_min_max(self, tail=False):
-        self._plot_target_vs_mean_min_max_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self.get_min(scaled=True), self.get_max(scaled=True), 'Scaled Sales', 'Scaled Real vs Ensemble Mean, Min and Max Sales')
+    def plot_target_vs_mean_min_max(self, feature_pos=0, scaled=False, tail=False):
+        feature_name = self._get_predicted_var_name(feature_pos)
+        formatted_feature_name = self._generate_feature_name(feature_name, scaled)
+        self._plot_target_vs_mean_min_max_new_process(self._get_target(feature_name, scaled=scaled, length=self._get_target_data_length(tail)), 
+                                                      self.get_predictions(feature_pos, scaled), 
+                                                      self.get_min(feature_pos, scaled), 
+                                                      self.get_max(feature_pos, scaled) , 
+                                                      formatted_feature_name, 
+                                                      'Target vs Ensemble Mean, Min and Max ' + formatted_feature_name)
         
     def _plot_target_vs_mean_interval_new_process(self, real, mean, lower, upper, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_interval, args=(real, mean, lower, upper, ylabel, title))
@@ -171,11 +199,16 @@ class EnsembleEvaluator(BaseEvaluator):
     def _plot_target_vs_mean_interval(self, real, mean, lower, upper, ylabel, title):
         self._plot_target_vs(real,{'Ensemble Mean':mean, 'Lower Limit': lower, 'Upper Limit': upper}, ylabel, title)
         
-    def plot_real_target_vs_mean_interval(self, tail=False):
-        self._plot_target_vs_mean_interval_new_process(self._get_target_sales(length=self._get_target_data_length(tail)), self.get_predictions(), self.get_lower(), self.get_upper() , 'Sales', 'Real vs Ensemble Mean and Interval Sales')
+    def plot_target_vs_mean_interval(self, feature_pos=0, scaled=False, tail=False):
+        feature_name = self._get_predicted_var_name(feature_pos)
+        formatted_feature_name = self._generate_feature_name(feature_name, scaled)
+        self._plot_target_vs_mean_interval_new_process(self._get_target(feature_name, scaled=scaled,length=self._get_target_data_length(tail)), 
+                                                       self.get_predictions(feature_pos, scaled), 
+                                                       self.get_lower(feature_pos, scaled), 
+                                                       self.get_upper(feature_pos, scaled) , 
+                                                       formatted_feature_name, 
+                                                       'Target vs Ensemble Mean and Interval ' + formatted_feature_name)
         
-    def plot_scaled_target_vs_mean_interval(self, tail=False):
-        self._plot_target_vs_mean_interval_new_process(self._get_target_sales(scaled=True, length=self._get_target_data_length(tail)), self.get_predictions(scaled=True), self.get_lower(scaled=True), self.get_upper(scaled=True), 'Scaled Sales', 'Scaled Real vs Ensemble Mean and Interval Saless')    
     
     def _plot_variance_errors_new_process(self, model_variance, noise_variance, ylabel, title):
         self._run_in_new_process(target=self._plot_variance_errors, args=(model_variance, noise_variance, ylabel, title))
