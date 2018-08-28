@@ -167,9 +167,13 @@ class BaseEvaluator(object):
         name = ''
         if scaled is not None:
             name += 'Scaled ' if scaled else 'Real '
-        name +=  self._format_name(feature_name)
-        return name
-    def _format_name(self, name):
+        name +=  self.format_name(feature_name)
+        return name.strip()
+    
+    def generate_feature_name(self, feature_pos, scaled=None):
+        return self._generate_feature_name(self.reader.get_predicted_var_name(feature_pos), scaled)
+    
+    def format_name(self, name):
         ns = name.split('_')
         fname = ''
         
@@ -182,11 +186,10 @@ class BaseEvaluator(object):
         feature_name = self.reader.get_predicted_var_name(feature_pos)
         self._plot_target_vs_predicted_new_process(self._get_target(feature_name, scaled=scaled, length=self._get_target_data_length(tail)), 
                                                    self.get_predictions(feature_pos), 
-                                                   self._format_name(feature_name), 'Real vs Predicted ' + self._generate_feature_name(feature_name, scaled)) 
+                                                   self.format_name(feature_name), 'Real vs Predicted ' + self._generate_feature_name(feature_name, scaled)) 
     
     def plot_errors(self, feature_pos=0, scaled=False):
         return self._calculate_and_plot_errors(feature_pos, scaled)
-    
     
     def absolute_mean_error(self, feature_pos=0, scaled=False):
         return self._calculate_absolute_mean_error(self._get_target_by_pos(feature_pos, scaled=scaled), self.get_predictions(feature_pos, scaled=scaled))

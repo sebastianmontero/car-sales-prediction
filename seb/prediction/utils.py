@@ -81,7 +81,7 @@ class Utils:
                     if i >= recursive:
                         break;
                 else:
-                    if len(tpaths) > 0 and tpaths[0].find(recursive):
+                    if len(tpaths) > 0 and tpaths[0].find(recursive) >= 0:
                         break;
                 path_wild_card +='*/'
         
