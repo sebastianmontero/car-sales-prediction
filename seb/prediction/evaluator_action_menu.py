@@ -84,10 +84,10 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
     
     def _get_menu_options(self):
         options = ['Show real absolute mean error',
-                'Show scaled absolute mean error',
-                'Show real relative mean error',
-                'Show scaled relative mean error',
-                'Show related configuration']
+                   'Show scaled absolute mean error',
+                   'Show real relative mean error',
+                   'Show scaled relative mean error',
+                   'Show related configuration']
         return super(EvaluatorActionMenu, self)._get_menu_options() + options
                                     
     def _handle_action(self, action, feature_pos, params):
