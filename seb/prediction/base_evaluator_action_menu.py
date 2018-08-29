@@ -16,11 +16,7 @@ class BaseEvaluatorActionMenu(ActionMenu):
                 'Plot target vs predicted scaled',
                 'Plot target vs predicted scaled with tail',
                 'Plot real errors',
-                'Plot scaled errors',
-                'Show real absolute mean error',
-                'Show scaled absolute mean error',
-                'Show real relative mean error',
-                'Show scaled relative mean error']
+                'Plot scaled errors']
         
     def _perform_action(self, action, params):
         feature_pos = 0
@@ -42,14 +38,6 @@ class BaseEvaluatorActionMenu(ActionMenu):
             self._actor.plot_errors(feature_pos)
         elif action == 7:
             self._actor.plot_errors(feature_pos, scaled=True)
-        elif action == 8:
-            print('{} absolute mean error: {:.2f}'.format(self._actor.generate_feature_name(feature_pos, scaled=False), self._actor.absolute_mean_error(feature_pos)))
-        elif action == 9:
-            print('{} absolute mean error: {:.2f}'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.absolute_mean_error(feature_pos, scaled=True)))
-        elif action == 10:
-            print('{} relative mean error: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=False), self._actor.relative_mean_error(feature_pos)))
-        elif action == 11:
-            print('{} relative mean error: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.relative_mean_error(feature_pos, scaled=True)))
         else:
             self._handle_action(action, feature_pos, params)
             

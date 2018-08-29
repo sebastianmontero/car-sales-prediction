@@ -8,6 +8,7 @@ import os
 import sys
 import argparse
 import pprint
+import traceback
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType
 from feature_selector_reporter import FeatureSelectorReporter
@@ -83,7 +84,8 @@ class ActionMenu():
                     break;
                 
                 self._perform_action(action, split_action)
-            except (ValueError, IndexError):
+            except (ValueError, IndexError) as e:
+                traceback.print_exc()
                 print('Invalid option')
                                     
     def _perform_action(self, action, params):

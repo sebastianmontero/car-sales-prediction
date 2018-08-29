@@ -45,7 +45,7 @@ class EnsembleEvaluator(BaseEvaluator):
     def _find_best_ensemble(self, evaluators):
         best = []
         candidate_pos = 0
-        rme = evaluators[0].real_relative_mean_error()
+        rme = evaluators[0].relative_mean_error()
         while len(evaluators) > 0 and candidate_pos is not None:
             best.append(evaluators[candidate_pos])
             del evaluators[candidate_pos]
@@ -54,7 +54,7 @@ class EnsembleEvaluator(BaseEvaluator):
             #print('Current best relative mean error: {}, networks: {}'.format(rme, len(best)))
             for pos, evaluator in enumerate(evaluators):
                 ensemble = EnsembleEvaluator([evaluator] + best)
-                erme = ensemble.real_relative_mean_error()
+                erme = ensemble.relative_mean_error()
                 if erme < rme:
                     candidate_pos = pos
                     rme = erme
@@ -65,7 +65,7 @@ class EnsembleEvaluator(BaseEvaluator):
         predictions = self._generate_predictions_array(evaluators)
         self._mean = self._calculate_mean(predictions)
         self._model_variance = self._calculate_model_variance(predictions)
-        self._noise_variance = self._calculate_noise_variance(self._get_predicted_targets(scaled=True),self._mean, self._model_variance)
+        self._noise_variance = self._calculate_noise_variance(self.get_predicted_targets(scaled=True),self._mean, self._model_variance)
         self._std = self._calculate_std(predictions)
         self._min = self._get_min(predictions)
         self._max = self._get_max(predictions)
@@ -124,7 +124,7 @@ class EnsembleEvaluator(BaseEvaluator):
         return self._max if scaled else self._max_u
     
     def min_max_range(self, scaled=False):
-        return self.get_max(scaled) - self.get_min(scaled)
+        return self.max(scaled) - self.min(scaled)
     
     def lower(self, scaled=False):
         return self._lower if scaled else self._lower_u
@@ -145,13 +145,16 @@ class EnsembleEvaluator(BaseEvaluator):
         return self._get_feature_values(self.max(scaled), feature_pos)
     
     def get_min_max_range(self, feature_pos=0, scaled=False):
-        return self._get_feature_values(self.min_max_range(scaled), feature_pos)
+        return self.get_max(feature_pos, scaled) - self.get_min(feature_pos, scaled)
     
     def get_lower(self, feature_pos=0, scaled=False):
         return self._get_feature_values(self.lower(scaled), feature_pos)
     
     def get_upper(self, feature_pos=0, scaled=False):
         return self._get_feature_values(self.upper(scaled), feature_pos)
+    
+    def get_model_variance(self, feature_pos=0):
+        return self._get_feature_values(self._model_variance, feature_pos)
     
     def get_noise_variance(self, feature_pos=0):
         return self._get_feature_values(self._noise_variance, feature_pos)
@@ -216,8 +219,13 @@ class EnsembleEvaluator(BaseEvaluator):
     def _plot_variance_errors(self, model_variance, noise_variance, ylabel, title):
         self._plot_by_month('Model Variance',{'Model Variance':model_variance, 'Noise Variance': noise_variance}, ylabel, title)
         
-    def plot_variance_errors(self):
-        self._plot_variance_errors_new_process(self._model_variance, self._noise_variance, 'variance', 'Model and Noise Variance')
+    def plot_variance_errors(self, feature_pos=0):
+        feature_name = self._get_predicted_var_name(feature_pos)
+        formatted_feature_name = self._generate_feature_name(feature_name, scaled=None)
+        self._plot_variance_errors_new_process(self.get_model_variance(feature_pos), 
+                                               self.get_noise_variance(feature_pos), 
+                                               formatted_feature_name + ' Variance', 'Model and Noise {} Variance'.format(formatted_feature_name))
+        
     
     def _plot_std_new_process(self, std, ylabel, title):
         self._run_in_new_process(target=self._plot_std, args=(std, ylabel, title))
@@ -225,11 +233,13 @@ class EnsembleEvaluator(BaseEvaluator):
     def _plot_std(self, std, ylabel, title):
         self._plot_by_month('Standard Deviation',{'Standard Deviation':{'values': std, 'type': 'bar'}}, ylabel, title, yfix=True)
         
-    def plot_scaled_std(self):
-        self._plot_std_new_process(self.get_std(scaled=True),'Standard Deviation', 'Scaled Standard Deviation')
-    
-    def plot_real_std(self):
-        self._plot_std_new_process(self.get_std(scaled=False),'Standard Deviation', 'Real Standard Deviation')
+    def plot_std(self, feature_pos=0, scaled=False):
+        feature_name = self._get_predicted_var_name(feature_pos)
+        formatted_feature_name = self._generate_feature_name(feature_name, scaled=scaled)
+        title = formatted_feature_name + ' Standard Deviation'
+        self._plot_std_new_process(self.get_std(feature_pos, scaled=scaled),
+                                   title, 
+                                   title)
     
     def _plot_min_max_range_new_process(self, mm_range, ylabel, title):
         self._run_in_new_process(target=self._plot_min_max_range, args=(mm_range, ylabel, title))
@@ -237,9 +247,10 @@ class EnsembleEvaluator(BaseEvaluator):
     def _plot_min_max_range(self, mm_range, ylabel, title):
         self._plot_by_month('Min Max Range',{'Min Max Range':{'values': mm_range, 'type': 'bar'}}, ylabel, title, yfix=True)
         
-    def plot_scaled_min_max_range(self):
-        self._plot_min_max_range_new_process(self.get_min_max_range(scaled=True),'Min Max Range', 'Scaled Min Max Range')
-    
-    def plot_real_min_max_range(self):
-        self._plot_min_max_range_new_process(self.get_min_max_range(scaled=False),'Min Max Range', 'Real Min Max Range')
-    
+    def plot_min_max_range(self, feature_pos=0, scaled=False):
+        feature_name = self._get_predicted_var_name(feature_pos)
+        formatted_feature_name = self._generate_feature_name(feature_name, scaled=scaled)
+        title = formatted_feature_name + ' Min Max Range'
+        self._plot_min_max_range_new_process(self.get_min_max_range(feature_pos, scaled=scaled),
+                                             title, 
+                                             title)
