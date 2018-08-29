@@ -24,14 +24,6 @@ class Reader(object):
         'economic_activity_index': [80, 115]
     }
     
-    scale_features = [
-        'consumer_confidence_index',
-        'energy_price_index',
-        'exchange_rate',
-        'inflation_index',
-        'interest_rate',
-        'manufacturing_confidence_index',
-        'economic_activity_index']
 
     def __init__(self, line_id, window_size, included_features, prediction_size = 1):
         assert (window_size > 0), "Window size must be greater than zero"
@@ -39,13 +31,12 @@ class Reader(object):
         self._window_size = window_size
         self._window_pos = -1
         self._prediction_size = prediction_size
-        self._scale_features, self._dont_scale_features = self._group_included_features(included_features)
-        self._included_features = np.concatenate((self._scale_features, self._dont_scale_features))
-        self._scale_features = ['sales'] + self._scale_features
+        self._included_features = included_features
+        self._scale_features = ['sales'] + included_features
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
-        self._predicted_vars = np.concatenate((self._scale_features, self._dont_scale_features))
+        self._predicted_vars = self._scale_features
         self._num_predicted_vars = len(self._predicted_vars)
         self._init_fleeting_vars()
         
@@ -119,20 +110,10 @@ class Reader(object):
         self._scaler.fit(fit_data_np)
         data_np = self._scaler.transform(data_np)
         
-        data_np = np.concatenate((month_np, data_np, data_df[self._dont_scale_features].values), axis=1)
+        data_np = np.concatenate((month_np, data_np), axis=1)
         
         self._data = pd.DataFrame(data_np, columns=self._features, dtype=np.float32)
-        
-    def _group_included_features(self, included_features):
-        scale = []
-        dont_scale = []
-        for feature in included_features:
-            if feature in self.scale_features:
-                scale.append(feature)
-            else: 
-                dont_scale.append(feature)
-                
-        return scale, dont_scale 
+         
         
     def _add_scaler_fit_domain_values(self, features, data):
         
@@ -230,6 +211,7 @@ class Reader(object):
 
 
 '''features = ['interest_rate', 'exchange_rate', 'energy_price_index_roc_prev_month','energy_price_index_roc_start_year']
+#features = ['inflation_index_roc_prev_month']
 reader = Reader(13, 36, features)
 
 print(reader.get_data(36, 36))
@@ -240,18 +222,18 @@ generator = reader.get_generator(1, 40, False)
 x, y = generator.get_data()
 
 with tf.Session() as sess:
-    for i in range(4):
-        vals = sess.run({'x':x, 'y': y})
-        print('x value:')
-        print(vals['x'])
-        print('')
-        print('')
-        x_vals = np.reshape(vals['x'], (-1, 7))
-        print(np.array(reader.unscale_features(np.take(x_vals, [2,3,4,5,6], axis=1), round_sales=True)))
-        print('')
-        print('')
-        print('y value:')
-        print(vals['y'])
+    #for i in range(4):
+    vals = sess.run({'x':x, 'y': y})
+    print('x value:')
+    print(vals['x'])
+    print('')
+    print('')
+    #x_vals = np.reshape(vals['x'], (-1, 7))
+    #print(np.array(reader.unscale_features(np.take(x_vals, [2,3,4,5,6], axis=1), round_sales=True)))
+    print('')
+    print('')
+    print('y value:')
+    print(vals['y'])
 
 stage = 0
  
