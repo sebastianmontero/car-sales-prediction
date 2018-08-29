@@ -10,6 +10,7 @@ import datetime
 class EnsembleConfig():
     
     BASE_DIR_PREFIX = 'ensemble-run-'
+    IFP_INDICATOR = '_ifp_'
     
     def __init__(self, description='', base_path = None, run_path = None):
         assert(base_path or run_path), "base_path or run_path must be specified"

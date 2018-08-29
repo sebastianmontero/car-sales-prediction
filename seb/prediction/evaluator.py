@@ -13,14 +13,9 @@ class Evaluator(BaseEvaluator):
 
     def __init__(self, reader, predictions, end_window_pos, global_step=None):
         BaseEvaluator.__init__(self)
-        #print(predictions)
         self._reader = reader
         self._unscaled_predictions = self._unscale_features(predictions)
         self._predictions = predictions
-        print(predictions)
-        print()
-        print()
-        print(self._unscaled_predictions)
         self._end_window_pos = end_window_pos
         self._window_length = len(predictions)
         self._global_step = global_step

@@ -3,6 +3,10 @@ from __future__ import division
 from __future__ import print_function
 
 
+import os
+import re
+import traceback
+
 from storage_manager import StorageManager, StorageManagerType
 from utils import Utils
 from ensemble_config import EnsembleConfig
@@ -10,6 +14,8 @@ from ensemble_evaluator import EnsembleEvaluator
 from db_manager import DBManager
 
 
+class InvalidIFP(Exception):
+    pass
 
 class EnsembleReporter():
     
@@ -52,7 +58,44 @@ class EnsembleReporter():
         return [evaluator_error['obj'] for evaluator_error in evaluators_errors]
             
     @classmethod
-    def find_ensemble_runs(cls, path):
-        return Utils.search_paths(path, EnsembleConfig.BASE_DIR_PREFIX + '*', recursive=False, sort=True)
-
+    def find_ensemble_runs(cls, path, filter_=None, exclude_filter=None, sort=True):
+        return Utils.search_paths(path, EnsembleConfig.BASE_DIR_PREFIX + '*', recursive=False, sort=sort, filter_=filter_, exclude_filter=exclude_filter)
+    
+    @classmethod
+    def find_base_ensemble_runs(cls, path):
+        name = os.path.basename(path)
+        ifp_data = cls._process_ifp_run(name)
+        if not ifp_data:
+            return []
+        
+        base_dir = os.path.dirname(path)
+        
+        base_name = ifp_data['base_name']
+        ensembles = cls.find_ensemble_runs(base_dir, filter_=base_name, exclude_filter=name)
+        
+        base_predictions = ifp_data['prediction'] - 1
+        if len(ensembles) != (base_predictions):
+            raise InvalidIFP('Invalid number of base ensemble runs') 
+        
+        for i, ensemble in enumerate(ensembles):
+            if not os.path.basename(ensemble).startswith('{}{}m'.format(base_name, i + 1)):
+                raise InvalidIFP('Invalid base ensemble runs')
+            
+        return ensembles
+    
+    @classmethod
+    def _process_ifp_run(cls, name):
+        
+        if name.startswith(EnsembleConfig.BASE_DIR_PREFIX):
+            match = re.search(EnsembleConfig.IFP_INDICATOR, name)
+            if match:
+                try:
+                    return {
+                        'base_name': name[0:match.end()], 
+                        'prediction': int(name[match.end() : name.index('m', match.end())])
+                    }
+                except:
+                    traceback.print_exc()
+                    raise InvalidIFP('Invalid Input Feature Prediction Name')
+        return False
 

@@ -168,6 +168,6 @@ class FeatureSelectorReporter():
         
     @classmethod
     def find_feature_selector_runs(cls, path):
-        return Utils.search_paths(path, cls.BASE_DIR_PREFIX + '*', recursive=True, sort=True)
+        return Utils.search_paths(path, cls.BASE_DIR_PREFIX + '*', recursive=False, sort='reverse')
 
 

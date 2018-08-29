@@ -11,6 +11,7 @@ import numpy as np
 from utils import Utils
 from generator import Generator
 from db_manager import DBManager
+from ensemble_reporter import EnsembleReporter
 
 
 class Reader(object):
@@ -25,7 +26,7 @@ class Reader(object):
     }
     
 
-    def __init__(self, line_id, window_size, included_features, prediction_size = 1):
+    def __init__(self, line_id, window_size, included_features, prediction_size = 1, base_ensembles=[]):
         assert (window_size > 0), "Window size must be greater than zero"
         self._line_id = str(line_id) 
         self._window_size = window_size
@@ -38,6 +39,7 @@ class Reader(object):
         self._num_features = len(self._features)
         self._predicted_vars = self._scale_features
         self._num_predicted_vars = len(self._predicted_vars)
+        self._base_ensembles = self._load_base_ensembles(base_ensembles)
         self._init_fleeting_vars()
         
     def _init_fleeting_vars(self):
@@ -78,6 +80,13 @@ class Reader(object):
     @property
     def num_predicted_vars(self):
         return self._num_predicted_vars
+    
+    def _load_base_ensembles(self, paths):
+        ensembles = []
+        for path in paths:
+            ensembleReporter = EnsembleReporter(path, overwrite=True)
+            ensembles.append(ensembleReporter.get_ensemble_evaluator(find_best_ensemble=True))
+        return ensembles
     
     def get_predicted_var_name(self, pos):
         return self._predicted_vars[pos]

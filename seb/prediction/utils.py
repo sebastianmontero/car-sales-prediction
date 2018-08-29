@@ -88,5 +88,5 @@ class Utils:
         paths = Utils.filter_list(paths, filter_, exclude_filter)
             
         if sort:
-            paths.sort(reverse=True)
+            paths.sort(reverse=(sort == 'reverse'))
         return paths
