@@ -3,8 +3,6 @@ Created on Jun 11, 2018
 
 @author: nishilab
 '''
-
-import os
 import math
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -13,12 +11,7 @@ import numpy as np
 from utils import Utils
 from generator import Generator
 from db_manager import DBManager
-from ensemble_reporter import EnsembleReporter
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-class IncompatibleBaseEnsemble(Exception):
-    pass
 
 class Reader(object):
     
@@ -32,7 +25,7 @@ class Reader(object):
     }
     
 
-    def __init__(self, line_id, window_size, included_features, prediction_size = 1, base_ensembles=[]):
+    def __init__(self, line_id, window_size, included_features, prediction_size = 1):
         assert (window_size > 0), "Window size must be greater than zero"
         self._line_id = str(line_id) 
         self._window_size = window_size
@@ -45,7 +38,6 @@ class Reader(object):
         self._num_features = len(self._features)
         self._predicted_vars = self._scale_features
         self._num_predicted_vars = len(self._predicted_vars)
-        self._base_ensembles = self._load_base_ensembles(base_ensembles)
         self._init_fleeting_vars()
         
     def _init_fleeting_vars(self):
@@ -86,20 +78,6 @@ class Reader(object):
     @property
     def num_predicted_vars(self):
         return self._num_predicted_vars
-    
-    def _load_base_ensembles(self, paths):
-        ensembles = []
-        for path in paths:
-            ensembleReporter = EnsembleReporter(path, overwrite=True)
-            ensemble = ensembleReporter.get_ensemble_evaluator(find_best_ensemble=True)
-            if not self._is_base_ensemble_compatible(ensemble):
-                raise IncompatibleBaseEnsemble('Base ensemble is not compatible with current reader')
-            ensembles.append(ensemble)
-        return ensembles
-    
-    def _is_base_ensemble_compatible(self, ensemble):
-        ereader = ensemble.reader
-        return ereader.predicted_vars == self.predicted_vars
         
     def get_predicted_var_name(self, pos):
         return self._predicted_vars[pos]
@@ -204,18 +182,7 @@ class Reader(object):
         return self._window_pos < self._num_windows
     
     def get_generator(self, batch_size, num_steps, for_test=False):
-        data = self._set_base_predictions(self._get_data(for_test), for_test).values
-        return Generator(data, batch_size, num_steps, self._num_predicted_vars, self._prediction_size)
-    
-    def _set_base_predictions(self, data, for_test=False):
-        num_predictions = len(self._base_ensembles)
-        pos = data.shape[0] - num_predictions - (1 if for_test else 0)
-        for ensemble in self._base_ensembles:
-            predictions = ensemble.predictions_by_absolute_pos(self._get_absolute_pos(pos), scaled=True)
-            if predictions is not None:
-                data.iloc[pos][self._predicted_vars] = predictions
-            pos += 1
-        return data
+        return Generator(self._get_data(for_test).values, batch_size, num_steps, self._num_predicted_vars, self._prediction_size)
     
     def _get_absolute_pos(self, delta=0):
         return self._window_pos + delta

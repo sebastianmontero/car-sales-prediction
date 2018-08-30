@@ -20,7 +20,6 @@ from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType, PickleAction
 from tensorflow_utils import TensorflowUtils
-from ensemble_reporter import EnsembleReporter
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ["CUDA_VISIBLE_DEVICES"]="-1"
@@ -148,12 +147,9 @@ class ModelTrainer():
         self._eval_config = self._config.copy()
         self._eval_config['batch_size'] = 1
         if 'window_size' not in self._config:
-            self._config['window_size'] = self._config['train_months'] + self._config['prediction_size']
-        
-        if 'base_ensembles' not in self._config:
-            self._config['base_ensembles'] = EnsembleReporter.find_base_ensemble_runs(os.path.dirname(self._config['save_path']))
+            self._config['window_size'] = self._config['train_months'] + self._config['prediction_size'] 
              
-        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'], self._config['prediction_size'], self._config['base_ensembles'])
+        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'], self._config['prediction_size'])
     
     def _config_layers(self, config):
                 
