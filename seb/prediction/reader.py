@@ -3,6 +3,8 @@ Created on Jun 11, 2018
 
 @author: nishilab
 '''
+
+import os
 import math
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -13,6 +15,10 @@ from generator import Generator
 from db_manager import DBManager
 from ensemble_reporter import EnsembleReporter
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+class IncompatibleBaseEnsemble(Exception):
+    pass
 
 class Reader(object):
     
@@ -85,9 +91,16 @@ class Reader(object):
         ensembles = []
         for path in paths:
             ensembleReporter = EnsembleReporter(path, overwrite=True)
-            ensembles.append(ensembleReporter.get_ensemble_evaluator(find_best_ensemble=True))
+            ensemble = ensembleReporter.get_ensemble_evaluator(find_best_ensemble=True)
+            if not self._is_base_ensemble_compatible(ensemble):
+                raise IncompatibleBaseEnsemble('Base ensemble is not compatible with current reader')
+            ensembles.append(ensemble)
         return ensembles
     
+    def _is_base_ensemble_compatible(self, ensemble):
+        ereader = ensemble.reader
+        return ereader.predicted_vars == self.predicted_vars
+        
     def get_predicted_var_name(self, pos):
         return self._predicted_vars[pos]
     
@@ -173,23 +186,39 @@ class Reader(object):
         return self._data if scaled else self._raw_data
     
     def _get_window_data_by_end_pos(self, source, end_window_pos, length):
-        if end_window_pos < 0:
-            end_window_pos = source.shape[0] + end_window_pos + 1
+        end_window_pos = self.process_absolute_pos(end_window_pos)
         if length < 0:
             length = end_window_pos
         assert (end_window_pos <= source.shape[0]), "end_window_pos index out of bounds"
         assert (length <= end_window_pos), "length must be lower than end_window_pos"
         return source[end_window_pos - length: end_window_pos]
     
+    def process_absolute_pos(self, pos):
+        return pos if pos >= 0 else self._data.shape[0] + pos + 1
+    
     def _get_window_data(self, source, window_pos, for_test = False):
         assert (window_pos >= 0), "Next window must be called first to get data for window"
-        return source[self._window_pos: self.get_end_window_pos(for_test) ]
+        return source[self._window_pos: self.get_end_window_pos(for_test) ].copy()
     
     def has_more_windows(self):
         return self._window_pos < self._num_windows
     
     def get_generator(self, batch_size, num_steps, for_test=False):
-        return Generator(self._get_data(for_test).values, batch_size, num_steps, self._num_predicted_vars, self._prediction_size)
+        data = self._set_base_predictions(self._get_data(for_test), for_test).values
+        return Generator(data, batch_size, num_steps, self._num_predicted_vars, self._prediction_size)
+    
+    def _set_base_predictions(self, data, for_test=False):
+        num_predictions = len(self._base_ensembles)
+        pos = data.shape[0] - num_predictions - (1 if for_test else 0)
+        for ensemble in self._base_ensembles:
+            predictions = ensemble.predictions_by_absolute_pos(self._get_absolute_pos(pos), scaled=True)
+            if predictions is not None:
+                data.iloc[pos][self._predicted_vars] = predictions
+            pos += 1
+        return data
+    
+    def _get_absolute_pos(self, delta=0):
+        return self._window_pos + delta
     
     def get_window_name(self, for_test=False):
         return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(for_test))
@@ -260,5 +289,32 @@ while generator.next_epoch_stage():
         print(i)
     
     stage += 1'''
+        
+        
+features = ['inflation_index_roc_prev_month',
+                                   'consumer_confidence_index']
+#features = ['inflation_index_roc_prev_month']
+reader = Reader(13, 37, features, base_ensembles=['/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_1m-20180829152705465891'])
+#reader = Reader(13, 37, features)
 
+while reader.next_window():
+    
+    print(reader.get_start_month_id(), reader.get_end_month_id(True))
+
+    generator = reader.get_generator(1, 40, True)
+    x, y = generator.get_data()
+    
+    with tf.Session() as sess:
+        #for i in range(4):
+        vals = sess.run({'x':x, 'y': y})
+        print('x value:')
+        print(vals['x'][-2:])
+        print('')
+        #x_vals = np.reshape(vals['x'], (-1, 7))
+        #print(np.array(reader.unscale_features(np.take(x_vals, [2,3,4,5,6], axis=1), round_sales=True)))
+        #print('')
+        print('y value:')
+        print(vals['y'][-2:])
+        print()
+        print()
     

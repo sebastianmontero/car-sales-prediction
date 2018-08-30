@@ -5,7 +5,6 @@ Created on Jun 15, 2018
 '''
 
 
-import numpy as np
 from utils import Utils
 from base_evaluator import BaseEvaluator
 

@@ -18,8 +18,12 @@ class BaseEvaluator(object):
         sns.set()
         
     @property
+    def start_window_pos(self):
+        return self.reader.process_absolute_pos(self.end_window_pos) - self.window_length
+    
+    @property
     def end_window_pos(self):
-        return self._end_window_pos
+        return self.reader.process_absolute_pos(self._end_window_pos)
     
     @property
     def window_length(self):
@@ -36,6 +40,15 @@ class BaseEvaluator(object):
     @property
     def num_predicted_vars(self):
         return self.reader.num_predicted_vars
+    
+    def predictions_by_absolute_pos(self, pos, scaled=False):
+        start = self.start_window_pos
+        if start <= pos and pos < self.end_window_pos:
+            return self.get_predictions_by_row(pos - start, scaled)
+        return None
+    
+    def get_predictions_by_row(self, row, scaled=False):
+        return self.predictions(scaled)[row]
     
     def _get_predicted_var_name(self, feature_pos):
         return self.reader.get_predicted_var_name(feature_pos)

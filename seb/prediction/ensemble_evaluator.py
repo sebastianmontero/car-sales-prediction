@@ -132,6 +132,10 @@ class EnsembleEvaluator(BaseEvaluator):
     def upper(self, scaled=False):
         return self._upper if scaled else self._upper_u
     
+    #Has to be defined so that its compatible with evaluator, this method is used in BaseEvaluators
+    def predictions(self, scaled=False):
+        return self._mean if scaled else self._mean_u
+    
     def get_predictions(self, feature_pos=0, scaled=False):
         return self._get_feature_values(self.mean(scaled), feature_pos)
     
