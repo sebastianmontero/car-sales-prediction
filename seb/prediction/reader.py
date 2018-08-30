@@ -3,6 +3,7 @@ Created on Jun 11, 2018
 
 @author: nishilab
 '''
+import os
 import math
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -12,8 +13,12 @@ from utils import Utils
 from generator import Generator
 from db_manager import DBManager
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 
 class Reader(object):
+    
+    PREDICTED_VARS_START_POS = 2
     
     scaler_fit_domain_values = {
         'sales': [0, 180],
@@ -46,6 +51,9 @@ class Reader(object):
         self._data = None
         self._start_month_id = None
         self._raw_data = None
+        self._iterator = None
+        self._inputs = None
+        self._targets = None
         self._process_data()
         self._num_windows = self._data.shape[0] - self._window_size
     
@@ -57,6 +65,9 @@ class Reader(object):
         del state['_raw_data']
         del state['_start_month_id']
         del state['_num_windows']
+        del state['_iterator']
+        del state['_inputs']
+        del state['_targets']
         return state 
     
     def __setstate__(self, state):
@@ -78,6 +89,16 @@ class Reader(object):
     @property
     def num_predicted_vars(self):
         return self._num_predicted_vars
+    
+    @property
+    def iterator(self):
+        if self._iterator is None:
+            self._prepare_iterator()
+        return self._iterator
+    
+    def _prepare_iterator(self):
+        self._iterator = tf.data.Iterator.from_structure(self._get_dataset_types())
+        self._inputs, self._targets = self._iterator.get_next() 
         
     def get_predicted_var_name(self, pos):
         return self._predicted_vars[pos]
@@ -182,7 +203,34 @@ class Reader(object):
         return self._window_pos < self._num_windows
     
     def get_generator(self, batch_size, num_steps, for_test=False):
-        return Generator(self._get_data(for_test).values, batch_size, num_steps, self._num_predicted_vars, self._prediction_size)
+        
+        data = self._get_data(for_test).values
+        length =  data.shape[0]
+        residual = (length - self._prediction_size) % batch_size
+        data = data[residual:]
+        num_batches = (length - self._prediction_size) // batch_size
+        epoch_size = math.ceil((length - self._prediction_size) / (num_steps * batch_size))
+        ds = self._get_dataset(data, batch_size, num_batches)
+        ds = ds.batch(num_steps).repeat()
+        ii = self.iterator.make_initializer(ds)
+        return Generator(self._inputs, self._targets, ii, self._num_predicted_vars, epoch_size)
+    
+    def _get_dataset_types(self):
+        return self._get_dataset(self._data[0:2].values, 1, 1).output_types
+    
+    def _get_dataset(self, data, batch_size, num_batches):
+        x_data = []
+        y_data = []
+        for num_batch in range(num_batches):
+            x_batch = []
+            y_batch = []
+            for batch_pos in range(batch_size):
+                pos =  batch_pos * num_batches + num_batch
+                x_batch.append(data[pos])
+                y_batch.append(data[pos + self._prediction_size][self.PREDICTED_VARS_START_POS:])
+            x_data.append(x_batch)
+            y_data.append(y_batch)
+        return tf.data.Dataset.from_tensor_slices((np.asarray(x_data), np.asarray(y_data)))
     
     def _get_absolute_pos(self, delta=0):
         return self._window_pos + delta
@@ -258,20 +306,20 @@ while generator.next_epoch_stage():
     stage += 1'''
         
         
-features = ['inflation_index_roc_prev_month',
+'''features = ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index']
 #features = ['inflation_index_roc_prev_month']
-reader = Reader(13, 37, features, base_ensembles=['/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_1m-20180829152705465891'])
-#reader = Reader(13, 37, features)
+reader = Reader(13, 37, features)
 
 while reader.next_window():
     
     print(reader.get_start_month_id(), reader.get_end_month_id(True))
 
-    generator = reader.get_generator(1, 40, True)
-    x, y = generator.get_data()
+    generator1 = reader.get_generator(1, 40, False)
+    x, y = generator1.get_data()
     
     with tf.Session() as sess:
+        sess.run(generator1.iterator_initializer)
         #for i in range(4):
         vals = sess.run({'x':x, 'y': y})
         print('x value:')
@@ -285,3 +333,20 @@ while reader.next_window():
         print()
         print()
     
+    generator2 = reader.get_generator(1, 40, True)
+    x, y = generator2.get_data()
+    
+    with tf.Session() as sess:
+        sess.run(generator2.iterator_initializer)
+        #for i in range(4):
+        vals = sess.run({'x':x, 'y': y})
+        print('x value:')
+        print(vals['x'][-2:])
+        print('')
+        #x_vals = np.reshape(vals['x'], (-1, 7))
+        #print(np.array(reader.unscale_features(np.take(x_vals, [2,3,4,5,6], axis=1), round_sales=True)))
+        #print('')
+        print('y value:')
+        print(vals['y'][-2:])
+        print()
+        print()'''

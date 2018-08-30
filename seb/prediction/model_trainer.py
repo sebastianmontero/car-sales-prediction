@@ -60,7 +60,7 @@ class ModelTrainer():
         costs = 0.
         predictions = []
         state = session.run(model.initial_state)
-        
+        session.run(model.generator.iterator_initializer)
         fetches ={
             'cost': model.cost,
             'final_state': model.final_state,
@@ -271,8 +271,8 @@ class ModelTrainer():
                     train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True), global_step)
-                    #for pos,_ in enumerate(evaluator.predicted_vars):
-                    #   evaluator.plot_target_vs_predicted(pos, scaled=True)
+                    for pos,_ in enumerate(evaluator.predicted_vars):
+                        evaluator.plot_target_vs_predicted(pos, scaled=True)
                     #print(predictions)
                     current_test_absolute_error = evaluator.window_real_absolute_mean_error()
                     best_test_absolute_error = session.run(test_absolute_error_tf)
@@ -310,8 +310,8 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':True})
-#modelTrainer.train()
+modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':True})
+modelTrainer.train()
             
         
         
