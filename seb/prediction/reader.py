@@ -225,6 +225,16 @@ class Reader(object):
         ii = self.iterator.make_initializer(ds)
         return ii, epoch_size
     
+    def _add_predictions(self, data, predictions, for_test=False):
+        num_predictions = len(self._base_ensembles)
+        pos = data.shape[0] - num_predictions - (1 if for_test else 0)
+        for ensemble in self._base_ensembles:
+            predictions = ensemble.predictions_by_absolute_pos(self._get_absolute_pos(pos), scaled=True)
+            if predictions is not None:
+                data.iloc[pos][self._predicted_vars] = predictions
+            pos += 1
+        return data
+    
     def _get_dataset_types(self):
         ds = self._get_dataset(self._data[0:2].values, 1, 1)
         return ds.output_types
