@@ -97,7 +97,7 @@ class Reader(object):
         return self._iterator
     
     def _prepare_iterator(self):
-        self._iterator = tf.data.Iterator.from_structure(self._get_dataset_types(),((None, None, self._num_features),(None, None, self._num_predicted_vars))) 
+        self._iterator = tf.data.Iterator.from_structure(self._get_dataset_types(),((None, 1, self._num_features),(None, 1, self._num_predicted_vars))) 
     
     def get_iterator_elements(self):
         if self._inputs is None:
