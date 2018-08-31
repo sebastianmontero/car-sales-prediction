@@ -22,12 +22,12 @@ from storage_manager import StorageManager, StorageManagerType, PickleAction
 from tensorflow_utils import TensorflowUtils
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='small', type=str, required=False, help="A type of model. Possible options are: small, medium, large.")
 parser.add_argument('--use_fp16', default=False, type=bool, required=False, help="Train using 16 bits floats instead of 32 bits")
-parser.add_argument('--num_gpus', default=0, type=int, required=False, help="If larger than 1, Grappler AutoParallel optimizer "
+parser.add_argument('--num_gpus', default=1, type=int, required=False, help="If larger than 1, Grappler AutoParallel optimizer "
                      "will create multiple training replicas with each GPU "
                      "running one replica.")
 parser.add_argument('--rnn_mode', default=None, type=str, required=False, help="The low level implementation of lstm cell: one of CUDNN, "
@@ -288,8 +288,8 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = ModelTrainer({'max_epoch' : 10, 'line_id':13, 'train_months':36, 'prediction_size':1, 'store_window':False})
-modelTrainer.train()
+#modelTrainer = ModelTrainer({'max_epoch' : 10, 'line_id':13, 'train_months':36, 'prediction_size':1, 'store_window':False})
+#modelTrainer.train()
             
         
         
