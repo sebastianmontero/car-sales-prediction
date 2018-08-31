@@ -6,13 +6,11 @@ Created on Jun 11, 2018
 
 class Generator(object):
 
-    def __init__(self, inputs, targets, iterator_initializer, num_predicted_vars, epoch_size):
+    def __init__(self, inputs, targets, num_predicted_vars):
         
         self._inputs = inputs
         self._targets = targets
-        self._iterator_initializer = iterator_initializer
         self._num_predicted_vars = num_predicted_vars
-        self._epoch_size = epoch_size
 
     @property
     def iterator_initializer(self):

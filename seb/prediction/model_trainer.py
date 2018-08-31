@@ -55,12 +55,12 @@ class ModelTrainer():
         self._setup(config)
         
     
-    def _run_epoch(self, session, model, eval_op=None, verbose=False):
+    def _run_epoch(self, session, model, iterator_initializer, epoch_size, eval_op=None, verbose=False):
         
         costs = 0.
         predictions = []
         state = session.run(model.initial_state)
-        session.run(model.generator.iterator_initializer)
+        session.run(iterator_initializer)
         fetches ={
             'cost': model.cost,
             'final_state': model.final_state,
@@ -70,7 +70,6 @@ class ModelTrainer():
         if eval_op is not None:
             fetches['eval_op'] = eval_op
         
-        epoch_size = model.generator.epoch_size
         for step in range(1, epoch_size + 1):
             feed_dict = {}
             for i, (c,h) in enumerate(model.initial_state):
@@ -187,16 +186,16 @@ class ModelTrainer():
             with tf.Graph().as_default():
                 initializer = tf.random_uniform_initializer(-config['init_scale'], config['init_scale'])
                 
+                inputs, targets = reader.get_iterator_elements()
+                
                 with tf.name_scope('Train'):
                     
-                    with tf.variable_scope("Model", reuse=None, initializer=initializer):
-                        generator = reader.get_generator(config['batch_size'], config['num_steps']) 
-                        m = Model(stage=ModelStage.TRAIN, config=config, generator=generator)
+                    with tf.variable_scope("Model", reuse=None, initializer=initializer): 
+                        m = Model(ModelStage.TRAIN, config, inputs, targets, reader.num_predicted_vars)
                 
                 with tf.name_scope('Test'):
-                    generator = reader.get_generator(eval_config['batch_size'], eval_config['num_steps'], for_test=True)
                     with tf.variable_scope('Model', reuse=True, initializer=initializer):
-                        mtest = Model(stage=ModelStage.TEST, config=eval_config, generator=generator)
+                        mtest = Model(ModelStage.TEST, config, inputs, targets, reader.num_predicted_vars)
                         
                 '''models = {'Train': m, 'Valid': mvalid, 'Test': mtest}'''
                 models = {'Train': m, 'Test': mtest}
@@ -238,9 +237,11 @@ class ModelTrainer():
                     learning_rate = 0
                     global_step = 0
                     
+                    train_ii, epoch_size = reader.get_iterator_initializer(config['batch_size'], config['num_steps'], for_test=False)
+                    
                     for i in range(config['max_epoch']):
                         
-                        train_mse, predictions = self._run_epoch(session, m, eval_op=m.train_op, verbose=False)
+                        train_mse, predictions = self._run_epoch(session, m, train_ii, epoch_size, eval_op=m.train_op, verbose=False)
                         learning_rate =  session.run(m.lr)
                         #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                         global_step = session.run(tf.train.get_global_step())
@@ -265,7 +266,8 @@ class ModelTrainer():
                     
                     
                     print('Train Step: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(global_step, train_mse, learning_rate))            
-                    test_mse, predictions = self._run_epoch(session, mtest)
+                    test_ii, epoch_size = reader.get_iterator_initializer(config['batch_size'], config['num_steps'], for_test=True)
+                    test_mse, predictions = self._run_epoch(session, mtest, test_ii, epoch_size)
                     test_predictions.append(predictions[-1])
                     train_writer.add_summary(TensorflowUtils.summary_value('Test Loss', test_mse), global_step)
                     train_writer.close()

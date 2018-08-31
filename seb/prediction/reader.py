@@ -97,8 +97,12 @@ class Reader(object):
         return self._iterator
     
     def _prepare_iterator(self):
-        self._iterator = tf.data.Iterator.from_structure(self._get_dataset_types())
-        self._inputs, self._targets = self._iterator.get_next() 
+        self._iterator = tf.data.Iterator.from_structure(self._get_dataset_types(),((None, None, self._num_features),(None, None, self._num_predicted_vars))) 
+    
+    def get_iterator_elements(self):
+        if self._inputs is None:
+            self._inputs, self._targets = self.iterator.get_next()
+        return self._inputs, self._targets
         
     def get_predicted_var_name(self, pos):
         return self._predicted_vars[pos]
@@ -202,7 +206,7 @@ class Reader(object):
     def has_more_windows(self):
         return self._window_pos < self._num_windows
     
-    def get_generator(self, batch_size, num_steps, for_test=False):
+    def get_iterator_initializer(self, batch_size, num_steps, for_test=False):
         
         data = self._get_data(for_test).values
         length =  data.shape[0]
@@ -213,10 +217,11 @@ class Reader(object):
         ds = self._get_dataset(data, batch_size, num_batches)
         ds = ds.batch(num_steps).repeat()
         ii = self.iterator.make_initializer(ds)
-        return Generator(self._inputs, self._targets, ii, self._num_predicted_vars, epoch_size)
+        return ii, epoch_size
     
     def _get_dataset_types(self):
-        return self._get_dataset(self._data[0:2].values, 1, 1).output_types
+        ds = self._get_dataset(self._data[0:2].values, 1, 1)
+        return ds.output_types
     
     def _get_dataset(self, data, batch_size, num_batches):
         x_data = []
@@ -315,11 +320,11 @@ while reader.next_window():
     
     print(reader.get_start_month_id(), reader.get_end_month_id(True))
 
-    generator1 = reader.get_generator(1, 40, False)
-    x, y = generator1.get_data()
+    x, y = reader.get_iterator_elements()
     
     with tf.Session() as sess:
-        sess.run(generator1.iterator_initializer)
+        ii,_ = reader.get_iterator_initializer(1, 40, False)
+        sess.run(ii)
         #for i in range(4):
         vals = sess.run({'x':x, 'y': y})
         print('x value:')
@@ -333,11 +338,9 @@ while reader.next_window():
         print()
         print()
     
-    generator2 = reader.get_generator(1, 40, True)
-    x, y = generator2.get_data()
-    
     with tf.Session() as sess:
-        sess.run(generator2.iterator_initializer)
+        ii,_ = reader.get_iterator_initializer(1, 40, True)
+        sess.run(ii)
         #for i in range(4):
         vals = sess.run({'x':x, 'y': y})
         print('x value:')
