@@ -185,8 +185,8 @@ class Reader(object):
         self._inputs = None
         self._targets = None
         
-    def _get_data(self, for_test = False):
-        return self._get_window_data(self._data, self._window_pos, for_test) 
+    def _get_data(self, test = 0):
+        return self._get_window_data(self._data, self._window_pos, test) 
     
     def get_data(self, end_window_pos, length, scaled = False):
         return self._get_window_data_by_end_pos(self.get_all_data(scaled), end_window_pos, length)
@@ -205,16 +205,20 @@ class Reader(object):
     def process_absolute_pos(self, pos):
         return pos if pos >= 0 else self._data.shape[0] + pos + 1
     
-    def _get_window_data(self, source, window_pos, for_test = False):
+    def _get_window_data(self, source, window_pos, test = 0):
         assert (window_pos >= 0), "Next window must be called first to get data for window"
-        return source[self._window_pos: self.get_end_window_pos(for_test) ].copy()
+        return source[self._window_pos: self.get_end_window_pos(test) ].copy()
     
     def has_more_windows(self):
         return self._window_pos < self._num_windows
     
-    def get_iterator_initializer(self, batch_size, num_steps, for_test=False, predictions=[]):
+    def get_iterator_initializer(self, batch_size, num_steps, predictions=None):
         
-        data = self._get_data(for_test).values
+        test = 0 if predictions is None else len(predictions) + 1
+        data = self._get_data(test).values
+        
+        if test > 1:
+            self._add_predictions(data, predictions)
         length =  data.shape[0]
         residual = (length - self._prediction_size) % batch_size
         data = data[residual:]
@@ -225,9 +229,9 @@ class Reader(object):
         ii = self.iterator.make_initializer(ds)
         return ii, epoch_size
     
-    def _add_predictions(self, data, predictions, for_test=False):
-        num_predictions = len(self._base_ensembles)
-        pos = data.shape[0] - num_predictions - (1 if for_test else 0)
+    def _add_predictions(self, data, predictions):
+        num_predictions = len(predictions)
+        pos = data.shape[0] - num_predictions - 1
         for ensemble in self._base_ensembles:
             predictions = ensemble.predictions_by_absolute_pos(self._get_absolute_pos(pos), scaled=True)
             if predictions is not None:
@@ -256,17 +260,17 @@ class Reader(object):
     def _get_absolute_pos(self, delta=0):
         return self._window_pos + delta
     
-    def get_window_name(self, for_test=False):
-        return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(for_test))
+    def get_window_name(self, test=0):
+        return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(test))
     
-    def get_end_window_pos(self, for_test=False):
-        return self._window_pos + self._window_size + (1 if for_test else 0)
+    def get_end_window_pos(self, test=0):
+        return self._window_pos + self._window_size + test
     
     def get_start_month_id(self):
         return Utils.add_months_to_month_id(self._start_month_id, self._window_pos)
     
-    def get_end_month_id(self, for_test=False):
-        return Utils.add_months_to_month_id(self._start_month_id, self.get_end_window_pos(for_test))
+    def get_end_month_id(self, test=0):
+        return Utils.add_months_to_month_id(self._start_month_id, self.get_end_window_pos(test))
     
     def unscale_features(self, features, round_sales=True):
         features = np.array(features)
@@ -334,7 +338,7 @@ reader = Reader(13, 37, features)
 
 while reader.next_window():
     
-    print(reader.get_start_month_id(), reader.get_end_month_id(True))
+    print(reader.get_start_month_id(), reader.get_end_month_id(1))
 
     x, y = reader.get_iterator_elements()
     
