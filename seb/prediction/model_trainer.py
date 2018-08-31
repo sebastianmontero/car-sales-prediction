@@ -49,7 +49,6 @@ class ModelTrainer():
     
     def __init__(self, config):
         self._config = None
-        self._eval_config = None
         self._reader = None
         self._save_path = None
         self._setup(config)
@@ -78,7 +77,7 @@ class ModelTrainer():
             vals = session.run(fetches, feed_dict)
             cost = vals['cost']
             state = vals['final_state']
-            predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size, model.generator.num_predicted_vars]))
+            predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size, model.num_predicted_vars]))
             
             costs += cost
             if verbose:
@@ -87,7 +86,7 @@ class ModelTrainer():
                      costs/step))
         
         predictions = np.split(np.concatenate(predictions), model.batch_size,axis=1)
-        predictions = np.reshape(np.concatenate(predictions), [-1,model.generator.num_predicted_vars])       
+        predictions = np.reshape(np.concatenate(predictions), [-1,model.num_predicted_vars])       
         return costs, predictions
 
     def _get_base_config(self):
@@ -143,8 +142,6 @@ class ModelTrainer():
         self._config = self._get_base_config()
         self._config.update(config)
         self._config_layers(self._config)
-        self._eval_config = self._config.copy()
-        self._eval_config['batch_size'] = 1
         if 'window_size' not in self._config:
             self._config['window_size'] = self._config['train_months'] + self._config['prediction_size'] 
              
@@ -168,10 +165,8 @@ class ModelTrainer():
     def train(self):
         
         test_predictions = []
-        #eval_config.num_steps = 1
         reader = self._reader
         config = self._config
-        eval_config = self._eval_config
         evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
         config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         reader.reset()
@@ -197,32 +192,13 @@ class ModelTrainer():
                     with tf.variable_scope('Model', reuse=True, initializer=initializer):
                         mtest = Model(ModelStage.TEST, config, inputs, targets, reader.num_predicted_vars)
                         
-                '''models = {'Train': m, 'Valid': mvalid, 'Test': mtest}'''
-                models = {'Train': m, 'Test': mtest}
-                for name, model in models.items():
-                    model.export_ops(name)
-                metagraph = tf.train.export_meta_graph()
-                if tf.__version__ < '1.1.0' and FLAGS.num_gpus > 1:
-                    raise ValueError('Your version of tensorflow does not support more than 1 gpu')
-                
-                soft_placement = False
-                
-                if FLAGS.num_gpus > 1:
-                    soft_placement = True
-                    export_utils.auto_parallel(metagraph, m)
-            
-            
-            with tf.Graph().as_default():
-                
                 test_absolute_error_tf = tf.Variable(-1.0, trainable=False, name='test_absolute_error')
                 mse_not_improved_count_tf = tf.Variable(0, trainable=False, name='mse_not_improved_count')
                 min_mse_tf = tf.Variable(-1, trainable=False, name='min_mse')
-                saver = tf.train.import_meta_graph(metagraph)
-                for model in models.values():
-                    model.import_ops(FLAGS.num_gpus)
+
                     
-                #saver = tf.train.Saver()    
-                with tf.Session(config=tf.ConfigProto(allow_soft_placement=soft_placement)) as session:
+                saver = tf.train.Saver()    
+                with tf.Session(config=tf.ConfigProto(allow_soft_placement=False)) as session:
                     
                     if tf.train.latest_checkpoint(save_path):
                         saver.restore(session, tf.train.latest_checkpoint(save_path))
@@ -246,7 +222,7 @@ class ModelTrainer():
                         #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                         global_step = session.run(tf.train.get_global_step())
                         train_writer.add_summary(TensorflowUtils.summary_value('Train Loss', train_mse), global_step)
-                        train_writer.add_summary(TensorflowUtils.summary_value('Learning Rate', train_mse), global_step)
+                        train_writer.add_summary(TensorflowUtils.summary_value('Learning Rate', learning_rate), global_step)
                         
                         if min_mse < 0 or train_mse < min_mse:
                             min_mse = train_mse
@@ -273,8 +249,8 @@ class ModelTrainer():
                     train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True), global_step)
-                    for pos,_ in enumerate(evaluator.predicted_vars):
-                        evaluator.plot_target_vs_predicted(pos, scaled=True)
+                    #for pos,_ in enumerate(evaluator.predicted_vars):
+                    #    evaluator.plot_target_vs_predicted(pos, scaled=True)
                     #print(predictions)
                     current_test_absolute_error = evaluator.window_real_absolute_mean_error()
                     best_test_absolute_error = session.run(test_absolute_error_tf)
@@ -312,7 +288,7 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':True})
+modelTrainer = ModelTrainer({'max_epoch' : 10, 'line_id':13, 'train_months':36, 'prediction_size':1, 'store_window':False})
 modelTrainer.train()
             
         

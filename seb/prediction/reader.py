@@ -177,7 +177,13 @@ class Reader(object):
     
     def next_window(self):
         self._window_pos += 1
+        self._clear_iterator()
         return self.has_more_windows()
+    
+    def _clear_iterator(self):
+        self._iterator = None
+        self._inputs = None
+        self._targets = None
         
     def _get_data(self, for_test = False):
         return self._get_window_data(self._data, self._window_pos, for_test) 
@@ -206,7 +212,7 @@ class Reader(object):
     def has_more_windows(self):
         return self._window_pos < self._num_windows
     
-    def get_iterator_initializer(self, batch_size, num_steps, for_test=False):
+    def get_iterator_initializer(self, batch_size, num_steps, for_test=False, predictions=[]):
         
         data = self._get_data(for_test).values
         length =  data.shape[0]

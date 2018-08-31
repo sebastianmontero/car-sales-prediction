@@ -30,6 +30,7 @@ class Model(object):
         self._stage = stage
         self._rnn_params = None
         self._cell = None
+        self.num_predicted_vars = num_predicted_vars
         self.batch_size = config['batch_size']
         self.num_steps = config['num_steps']  
         
@@ -116,44 +117,7 @@ class Model(object):
         
     def assign_lr(self, session, lr_value):
         session.run(self._lr_update, feed_dict={self._new_lr: lr_value})
-    
-    def export_ops(self, name):
-        self._name = name
-        ops = {export_utils.with_prefix(self._name, 'cost'): self._cost,
-               export_utils.with_prefix(self._name, 'predictions'): self._predictions}
-        
-        if self._is_training:
-            ops.update(lr=self._lr, new_lr=self._new_lr, lr_update=self._lr_update)
-            if self._rnn_params:
-                ops.update(rnn_params=self._rnn_params)
-        for name, op in ops.items():
-            tf.add_to_collection(name, op)
-        self._initial_state_name = export_utils.with_prefix(self._name, 'initial')
-        self._final_state_name = export_utils.with_prefix(self._name, 'final')
-        export_utils.export_state_tuples(self._initial_state, self._initial_state_name)
-        export_utils.export_state_tuples(self._final_state, self._final_state_name)
-    
-    def import_ops(self, num_gpus):
-        if self._is_training:
-            self._train_op = tf.get_collection_ref('train_op')[0]
-            self._lr = tf.get_collection_ref('lr')[0]
-            self._new_lr = tf.get_collection_ref('new_lr')[0]
-            self._lr_update = tf.get_collection_ref('lr_update')[0]
-            rnn_params = tf.get_collection_ref('rnn_params')
-            if self._cell and rnn_params:
-                params_saveable = tfcudnn_rnn.RNNParamsSaveable(
-                    self._cell,
-                    self._cell.params_to_canonical,
-                    self._cell.canonical_to_params,
-                    rnn_params,
-                    base_variable_scope='Model/RNN')
-                tf.add_to_collection(tf.GraphKeys.SAVEABLE_OBJECTS, params_saveable)
-        self._cost = tf.get_collection_ref(export_utils.with_prefix(self._name, 'cost'))[0]
-        self._predictions = tf.get_collection_ref(export_utils.with_prefix(self._name, 'predictions'))[0]
-        num_replicas = num_gpus if self._is_training else 1
-        self._initial_state = export_utils.import_state_tuples(self._initial_state, self._initial_state_name, num_replicas)
-        self._final_state = export_utils.import_state_tuples(self._final_state, self._final_state_name, num_replicas)
-        
+         
     
     @property
     def initial_state(self):
@@ -162,6 +126,7 @@ class Model(object):
     @property
     def cost(self):
         return self._cost
+    
     
     @property
     def final_state(self):
