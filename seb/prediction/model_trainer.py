@@ -171,35 +171,37 @@ class ModelTrainer():
         config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         reader.reset()
         
-        while reader.next_window():
-            print()
-            print('Window from: {} to {}'.format(reader.get_start_month_id(), reader.get_end_month_id()))
-            print()
-            tf.reset_default_graph()
-            save_path = os.path.join(config['save_path'], reader.get_window_name())
-            best_save_path = os.path.join(save_path, 'best')  
-            with tf.Graph().as_default():
-                initializer = tf.random_uniform_initializer(-config['init_scale'], config['init_scale'])
+          
+        with tf.Graph().as_default():
+            initializer = tf.random_uniform_initializer(-config['init_scale'], config['init_scale'])
+            
+            inputs, targets = reader.get_iterator_elements()
+            
+            with tf.name_scope('Train'):
                 
-                inputs, targets = reader.get_iterator_elements()
-                
-                with tf.name_scope('Train'):
+                with tf.variable_scope("Model", reuse=None, initializer=initializer): 
+                    m = Model(ModelStage.TRAIN, config, inputs, targets, reader.num_predicted_vars)
+            
+            with tf.name_scope('Test'):
+                with tf.variable_scope('Model', reuse=True, initializer=initializer):
+                    mtest = Model(ModelStage.TEST, config, inputs, targets, reader.num_predicted_vars)
                     
-                    with tf.variable_scope("Model", reuse=None, initializer=initializer): 
-                        m = Model(ModelStage.TRAIN, config, inputs, targets, reader.num_predicted_vars)
-                
-                with tf.name_scope('Test'):
-                    with tf.variable_scope('Model', reuse=True, initializer=initializer):
-                        mtest = Model(ModelStage.TEST, config, inputs, targets, reader.num_predicted_vars)
-                        
-                test_absolute_error_tf = tf.Variable(-1.0, trainable=False, name='test_absolute_error')
-                mse_not_improved_count_tf = tf.Variable(0, trainable=False, name='mse_not_improved_count')
-                min_mse_tf = tf.Variable(-1, trainable=False, name='min_mse')
+            test_absolute_error_tf = tf.Variable(-1.0, trainable=False, name='test_absolute_error')
+            mse_not_improved_count_tf = tf.Variable(0, trainable=False, name='mse_not_improved_count')
+            min_mse_tf = tf.Variable(-1, trainable=False, name='min_mse')
 
-                    
-                saver = tf.train.Saver()    
-                with tf.Session(config=tf.ConfigProto(allow_soft_placement=False)) as session:
-                    
+                
+            saver = tf.train.Saver()    
+            with tf.Session(config=tf.ConfigProto(allow_soft_placement=False)) as session:
+                
+                while reader.next_window():
+                    print()
+                    print('Window from: {} to {}'.format(reader.get_start_month_id(), reader.get_end_month_id()))
+                    print()
+                    #tf.reset_default_graph()
+                    save_path = os.path.join(config['save_path'], reader.get_window_name())
+                    best_save_path = os.path.join(save_path, 'best')
+                
                     if tf.train.latest_checkpoint(save_path):
                         saver.restore(session, tf.train.latest_checkpoint(save_path))
                     else:
