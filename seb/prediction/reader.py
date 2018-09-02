@@ -177,7 +177,7 @@ class Reader(object):
     
     def next_window(self):
         self._window_pos += 1
-        self._clear_iterator()
+        #self._clear_iterator()
         return self.has_more_windows()
     
     def _clear_iterator(self):
