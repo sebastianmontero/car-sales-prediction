@@ -213,7 +213,7 @@ class ModelTrainer():
                     learning_rate = 0
                     global_step = 0
                     
-                    train_ii, epoch_size = reader.get_iterator_initializer(config['batch_size'], config['num_steps'], for_test=False)
+                    train_ii, epoch_size = reader.get_iterator_initializer(config['batch_size'], config['num_steps'])
                     
                     for i in range(config['max_epoch']):
                         
@@ -242,7 +242,7 @@ class ModelTrainer():
                     
                     
                     print('Train Step: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(global_step, train_mse, learning_rate))            
-                    test_ii, epoch_size = reader.get_iterator_initializer(config['batch_size'], config['num_steps'], for_test=True)
+                    test_ii, epoch_size = reader.get_iterator_initializer(config['batch_size'], config['num_steps'], predictions=[])
                     test_mse, predictions = self._run_epoch(session, mtest, test_ii, epoch_size)
                     test_predictions.append(predictions[-1])
                     train_writer.add_summary(TensorflowUtils.summary_value('Test Loss', test_mse), global_step)

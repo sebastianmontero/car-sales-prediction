@@ -218,7 +218,7 @@ class Reader(object):
         data = self._get_data(test).values
         
         if test > 1:
-            self._add_predictions(data, predictions)
+            data = self._add_predictions(data, predictions)
         length =  data.shape[0]
         residual = (length - self._prediction_size) % batch_size
         data = data[residual:]
