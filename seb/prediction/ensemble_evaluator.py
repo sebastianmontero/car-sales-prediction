@@ -141,8 +141,8 @@ class EnsembleEvaluator(BaseEvaluator):
     
     #Has to be defined so that its compatible with evaluator, this method is used in BaseEvaluators
     def predictions(self, scaled=False):
-        return self._mean if scaled else self._mean_u
-        #return self._median if scaled else self._median_u
+        #return self._mean if scaled else self._mean_u
+        return self._median if scaled else self._median_u
     
     def get_predictions(self, feature_pos=0, scaled=False):
         return self._get_feature_values(self.predictions(scaled), feature_pos)
