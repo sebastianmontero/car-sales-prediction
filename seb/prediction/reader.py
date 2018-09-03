@@ -96,7 +96,6 @@ class Reader(object):
             if not self._is_base_ensemble_compatible(ensemble):
                 raise IncompatibleBaseEnsemble('Base ensemble is not compatible with current reader')
             ensembles.append(ensemble)
-            print(ensemble.mean(scaled=True))
             print('Loaded base ensemble: {} ...'.format(path))
         return ensembles
     
@@ -294,7 +293,7 @@ while generator.next_epoch_stage():
     stage += 1'''
         
         
-features = ['inflation_index_roc_prev_month',
+'''features = ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index']
 #features = ['inflation_index_roc_prev_month']
 reader = Reader(13, 37, features, base_ensembles=['/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_1m-20180829152705465891', '/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_2m-20180829152705465891'])
@@ -319,5 +318,5 @@ while reader.next_window():
         print('y value:')
         print(vals['y'][-3:])
         print()
-        print()
+        print()'''
     
