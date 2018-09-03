@@ -219,8 +219,7 @@ class ModelTrainer():
                     
                     for i in range(config['max_epoch']):
                         
-                        #train_mse, predictions = self._run_epoch(session, m, train_ii, epoch_size, eval_op=m.train_op, verbose=False)
-                        train_mse, predictions = 0, []
+                        train_mse, predictions = self._run_epoch(session, m, train_ii, epoch_size, eval_op=m.train_op, verbose=False)
                         learning_rate =  session.run(m.lr)
                         #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                         global_step = session.run(tf.train.get_global_step())
@@ -291,8 +290,8 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({'max_epoch' : 10, 'line_id':13, 'train_months':36, 'prediction_size':1, 'store_window':False})
-#modelTrainer.train()
+modelTrainer = ModelTrainer({'max_epoch' : 10, 'line_id':13, 'train_months':36, 'prediction_size':1, 'store_window':False})
+modelTrainer.train()
             
         
         
