@@ -55,7 +55,7 @@ ensemble_trainer = EnsembleTrainer({
                 'included_features' : ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index'],
                 'num_steps': 40
-            }, repeats=3, description='nationwide_sf_ifp_1m')
+            }, repeats=3, description='nationwide_sf_ifp_2m')
 
 '''ensemble_trainer = EnsembleTrainer({
                 'line_id': 102,
