@@ -169,8 +169,6 @@ class ModelTrainer():
         config = self._config
         evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
         config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
-        reader.reset()
-        #tf.reset_default_graph()
           
         with tf.Graph().as_default():
             
@@ -277,6 +275,10 @@ class ModelTrainer():
         print()
         print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.absolute_mean_error(), evaluator.relative_mean_error()))
         print()
+        
+        reader.reset()
+        tf.reset_default_graph()
+        
         return evaluator
     
     def _checkpoint(self, saver, session, path, remove_current, **kwargs):
