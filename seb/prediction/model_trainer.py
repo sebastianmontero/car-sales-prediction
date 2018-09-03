@@ -170,7 +170,7 @@ class ModelTrainer():
         evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
         config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         reader.reset()
-        tf.reset_default_graph()
+        #tf.reset_default_graph()
           
         with tf.Graph().as_default():
             
