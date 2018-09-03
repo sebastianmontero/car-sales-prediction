@@ -290,7 +290,7 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = ModelTrainer({'max_epoch' : 10, 'line_id':13, 'train_months':36, 'prediction_size':1, 'store_window':False})
+modelTrainer = ModelTrainer({'max_epoch' : 10, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':False})
 modelTrainer.train()
             
         
