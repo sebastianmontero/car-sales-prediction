@@ -170,9 +170,10 @@ class ModelTrainer():
         evaluator_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
         config_sm = StorageManager.get_storage_manager(StorageManagerType.CONFIG)
         reader.reset()
-        
+        tf.reset_default_graph()
           
         with tf.Graph().as_default():
+            
             initializer = tf.random_uniform_initializer(-config['init_scale'], config['init_scale'])
             
             inputs, targets = reader.get_iterator_elements()
@@ -190,8 +191,7 @@ class ModelTrainer():
             mse_not_improved_count_tf = tf.Variable(0, trainable=False, name='mse_not_improved_count')
             min_mse_tf = tf.Variable(-1, trainable=False, name='min_mse')
 
-                
-            saver = tf.train.Saver()    
+                    
             with tf.Session(config=tf.ConfigProto(allow_soft_placement=False)) as session:
                 
                 while reader.next_window():
@@ -199,6 +199,7 @@ class ModelTrainer():
                     print('Window from: {} to {}'.format(reader.get_start_month_id(), reader.get_end_month_id()))
                     print()
                     #tf.reset_default_graph()
+                    saver = tf.train.Saver()
                     save_path = os.path.join(config['save_path'], reader.get_window_name())
                     best_save_path = os.path.join(save_path, 'best')
                 
@@ -290,8 +291,8 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = ModelTrainer({'max_epoch' : 10, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':False})
-modelTrainer.train()
+#modelTrainer = ModelTrainer({'max_epoch' : 20, 'line_id':13, 'train_months':36, 'prediction_size':1, 'store_window':False})
+#modelTrainer.train()
             
         
         
