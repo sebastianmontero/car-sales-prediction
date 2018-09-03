@@ -16,6 +16,10 @@ from db_manager import DBManager
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
+class NotEnoughDataException(Exception):
+    pass
+    
+
 class Reader(object):
     
     PREDICTED_VARS_START_POS = 2
@@ -206,7 +210,10 @@ class Reader(object):
     
     def _get_window_data(self, source, window_pos, test = 0):
         assert (window_pos >= 0), "Next window must be called first to get data for window"
-        return source[self._window_pos: self.get_end_window_pos(test) ].copy()
+        end_pos = self.get_end_window_pos(test)
+        if end_pos > len(source):
+            raise NotEnoughDataException('Not enough data for window')
+        return source[self._window_pos: end_pos ].copy()
     
     def has_more_windows(self):
         return self._window_pos < self._num_windows
