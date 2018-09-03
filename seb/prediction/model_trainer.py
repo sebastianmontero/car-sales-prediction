@@ -219,7 +219,8 @@ class ModelTrainer():
                     
                     for i in range(config['max_epoch']):
                         
-                        train_mse, predictions = self._run_epoch(session, m, train_ii, epoch_size, eval_op=m.train_op, verbose=False)
+                        #train_mse, predictions = self._run_epoch(session, m, train_ii, epoch_size, eval_op=m.train_op, verbose=False)
+                        train_mse, predictions = 0, []
                         learning_rate =  session.run(m.lr)
                         #print('Train Epoch: {:d} Mean Squared Error: {:.5f} Learning rate: {:.5f}'.format(i + 1, train_mse, learning_rate))
                         global_step = session.run(tf.train.get_global_step())
