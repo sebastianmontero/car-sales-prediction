@@ -296,7 +296,7 @@ while generator.next_epoch_stage():
 features = ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index']
 #features = ['inflation_index_roc_prev_month']
-#reader = Reader(13, 37, features, base_ensembles=['/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_1m-20180829152705465891'])
+#reader = Reader(13, 37, features, base_ensembles=['/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_1m-20180829152705465891', '/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_2m-20180829152705465891'])
 reader = Reader(13, 37, features)
 
 while reader.next_window():
@@ -310,13 +310,13 @@ while reader.next_window():
         #for i in range(4):
         vals = sess.run({'x':x, 'y': y})
         print('x value:')
-        print(vals['x'][-2:])
+        print(vals['x'][-3:])
         print('')
         #x_vals = np.reshape(vals['x'], (-1, 7))
         #print(np.array(reader.unscale_features(np.take(x_vals, [2,3,4,5,6], axis=1), round_sales=True)))
         #print('')
         print('y value:')
-        print(vals['y'][-2:])
+        print(vals['y'][-3:])
         print()
         print()
     
