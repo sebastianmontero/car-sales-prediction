@@ -5,6 +5,7 @@ Created on Jun 15, 2018
 '''
 
 
+import numpy as np
 from utils import Utils
 from base_evaluator import BaseEvaluator
 
@@ -18,7 +19,13 @@ class Evaluator(BaseEvaluator):
         self._end_window_pos = end_window_pos
         self._window_length = len(predictions)
         self._global_step = global_step
+
+
+    def __setstate__(self, state):
         
+        if len(state['_predictions'].shape) == 1:
+            state['_predictions'] = np.reshape(state['_predictions'],(-1,1))
+        self.__dict__.update(state)
     
     @property
     def global_step(self):
