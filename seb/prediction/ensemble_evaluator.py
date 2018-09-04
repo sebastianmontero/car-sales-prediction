@@ -114,6 +114,8 @@ class EnsembleEvaluator(BaseEvaluator):
             ms.fit(month_predictions)
             if prev_month_predictions is not None:
                 cc = np.array(ms.cluster_centers_[0])
+                print('cc', cc)
+                print('pmp', prev_month_predictions)
                 distances = np.linalg.norm(cc - prev_month_predictions, axis=1)
                 sel_predictions = cc[np.argmin(distances)]
             else:
