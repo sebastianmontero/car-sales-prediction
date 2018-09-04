@@ -19,6 +19,7 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
         path_parser = subparser.add_parser('seneval', help='Select an ensemble evaluator')
         path_parser.add_argument('pos', help='Select an ensemble evaluator, specify position', type=int)
         path_parser.add_argument('--networks', '-n', required=False, help='Specifies the number of networks to use', dest='networks', type=int)
+        path_parser.add_argument('--operator', '-o', required=False, help='Specifies the operator to use to ensemble networks', dest='operator', type=str, default='mean')
         
     def handle_command(self, cmd, command, base_path):
         if cmd == 'enevals':
@@ -32,12 +33,14 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
                     return
                 self._networks = command.networks
             else:
-                self._networks = None         
+                self._networks = None
+                
+            self._operator = command.operator         
             self._select_actor(command, base_path)
             return True
         
     def _get_actor(self):
-        return EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(find_best_ensemble=True)
+        return EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(find_best_ensemble=(self._networks is None))
     
     def _get_menu_options(self):
         

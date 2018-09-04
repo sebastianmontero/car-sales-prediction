@@ -34,14 +34,14 @@ class EnsembleReporter():
         return self._run_path
     
     
-    def get_ensemble_evaluator(self, find_best_ensemble=False):
+    def get_ensemble_evaluator(self, operator='mean', find_best_ensemble=False):
         
         if self._ensemble_evaluator is None:
             pickle = self._ensemble_eval_sm.get_pickle(self.run_path)
             
             if pickle is None or self._overwrite:
-                self._ensemble_evaluator = EnsembleEvaluator(self._get_evaluators(), find_best_ensemble)
-                self.store_noise_variance_dataset('test')
+                self._ensemble_evaluator = EnsembleEvaluator(self._get_evaluators(), operator, find_best_ensemble)
+                #self.store_noise_variance_dataset('test')
                 self._ensemble_eval_sm.pickle(self._ensemble_evaluator, self.run_path, self._ensemble_evaluator.absolute_mean_error())
             else:
                 self._ensemble_evaluator = self._ensemble_eval_sm.unpickle(pickle)

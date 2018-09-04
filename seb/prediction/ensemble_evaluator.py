@@ -14,12 +14,13 @@ from sklearn.cluster import MeanShift
 
 class EnsembleEvaluator(BaseEvaluator):
 
-    def __init__(self, evaluators, find_best_ensemble=False):
+    def __init__(self, evaluators, operator='mean', find_best_ensemble=False):
         BaseEvaluator.__init__(self)
         if find_best_ensemble:
             evaluators = self._find_best_ensemble(evaluators)
         assert (len(evaluators) > 1), "There must be at least two evaluators in the ensemble"
         best_network = evaluators[0]
+        self._operator = operator
         self._quantile = 0.975 #0.95 confidence interval 
         self._best_network = best_network
         self._end_window_pos = best_network.end_window_pos
@@ -58,7 +59,7 @@ class EnsembleEvaluator(BaseEvaluator):
             candidate_pos = None
             print('Current best relative mean error: {}, networks: {}'.format(rme, len(best)))
             for pos, evaluator in enumerate(evaluators):
-                ensemble = EnsembleEvaluator([evaluator] + best)
+                ensemble = EnsembleEvaluator([evaluator] + best, operator=self._operator)
                 erme = ensemble.relative_mean_error()
                 if erme < rme:
                     candidate_pos = pos
@@ -70,7 +71,7 @@ class EnsembleEvaluator(BaseEvaluator):
         predictions = self._generate_predictions_array(evaluators)
         self._mean = self._calculate_mean(predictions)
         self._median = self._calculate_median(predictions)
-        #self._mode = self._calculate_mode(predictions)
+        self._mode = self._calculate_mode(predictions)
         self._model_variance = self._calculate_model_variance(predictions)
         self._noise_variance = self._calculate_noise_variance(self.get_predicted_targets(scaled=True),self._mean, self._model_variance)
         self._std = self._calculate_std(predictions)
@@ -79,7 +80,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._lower, self._upper = self._calculate_interval(self._mean, self._std)
         self._mean_u = self._unscale_features(self._mean)
         self._median_u = self._unscale_features(self._median)
-        #self._mode_u = self._unscale_features(self._mode)
+        self._mode_u = self._unscale_features(self._mode)
         self._std_u = self._unscale_features(self._std, round_=False)
         self._min_u = self._unscale_features(self._min)
         self._max_u = self._unscale_features(self._max)
@@ -111,9 +112,11 @@ class EnsembleEvaluator(BaseEvaluator):
             ms = MeanShift()
             ms.fit(month_predictions)
             if prev_month_predictions is not None:
-                sel_predictions = ms.cluster_centers_[0]
+                cc = np.array(ms.cluster_centers_[0])
+                distances = np.linalg.norm(cc - prev_month_predictions, axis=1)
+                sel_predictions = cc[np.argmin(distances)]
             else:
-                sel_predictions = ms.cluster_centers_[0]
+                sel_predictions = np.array(ms.cluster_centers_[0])
             prev_month_predictions = sel_predictions
             mode.append(sel_predictions)
         
@@ -141,6 +144,12 @@ class EnsembleEvaluator(BaseEvaluator):
     def mean(self, scaled=False):
         return self._mean if scaled else self._mean_u
     
+    def median(self, scaled=False):
+        return self._median if scaled else self._median_u
+    
+    def mode(self, scaled=False):
+        return self._mode if scaled else self._mode_u
+    
     def std(self, scaled=False):
         return self._std if scaled else self._std_u
     
@@ -161,8 +170,15 @@ class EnsembleEvaluator(BaseEvaluator):
     
     #Has to be defined so that its compatible with evaluator, this method is used in BaseEvaluators
     def predictions(self, scaled=False):
+        fn = {
+                'mean': self.mean,
+                'median' : self.median,
+                'mode' : self.mode
+              }
+        return fn[self._operator](scaled)
         #return self._mean if scaled else self._mean_u
-        return self._median if scaled else self._median_u
+        #return self._median if scaled else self._median_u
+        #return self._m if scaled else self._mode_u
     
     def get_predictions(self, feature_pos=0, scaled=False):
         return self._get_feature_values(self.predictions(scaled), feature_pos)
