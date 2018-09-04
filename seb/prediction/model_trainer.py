@@ -20,8 +20,10 @@ from tensorflow.python.debug.wrappers.hooks import TensorBoardDebugHook
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType, PickleAction
 from tensorflow_utils import TensorflowUtils
+from ensemble_reporter import EnsembleReporter
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+#os.environ["CUDA_VISIBLE_DEVICES"]="-1"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='small', type=str, required=False, help="A type of model. Possible options are: small, medium, large.")
@@ -78,7 +80,8 @@ class ModelTrainer():
             vals = session.run(fetches, feed_dict)
             cost = vals['cost']
             state = vals['final_state']
-            predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size]))
+            predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size, model.generator.num_predicted_vars]))
+            
             costs += cost
             if verbose:
                 print('{:.3f} Mean Squared Error: {:.5f}'.format(
@@ -86,7 +89,7 @@ class ModelTrainer():
                      costs/step))
         
         predictions = np.split(np.concatenate(predictions), model.batch_size,axis=1)
-        predictions = np.reshape(np.concatenate(predictions), [-1,1])       
+        predictions = np.reshape(np.concatenate(predictions), [-1,model.generator.num_predicted_vars])       
         return costs, predictions
 
     def _get_base_config(self):
@@ -98,7 +101,7 @@ class ModelTrainer():
             'init_scale': 0.1,
             'max_grad_norm': 5,
             'num_layers': 2,
-            'num_steps': 12,
+            'num_steps': 72,
             'hidden_size': 10,
             'max_epoch': 10,
             'keep_prob': 1,
@@ -106,19 +109,13 @@ class ModelTrainer():
             'mse_not_improved_threshold': 3,
             'batch_size': 1,
             'rnn_mode': ModelRNNMode.BLOCK,
-            'layers': [15],
+            'layers': [70],
             'error_weight': 1000000,
             'data_type': tf.float32,
             'save_path': '/home/nishilab/Documents/python/model-storage/car-sales-prediction/save/',
-            'included_features': ['consumer_confidence_index',
-                                           'exchange_rate',
-                                           'interest_rate',
-                                           'manufacturing_confidence_index',
-                                           'economic_activity_index',
-                                           'energy_price_index_roc_prev_month',
-                                           'energy_price_index_roc_start_year',
-                                           'inflation_index_roc_prev_month',
-                                           'inflation_index_roc_start_year'],
+            'included_features': ['inflation_index_roc_prev_month',
+                                  'consumer_confidence_index',
+                                  'energy_price_index_roc_prev_month'],
             'store_window' : True # Whether the configuration and evaluator object should be saved for every window
         }
         
@@ -151,8 +148,12 @@ class ModelTrainer():
         self._eval_config = self._config.copy()
         self._eval_config['batch_size'] = 1
         if 'window_size' not in self._config:
-            self._config['window_size'] = self._config['train_months'] + self._config['prediction_size'] 
-        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'], self._config['prediction_size'])
+            self._config['window_size'] = self._config['train_months'] + self._config['prediction_size']
+        
+        if 'base_ensembles' not in self._config:
+            self._config['base_ensembles'] = EnsembleReporter.find_base_ensemble_runs(os.path.dirname(self._config['save_path']))
+             
+        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'], self._config['prediction_size'], self._config['base_ensembles'])
     
     def _config_layers(self, config):
                 
@@ -274,7 +275,9 @@ class ModelTrainer():
                     train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True), global_step)
-                    #evaluator.plot_real_target_vs_predicted()
+                    #for pos,_ in enumerate(evaluator.predicted_vars):
+                    #   evaluator.plot_target_vs_predicted(pos, scaled=True)
+                    #print(predictions)
                     current_test_absolute_error = evaluator.window_real_absolute_mean_error()
                     best_test_absolute_error = session.run(test_absolute_error_tf)
                 
@@ -292,10 +295,10 @@ class ModelTrainer():
                     self._checkpoint(saver, session, save_path, True, **name_dict)
                     
         evaluator = Evaluator(reader, test_predictions, -1, global_step)
-        evaluator_sm.pickle(evaluator, config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
-        config_sm.pickle(config, config['save_path'], evaluator.real_absolute_mean_error(), PickleAction.BEST)
+        evaluator_sm.pickle(evaluator, config['save_path'], evaluator.absolute_mean_error(), PickleAction.BEST)
+        config_sm.pickle(config, config['save_path'], evaluator.absolute_mean_error(), PickleAction.BEST)
         print()
-        print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.real_absolute_mean_error(), evaluator.real_relative_mean_error()))
+        print("Absolute Mean Error: {:.2f} Relative Mean Error: {:.2f}%".format(evaluator.absolute_mean_error(), evaluator.relative_mean_error()))
         print()
         return evaluator
     
@@ -311,7 +314,7 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({'max_epoch' : 300, 'line_id':13, 'train_months':49, 'prediction_size':3})
+#modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':True})
 #modelTrainer.train()
             
         

@@ -27,7 +27,7 @@ class ModelTrainable(Trainable):
     def _train(self):
         evaluator = self.model_trainer.train()
         self.timesteps += 1
-        return TrainingResult(timesteps_total=self.timesteps, timesteps_this_iter=1, training_iteration=self.timesteps, mean_loss=evaluator.real_absolute_mean_error())
+        return TrainingResult(timesteps_total=self.timesteps, timesteps_this_iter=1, training_iteration=self.timesteps, mean_loss=evaluator.absolute_mean_error())
     
     def _save(self, checkpoint_dir):
         self.checkpoint_dir = checkpoint_dir
