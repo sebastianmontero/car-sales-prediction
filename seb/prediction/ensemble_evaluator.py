@@ -68,7 +68,6 @@ class EnsembleEvaluator(BaseEvaluator):
         
     def _process_evaluators(self, evaluators):
         predictions = self._generate_predictions_array(evaluators)
-        print(predictions)
         self._mean = self._calculate_mean(predictions)
         self._median = self._calculate_median(predictions)
         self._mode = self._calculate_mode(predictions)
@@ -106,7 +105,19 @@ class EnsembleEvaluator(BaseEvaluator):
         return np.median(predictions, axis=1)
     
     def _calculate_mode(self, predictions):
-        return np.median(predictions, axis=1)
+        mode = []
+        prev_month_predictions = None
+        for month_predictions in predictions:
+            ms = MeanShift()
+            ms.fit(month_predictions)
+            if prev_month_predictions is not None:
+                sel_predictions = ms.cluster_centers_[0]
+            else:
+                sel_predictions = ms.cluster_centers_[0]
+            prev_month_predictions = sel_predictions
+            mode.append(sel_predictions)
+        
+        return mode
     
     def _calculate_model_variance(self, predictions):
         return np.var(predictions, axis=1, ddof=1)

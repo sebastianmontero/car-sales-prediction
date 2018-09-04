@@ -293,10 +293,10 @@ while generator.next_epoch_stage():
     stage += 1'''
         
         
-'''features = ['inflation_index_roc_prev_month',
+features = ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index']
 #features = ['inflation_index_roc_prev_month']
-reader = Reader(13, 37, features, base_ensembles=['/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_1m-20180829152705465891', '/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_2m-20180829152705465891'])
+reader = Reader(13, 37, features, base_ensembles=['/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_1m-20180829152705465891', '/home/nishilab/Documents/python/model-storage/ensemble-run-nationwide_sf_ifp_2m-20180903224408157528'])
 #reader = Reader(13, 37, features)
 
 while reader.next_window():
@@ -318,5 +318,5 @@ while reader.next_window():
         print('y value:')
         print(vals['y'][-3:])
         print()
-        print()'''
+        print()
     
