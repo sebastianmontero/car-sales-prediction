@@ -16,11 +16,11 @@ class EnsembleEvaluator(BaseEvaluator):
 
     def __init__(self, evaluators, operator='mean', find_best_ensemble=False):
         BaseEvaluator.__init__(self)
+        self._operator = operator
         if find_best_ensemble:
             evaluators = self._find_best_ensemble(evaluators)
         assert (len(evaluators) > 1), "There must be at least two evaluators in the ensemble"
         best_network = evaluators[0]
-        self._operator = operator
         self._quantile = 0.975 #0.95 confidence interval 
         self._best_network = best_network
         self._end_window_pos = best_network.end_window_pos
