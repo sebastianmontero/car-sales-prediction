@@ -40,7 +40,7 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
             return True
         
     def _get_actor(self):
-        return EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(find_best_ensemble=(self._networks is None))
+        return EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(self._operator, find_best_ensemble=(self._networks is None))
     
     def _get_menu_options(self):
         
