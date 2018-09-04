@@ -32,7 +32,7 @@ class Reader(object):
     }
     
 
-    def __init__(self, line_id, window_size, included_features, prediction_size = 1, base_ensembles=[]):
+    def __init__(self, line_id, window_size, included_features, predicted_vars=None, prediction_size = 1, base_ensembles=[]):
         assert (window_size > 0), "Window size must be greater than zero"
         self._line_id = str(line_id) 
         self._window_size = window_size
@@ -43,7 +43,7 @@ class Reader(object):
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
-        self._predicted_vars = self._scale_features
+        self._predicted_vars = self._scale_features if predicted_vars is None else predicted_vars
         self._num_predicted_vars = len(self._predicted_vars)
         self._base_ensembles = self._load_base_ensembles(base_ensembles)
         self._init_fleeting_vars()

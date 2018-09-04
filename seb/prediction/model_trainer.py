@@ -116,6 +116,7 @@ class ModelTrainer():
             'included_features': ['inflation_index_roc_prev_month',
                                   'consumer_confidence_index',
                                   'energy_price_index_roc_prev_month'],
+            'predicted_vars': None,
             'store_window' : True # Whether the configuration and evaluator object should be saved for every window
         }
         
@@ -153,7 +154,7 @@ class ModelTrainer():
         if 'base_ensembles' not in self._config:
             self._config['base_ensembles'] = EnsembleReporter.find_base_ensemble_runs(os.path.dirname(self._config['save_path']))
              
-        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'], self._config['prediction_size'], self._config['base_ensembles'])
+        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'], self._config['predicted_vars'], prediction_size=self._config['prediction_size'], base_ensembles=self._config['base_ensembles'])
     
     def _config_layers(self, config):
                 
@@ -275,8 +276,8 @@ class ModelTrainer():
                     train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True), global_step)
-                    #for pos,_ in enumerate(evaluator.predicted_vars):
-                    #   evaluator.plot_target_vs_predicted(pos, scaled=True)
+                    for pos,_ in enumerate(evaluator.predicted_vars):
+                        evaluator.plot_target_vs_predicted(pos, scaled=True)
                     #print(predictions)
                     current_test_absolute_error = evaluator.window_real_absolute_mean_error()
                     best_test_absolute_error = session.run(test_absolute_error_tf)
@@ -314,8 +315,8 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':True})
-#modelTrainer.train()
+modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':True, 'predicted_vars':['sales']})
+modelTrainer.train()
             
         
         
