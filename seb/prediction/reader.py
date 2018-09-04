@@ -96,6 +96,7 @@ class Reader(object):
             if not self._is_base_ensemble_compatible(ensemble):
                 raise IncompatibleBaseEnsemble('Base ensemble is not compatible with current reader')
             ensembles.append(ensemble)
+            print(ensemble.predictions(scale=True))
             print('Loaded base ensemble: {} ...'.format(path))
         return ensembles
     
