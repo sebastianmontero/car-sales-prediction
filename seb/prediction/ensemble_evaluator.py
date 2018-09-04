@@ -110,7 +110,11 @@ class EnsembleEvaluator(BaseEvaluator):
         prev_month_predictions = None
         for month_predictions in predictions:
             ms = MeanShift()
-            ms.fit(month_predictions)
+            try:
+                ms.fit(month_predictions)
+            except:
+                ms.set_params(bandwidth=0.75)
+                ms.fit(month_predictions)
             if prev_month_predictions is not None:
                 cc = np.array(ms.cluster_centers_)
                 distances = np.linalg.norm(cc - prev_month_predictions, axis=1)
