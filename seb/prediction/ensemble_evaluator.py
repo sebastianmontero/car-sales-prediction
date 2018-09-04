@@ -110,7 +110,7 @@ class EnsembleEvaluator(BaseEvaluator):
         prev_month_predictions = None
         for month_predictions in predictions:
             print(month_predictions)
-            ms = MeanShift()
+            ms = MeanShift(bandwidth='0.75')
             ms.fit(month_predictions)
             if prev_month_predictions is not None:
                 cc = np.array(ms.cluster_centers_)
