@@ -182,9 +182,6 @@ class EnsembleEvaluator(BaseEvaluator):
                 'mode' : self.mode
               }
         return fn[self._operator](scaled)
-        #return self._mean if scaled else self._mean_u
-        #return self._median if scaled else self._median_u
-        #return self._m if scaled else self._mode_u
     
     def get_predictions(self, feature_pos=0, scaled=False):
         return self._get_feature_values(self.predictions(scaled), feature_pos)
@@ -218,29 +215,29 @@ class EnsembleEvaluator(BaseEvaluator):
         data = data.join(pd.DataFrame({'variance':self.get_noise_variance()}))
         return data;
     
-    def _plot_target_vs_mean_best_new_process(self, real, mean, best, ylabel, title):
-        self._run_in_new_process(target=self._plot_target_vs_mean_best, args=(real, mean, best, ylabel, title))
+    def _plot_target_vs_ensemble_best_new_process(self, real, ensemble, best, ylabel, title):
+        self._run_in_new_process(target=self._plot_target_vs_ensemble_best, args=(real, ensemble, best, ylabel, title))
         
-    def _plot_target_vs_mean_best(self, real, mean, best, ylabel, title):
-        self._plot_target_vs(real,{'Ensemble Mean':mean, 'Best Network': best},ylabel, title)
+    def _plot_target_vs_ensemble_best(self, real, ensemble, best, ylabel, title):
+        self._plot_target_vs(real,{'Ensemble':ensemble, 'Best Network': best},ylabel, title)
         
-    def plot_target_vs_mean_best(self, feature_pos=0, scaled=False, tail=False):
+    def plot_target_vs_ensemble_best(self, feature_pos=0, scaled=False, tail=False):
         feature_name = self._get_predicted_var_name(feature_pos)
         formatted_feature_name = self._generate_feature_name(feature_name, scaled)
-        self._plot_target_vs_mean_best_new_process(self._get_target(feature_name, scaled=scaled,length=self._get_target_data_length(tail)), 
+        self._plot_target_vs_ensemble_best_new_process(self._get_target(feature_name, scaled=scaled,length=self._get_target_data_length(tail)), 
                                                    self.get_predictions(feature_pos, scaled), 
                                                    self._best_network.get_predictions(feature_pos, scaled), 
                                                    formatted_feature_name, 
-                                                   'Target vs Ensemble Mean and Best Network ' + formatted_feature_name)
+                                                   'Target vs Ensemble and Best Network ' + formatted_feature_name)
         
     
-    def _plot_target_vs_mean_min_max_new_process(self, real, mean, min_, max_, ylabel, title):
-        self._run_in_new_process(target=self._plot_target_vs_mean_min_max, args=(real, mean, min_, max_, ylabel, title))
+    def _plot_target_vs_ensemble_min_max_new_process(self, real, ensemble, min_, max_, ylabel, title):
+        self._run_in_new_process(target=self._plot_target_vs_ensemble_min_max, args=(real, ensemble, min_, max_, ylabel, title))
         
-    def _plot_target_vs_mean_min_max(self, real, mean, min_, max_, ylabel, title):
-        self._plot_target_vs(real,{'Ensemble Mean':mean, 'Min': min_, 'Max': max_},ylabel, title)
+    def _plot_target_vs_ensemble_min_max(self, real, ensemble, min_, max_, ylabel, title):
+        self._plot_target_vs(real,{'Ensemble':ensemble, 'Min': min_, 'Max': max_},ylabel, title)
         
-    def plot_target_vs_mean_min_max(self, feature_pos=0, scaled=False, tail=False):
+    def plot_target_vs_ensemble_min_max(self, feature_pos=0, scaled=False, tail=False):
         feature_name = self._get_predicted_var_name(feature_pos)
         formatted_feature_name = self._generate_feature_name(feature_name, scaled)
         self._plot_target_vs_mean_min_max_new_process(self._get_target(feature_name, scaled=scaled, length=self._get_target_data_length(tail)), 
@@ -248,7 +245,7 @@ class EnsembleEvaluator(BaseEvaluator):
                                                       self.get_min(feature_pos, scaled), 
                                                       self.get_max(feature_pos, scaled) , 
                                                       formatted_feature_name, 
-                                                      'Target vs Ensemble Mean, Min and Max ' + formatted_feature_name)
+                                                      'Target vs Ensemble, Min and Max ' + formatted_feature_name)
         
     def _plot_target_vs_mean_interval_new_process(self, real, mean, lower, upper, ylabel, title):
         self._run_in_new_process(target=self._plot_target_vs_mean_interval, args=(real, mean, lower, upper, ylabel, title))

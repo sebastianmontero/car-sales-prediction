@@ -48,14 +48,14 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
                    'Show scaled absolute mean error',
                    'Show real relative mean error',
                    'Show scaled relative mean error',
-                   'Plot target vs ensemble mean and best network real',
-                   'Plot target vs ensemble mean and best network real with tail',
-                   'Plot target vs ensemble mean and best network scaled',
-                   'Plot target vs ensemble mean and best network scaled with tail',
-                   'Plot target vs ensemble mean, min and max real',
-                   'Plot target vs ensemble mean, min and max real with tail',
-                   'Plot target vs ensemble mean, min and max scaled',
-                   'Plot target vs ensemble mean, min and max scaled with tail',
+                   'Plot target vs ensemble and best network real',
+                   'Plot target vs ensemble and best network real with tail',
+                   'Plot target vs ensemble and best network scaled',
+                   'Plot target vs ensemble and best network scaled with tail',
+                   'Plot target vs ensemble, min and max real',
+                   'Plot target vs ensemble, min and max real with tail',
+                   'Plot target vs ensemble, min and max scaled',
+                   'Plot target vs ensemble, min and max scaled with tail',
                    'Plot target vs ensemble mean and interval real',
                    'Plot target vs ensemble mean and interval real with tail',
                    'Plot target vs ensemble mean and interval scaled',
@@ -78,21 +78,21 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
         elif action == 11:
             print('{} relative mean error: {:.2f}% Best Network: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.relative_mean_error(feature_pos, scaled=True), self._actor.best_network.relative_mean_error(feature_pos, scaled=True)))
         elif action == 12:
-            self._actor.plot_target_vs_mean_best(feature_pos)
+            self._actor.plot_target_vs_ensemble_best(feature_pos)
         elif action == 13:
-            self._actor.plot_target_vs_mean_best(feature_pos, tail=True)
+            self._actor.plot_target_vs_ensemble_best(feature_pos, tail=True)
         elif action == 14:
-            self._actor.plot_target_vs_mean_best(feature_pos, scaled=True)
+            self._actor.plot_target_vs_ensemble_best(feature_pos, scaled=True)
         elif action == 15:
-            self._actor.plot_target_vs_mean_best(feature_pos, scaled=True, tail=True)
+            self._actor.plot_target_vs_ensemble_best(feature_pos, scaled=True, tail=True)
         elif action == 16:
-            self._actor.plot_target_vs_mean_min_max(feature_pos)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos)
         elif action == 17:
-            self._actor.plot_target_vs_mean_min_max(feature_pos, tail=True)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos, tail=True)
         elif action == 18:
-            self._actor.plot_target_vs_mean_min_max(feature_pos, scaled=True)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos, scaled=True)
         elif action == 19:
-            self._actor.plot_target_vs_mean_min_max(feature_pos, scaled=True, tail=True)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos, scaled=True, tail=True)
         elif action == 20:
             self._actor.plot_target_vs_mean_interval(feature_pos)
         elif action == 21:
