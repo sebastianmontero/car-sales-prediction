@@ -7,12 +7,12 @@ import os
 import matplotlib.pyplot as plt
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType
-from action_menu import ActionMenu
+from base_evaluator_action_menu import BaseEvaluatorActionMenu
 
-class EvaluatorActionMenu(ActionMenu):
+class EvaluatorActionMenu(BaseEvaluatorActionMenu):
     
     def __init__(self, config_sm):
-        ActionMenu.__init__(self, 'Evaluator',StorageManager.get_storage_manager(StorageManagerType.EVALUATOR), config_sm)
+        BaseEvaluatorActionMenu.__init__(self, 'Evaluator',StorageManager.get_storage_manager(StorageManagerType.EVALUATOR), config_sm)
    
     def add_main_menu_actions(self, subparser):
         path_parser = subparser.add_parser('evals', help='Search for evaluators')
@@ -82,41 +82,24 @@ class EvaluatorActionMenu(ActionMenu):
     def _get_actor(self):
         return self._unpickle(self._path)
     
-    def _print_menu_options(self):
-        print('[1] Plot target vs predicted real sales')
-        print('[2] Plot target vs predicted real sales with tail')
-        print('[3] Plot target vs predicted scaled sales')
-        print('[4] Plot target vs predicted scaled sales with tail')
-        print('[5] Plot real sales errors')
-        print('[6] Plot scaled sales errors')
-        print('[7] Show real sales absolute mean error')
-        print('[8] Show scaled sales absolute mean error')
-        print('[9] Show real sales relative mean error')
-        print('[10] Show scaled sales relative mean error')
-        print('[11] Show related configuration')
+    def _get_menu_options(self):
+        options = ['Show real absolute mean error',
+                   'Show scaled absolute mean error',
+                   'Show real relative mean error',
+                   'Show scaled relative mean error',
+                   'Show related configuration']
+        return super(EvaluatorActionMenu, self)._get_menu_options() + options
                                     
-    def _perform_action(self, action, params):
-        if action == 1:
-            self._actor.plot_real_target_vs_predicted()
-        if action == 2:
-            self._actor.plot_real_target_vs_predicted(tail=True)
-        elif action == 3:
-            self._actor.plot_scaled_target_vs_predicted()
-        elif action == 4:
-            self._actor.plot_scaled_target_vs_predicted(tail=True)
-        elif action == 5:
-            self._actor.plot_real_errors()
-        elif action == 6:
-            self._actor.plot_scaled_errors()
-        elif action == 7:
-            print('Real sales absolute mean error: {:.2f}'.format(self._actor.real_absolute_mean_error()))
-        elif action == 8:
-            print('Scaled sales absolute mean error: {:.5f}'.format(self._actor.scaled_absolute_mean_error()))
+    def _handle_action(self, action, feature_pos, params):
+        if action == 8:
+            print('{} absolute mean error: {:.2f}'.format(self._actor.generate_feature_name(feature_pos, scaled=False), self._actor.absolute_mean_error(feature_pos)))
         elif action == 9:
-            print('Real sales relative mean error: {:.2f}%'.format(self._actor.real_relative_mean_error()))
+            print('{} absolute mean error: {:.2f}'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.absolute_mean_error(feature_pos, scaled=True)))
         elif action == 10:
-            print('Scaled sales relative mean error: {:.2f}%'.format(self._actor.scaled_relative_mean_error()))
+            print('{} relative mean error: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=False), self._actor.relative_mean_error(feature_pos)))
         elif action == 11:
+            print('{} relative mean error: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.relative_mean_error(feature_pos, scaled=True)))
+        elif action == 12:
             path,_ = os.path.split(self._path)
             config = self._config_sm.unpickle(path)
             print('Configuration: ')

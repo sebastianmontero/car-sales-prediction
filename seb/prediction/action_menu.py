@@ -8,6 +8,7 @@ import os
 import sys
 import argparse
 import pprint
+import traceback
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType
 from feature_selector_reporter import FeatureSelectorReporter
@@ -47,12 +48,16 @@ class ActionMenu():
         print('{} mode options:'.format(self._title))
         print()
         print('[0] Exit {} mode'.format(self._title))
-        self._print_menu_options()
+        
+        options = self._get_menu_options()
+        for i, option in enumerate(options):
+            print('[{}] {}'.format(i + 1, option))
         print()
     
-    def _print_menu_options(self):
+    def _get_menu_options(self):
         raise NotImplementedError("Subclasses must implement this method")
     
+        
     def _select_actor(self, command, base_path):
         if command.pos >= 0 and command.pos < len(self._paths):
             self._path = self._paths[command.pos]
@@ -79,7 +84,8 @@ class ActionMenu():
                     break;
                 
                 self._perform_action(action, split_action)
-            except (ValueError, IndexError):
+            except (ValueError, IndexError) as e:
+                traceback.print_exc()
                 print('Invalid option')
                                     
     def _perform_action(self, action, params):
