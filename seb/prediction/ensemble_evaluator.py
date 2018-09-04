@@ -240,7 +240,7 @@ class EnsembleEvaluator(BaseEvaluator):
     def plot_target_vs_ensemble_min_max(self, feature_pos=0, scaled=False, tail=False):
         feature_name = self._get_predicted_var_name(feature_pos)
         formatted_feature_name = self._generate_feature_name(feature_name, scaled)
-        self._plot_target_vs_mean_min_max_new_process(self._get_target(feature_name, scaled=scaled, length=self._get_target_data_length(tail)), 
+        self._plot_target_vs_ensemble_min_max_new_process(self._get_target(feature_name, scaled=scaled, length=self._get_target_data_length(tail)), 
                                                       self.get_predictions(feature_pos, scaled), 
                                                       self.get_min(feature_pos, scaled), 
                                                       self.get_max(feature_pos, scaled) , 
