@@ -70,6 +70,8 @@ class Reader(object):
     def __setstate__(self, state):
         
         if '_dont_scale_features' in state:
+            print('_included_features')
+            print(type(state['_included_features']))
             state['_scale_features'] = ['sales'] + state['_included_features']
             state['_predicted_vars'] = ['sales']
             state['_num_predicted_vars'] = 1
