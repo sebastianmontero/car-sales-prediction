@@ -25,6 +25,10 @@ class Evaluator(BaseEvaluator):
         
         if len(state['_predictions'].shape) == 1:
             state['_predictions'] = np.reshape(state['_predictions'],(-1,1))
+            state['_unscaled_predictions'] = np.reshape(state['_predictions'],(-1,1))
+            print(state['_predictions'])
+            print(state['_unscaled_predictions'])
+            
         self.__dict__.update(state)
     
     @property
