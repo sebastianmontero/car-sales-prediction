@@ -109,6 +109,7 @@ class EnsembleEvaluator(BaseEvaluator):
         mode = []
         prev_month_predictions = None
         for month_predictions in predictions:
+            print(month_predictions)
             ms = MeanShift()
             ms.fit(month_predictions)
             if prev_month_predictions is not None:
