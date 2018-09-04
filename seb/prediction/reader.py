@@ -241,8 +241,16 @@ class Reader(object):
     
     def unscale_features(self, features, round_sales=True):
         features = np.array(features)
-        scaled_features = features[:,:len(self._scale_features)]
+        num_sf = len(self._scale_features)
+        scaled_features = features[:,:num_sf]
+        
+        if self._num_predicted_vars < num_sf:
+            scaled_features = np.concatenate((scaled_features, np.zeros((len(features), num_sf - self._num_predicted_vars))), axis=1)
+        
+        print(scaled_features)
         unscaled = self._scaler.inverse_transform(scaled_features)
+        unscaled = unscaled[:, :self._num_predicted_vars]
+        print(unscaled)
         if round_sales:
             for l in unscaled:
                 l[0] = round(max(l[0],0))
