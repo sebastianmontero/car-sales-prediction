@@ -10,6 +10,7 @@ import pandas as pd
 from utils import Utils
 from base_evaluator import BaseEvaluator
 from scipy.stats import t
+from sklearn.cluster import MeanShift
 
 class EnsembleEvaluator(BaseEvaluator):
 
@@ -27,6 +28,8 @@ class EnsembleEvaluator(BaseEvaluator):
         self._reader = best_network.reader
         self._mean = None
         self._mean_u = None
+        self._mode = None
+        self._mode_u = None
         self._median = None
         self._median_u = None
         self._model_variance = None
@@ -65,8 +68,10 @@ class EnsembleEvaluator(BaseEvaluator):
         
     def _process_evaluators(self, evaluators):
         predictions = self._generate_predictions_array(evaluators)
+        print(predictions)
         self._mean = self._calculate_mean(predictions)
         self._median = self._calculate_median(predictions)
+        self._mode = self._calculate_mode(predictions)
         self._model_variance = self._calculate_model_variance(predictions)
         self._noise_variance = self._calculate_noise_variance(self.get_predicted_targets(scaled=True),self._mean, self._model_variance)
         self._std = self._calculate_std(predictions)
@@ -75,6 +80,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._lower, self._upper = self._calculate_interval(self._mean, self._std)
         self._mean_u = self._unscale_features(self._mean)
         self._median_u = self._unscale_features(self._median)
+        self._mode_u = self._unscale_features(self._mode)
         self._std_u = self._unscale_features(self._std, round_=False)
         self._min_u = self._unscale_features(self._min)
         self._max_u = self._unscale_features(self._max)
@@ -97,6 +103,9 @@ class EnsembleEvaluator(BaseEvaluator):
         return np.mean(predictions, axis=1)
     
     def _calculate_median(self, predictions):
+        return np.median(predictions, axis=1)
+    
+    def _calculate_mode(self, predictions):
         return np.median(predictions, axis=1)
     
     def _calculate_model_variance(self, predictions):
