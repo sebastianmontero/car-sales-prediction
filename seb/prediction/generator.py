@@ -44,7 +44,7 @@ class Generator(object):
             for batch_pos in range(self._batch_size):
                 pos =  batch_pos * self._num_batches + num_batch
                 x_batch.append(self._data[pos])
-                y_batch.append(self._data[pos + self._prediction_size][self.PREDICTED_VARS_START_POS:])
+                y_batch.append(self._data[pos + self._prediction_size][self.PREDICTED_VARS_START_POS:self.PREDICTED_VARS_START_POS + self._num_predicted_vars])
             x_data.append(x_batch)
             y_data.append(y_batch)
         return np.asarray(x_data), np.asarray(y_data)
