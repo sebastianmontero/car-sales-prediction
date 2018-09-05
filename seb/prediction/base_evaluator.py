@@ -73,6 +73,16 @@ class BaseEvaluator(object):
             
         return errors
     
+    def absolute_error(self, feature_pos=0, scaled=False):
+        targets = self._get_target_by_pos(feature_pos, scaled=scaled)
+        predictions = self.get_predictions(feature_pos, scaled=scaled)
+        return self.calculate_absolute_error(targets, predictions)
+    
+    def relative_error(self, feature_pos=0, scaled=False):
+        targets = self._get_target_by_pos(feature_pos, scaled=scaled)
+        predictions = self.get_predictions(feature_pos, scaled=scaled)
+        return self.calculate_relative_error(targets, predictions)
+    
     def _calculate_absolute_mean_error(self, targets, predictions):
         return np.mean(self.calculate_absolute_error(targets, predictions))
     

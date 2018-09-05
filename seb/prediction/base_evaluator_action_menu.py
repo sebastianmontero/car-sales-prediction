@@ -17,7 +17,11 @@ class BaseEvaluatorActionMenu(ActionMenu):
                 'Plot target vs predicted scaled',
                 'Plot target vs predicted scaled with tail',
                 'Plot real errors',
-                'Plot scaled errors']
+                'Plot scaled errors',
+                'Plot real absolute errors',
+                'Plot scaled absolute errors',
+                'Plot real relative errors',
+                'Plot scaled relative errors']
         
     def _perform_action(self, action, command):
         
@@ -29,17 +33,19 @@ class BaseEvaluatorActionMenu(ActionMenu):
         elif action == 2:
             print(self._actor.evaluators_str())
         elif action == 3:
-            self._actor.plot_target_vs_predicted(feature_pos)
+            self._actor.plot_target_vs_predicted(feature_pos, evals=evals)
         elif action == 4:
-            self._actor.plot_target_vs_predicted(feature_pos, tail=True)
+            self._actor.plot_target_vs_predicted(feature_pos, tail=True, evals=evals)
         elif action == 5:
-            self._actor.plot_target_vs_predicted(feature_pos, scaled=True)
+            self._actor.plot_target_vs_predicted(feature_pos, scaled=True, evals=evals)
         elif action == 6:
-            self._actor.plot_target_vs_predicted(feature_pos, scaled=True, tail=True)
+            self._actor.plot_target_vs_predicted(feature_pos, scaled=True, tail=True, evals=evals)
         elif action == 7:
-            self._actor.plot_errors(feature_pos)
+            self._actor.plot_errors(feature_pos, evals=evals)
         elif action == 8:
-            self._actor.plot_errors(feature_pos, scaled=True)
+            self._actor.plot_errors(feature_pos, scaled=True, evals=evals)
+        elif action == 9:
+            self._actor.plot_absolute_errors(feature_pos, evals=evals)
         else:
             self._handle_action(action, feature_pos, evals)
             
