@@ -3,9 +3,11 @@ Created on Jul 2, 2018
 
 @author: nishilab
 '''
+import os
 from ensemble_reporter import EnsembleReporter
 from storage_manager import StorageManager, StorageManagerType
 from base_evaluator_action_menu import BaseEvaluatorActionMenu
+from ensemble_evaluator_presenter import EnsembleEvaluatorPresenter
 
 class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
     
@@ -40,7 +42,12 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
             return True
         
     def _get_actor(self):
-        return EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(self._operator, find_best_ensemble=(self._networks is None))
+        evals = []
+        evals.append({
+            'name':os.path.basename(self._path),
+            'obj': EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(self._operator, find_best_ensemble=(self._networks is None))
+        })
+        return EnsembleEvaluatorPresenter(evals)
     
     def _get_menu_options(self):
         
@@ -70,13 +77,13 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
     def _handle_action(self, action, feature_pos, params):
         
         if action == 8:
-            print('{} absolute mean error: {:.2f} Best Network: {:.2f}'.format(self._actor.generate_feature_name(feature_pos, scaled=False), self._actor.absolute_mean_error(feature_pos), self._actor.best_network.absolute_mean_error(feature_pos) ))
+            print(self._actor.absolute_mean_error_str(feature_pos))
         elif action == 9:
-            print('{} absolute mean error: {:.2f} Best Network: {:.2f}'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.absolute_mean_error(feature_pos, scaled=True), self._actor.best_network.absolute_mean_error(feature_pos, scaled=True) ))
+            print(self._actor.absolute_mean_error_str(feature_pos, scaled=True))
         elif action == 10:
-            print('{} relative mean error: {:.2f}% Best Network: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=False), self._actor.relative_mean_error(feature_pos), self._actor.best_network.relative_mean_error(feature_pos)))
+            print(self._actor.relative_mean_error_str(feature_pos))
         elif action == 11:
-            print('{} relative mean error: {:.2f}% Best Network: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.relative_mean_error(feature_pos, scaled=True), self._actor.best_network.relative_mean_error(feature_pos, scaled=True)))
+            print(self._actor.relative_mean_error_str(feature_pos, scaled=True))
         elif action == 12:
             self._actor.plot_target_vs_ensemble_best(feature_pos)
         elif action == 13:

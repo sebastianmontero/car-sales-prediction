@@ -25,7 +25,7 @@ class BaseEvaluatorActionMenu(ActionMenu):
             feature_pos = int(params[1])
         
         if action == 1:
-            self._display_predicted_vars()
+            print(self._actor.predicted_vars_str())
         elif action == 2:
             self._actor.plot_target_vs_predicted(feature_pos)
         elif action == 3:
@@ -42,12 +42,5 @@ class BaseEvaluatorActionMenu(ActionMenu):
             self._handle_action(action, feature_pos, params)
             
     def _handle_action(self, action, feature_pos, params):
-        raise NotImplementedError("Child classes must implement this method")
-    
-    def _display_predicted_vars(self):
-        features = self._actor.predicted_vars
-        
-        for i, feature in enumerate(features):
-            print('[{}] {}'.format(i, self._actor.format_name(feature)))
-        
+        raise NotImplementedError("Child classes must implement this method")    
     

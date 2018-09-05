@@ -5,7 +5,7 @@ Created on Jul 2, 2018
 '''
 import os
 import matplotlib.pyplot as plt
-from evaluator import Evaluator
+from evaluator_presenter import EvaluatorPresenter
 from storage_manager import StorageManager, StorageManagerType
 from base_evaluator_action_menu import BaseEvaluatorActionMenu
 
@@ -80,7 +80,12 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
         return self._sm.unpickle(path)
     
     def _get_actor(self):
-        return self._unpickle(self._path)
+        evals = []
+        evals.append({
+            'name':os.path.basename(self._path),
+            'obj': self._unpickle(self._path)
+        })
+        return EvaluatorPresenter(evals)
     
     def _get_menu_options(self):
         options = ['Show real absolute mean error',
@@ -92,13 +97,13 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
                                     
     def _handle_action(self, action, feature_pos, params):
         if action == 8:
-            print('{} absolute mean error: {:.2f}'.format(self._actor.generate_feature_name(feature_pos, scaled=False), self._actor.absolute_mean_error(feature_pos)))
+            print(self._actor.absolute_mean_error_str(feature_pos))
         elif action == 9:
-            print('{} absolute mean error: {:.2f}'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.absolute_mean_error(feature_pos, scaled=True)))
+            print(self._actor.absolute_mean_error_str(feature_pos, scaled=True))
         elif action == 10:
-            print('{} relative mean error: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=False), self._actor.relative_mean_error(feature_pos)))
+            print(self._actor.relative_mean_error_str(feature_pos))
         elif action == 11:
-            print('{} relative mean error: {:.2f}%'.format(self._actor.generate_feature_name(feature_pos, scaled=True), self._actor.relative_mean_error(feature_pos, scaled=True)))
+            print(self._actor.relative_mean_error_str(feature_pos, scaled=True))
         elif action == 12:
             path,_ = os.path.split(self._path)
             config = self._config_sm.unpickle(path)

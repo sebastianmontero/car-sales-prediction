@@ -3,10 +3,6 @@ Created on Jul 2, 2018
 
 @author: nishilab
 '''
-
-import os
-import sys
-import argparse
 import pprint
 import traceback
 from evaluator import Evaluator
