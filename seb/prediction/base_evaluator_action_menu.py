@@ -19,11 +19,10 @@ class BaseEvaluatorActionMenu(ActionMenu):
                 'Plot real errors',
                 'Plot scaled errors']
         
-    def _perform_action(self, action, params):
-        feature_pos = 0
+    def _perform_action(self, action, command):
         
-        if len(params) > 1:
-            feature_pos = int(params[1])
+        feature_pos = command.feature
+        evals = command.evals
         
         if action == 1:
             print(self._actor.predicted_vars_str())
@@ -42,8 +41,8 @@ class BaseEvaluatorActionMenu(ActionMenu):
         elif action == 8:
             self._actor.plot_errors(feature_pos, scaled=True)
         else:
-            self._handle_action(action, feature_pos, params)
+            self._handle_action(action, feature_pos, evals)
             
-    def _handle_action(self, action, feature_pos, params):
+    def _handle_action(self, action, feature_pos, evals):
         raise NotImplementedError("Child classes must implement this method")    
     

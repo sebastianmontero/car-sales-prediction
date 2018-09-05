@@ -35,13 +35,13 @@ class FeatureSelectorActionMenu(ActionMenu):
         print('[2] Show best configuration per feature')
         print('[3] Show configurations per feature [Specify number of features wanted]')
                                         
-    def _perform_action(self, action, params):
+    def _perform_action(self, action, command):
         if action == 1:
             self._actor.print_best_config()
         elif action == 2:
             self._actor.print_best_configs()
         elif action == 3:
-            self._actor.print_experiment_configs(int(params[1]))
+            self._actor.print_experiment_configs(command.num_features)
         else:
             raise ValueError('Unknown action')
             

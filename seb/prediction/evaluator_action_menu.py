@@ -97,7 +97,7 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
                    'Show related configuration']
         return super(EvaluatorActionMenu, self)._get_menu_options() + options
                                     
-    def _handle_action(self, action, feature_pos, params):
+    def _handle_action(self, action, feature_pos, evals):
         if action == 9:
             print(self._actor.absolute_mean_error_str(feature_pos))
         elif action == 10:

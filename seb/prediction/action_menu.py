@@ -5,6 +5,7 @@ Created on Jul 2, 2018
 '''
 import pprint
 import traceback
+import argparse
 from evaluator import Evaluator
 from storage_manager import StorageManager, StorageManagerType
 from feature_selector_reporter import FeatureSelectorReporter
@@ -20,11 +21,25 @@ class ActionMenu():
         self._sel_paths = None
         self._sm = sm
         self._config_sm = config_sm
+        self._parser = self._create_parser()
         self._pprint = pprint.PrettyPrinter()
         
     @property
     def paths(self):
         return self._paths
+    
+    def _create_parser(self):
+        parser = argparse.ArgumentParser(description="Evaluate " + self._title)
+        subparser = parser.add_subparsers(help='sub-command help', dest='cmd')
+        subparser.add_parser('exit', help='Exit application')
+        
+        path_parser = subparser.add_parser('sel', help='Select action to perform')
+        path_parser.add_argument('pos', help='Number corresponding to the action to perform', type=int)
+        path_parser.add_argument('--feature', '-f', required=False, help='Sets the feature to use', dest='feature', type=int, default=0)
+        path_parser.add_argument('--evals', '-e', required=False, help='Select the evals to use', dest='evals', type=int, default=[], nargs='+')
+        path_parser.add_argument('--num', '-n', required=False, help='Number of features', dest='num_features', type=int, default=1)        
+       
+        return parser;
    
     def add_main_menu_actions(self, subparser):
         raise NotImplementedError("Subclasses must implement this method")
@@ -43,7 +58,6 @@ class ActionMenu():
         print()
         print('{} mode options:'.format(self._title))
         print()
-        print('[0] Exit {} mode'.format(self._title))
         
         options = self._get_menu_options()
         for i, option in enumerate(options):
@@ -84,18 +98,17 @@ class ActionMenu():
             self._print_menu()
             try:
                 action = input('Select an option \n>>> ')
-                split_action = action.split()
-                action = int(split_action[0])
-
+                command = self._parser.parse_args(action.split())
                 print()
-                if action == 0:
+                cmd = command.cmd
+                if cmd == 'exit':
                     break;
-                
-                self._perform_action(action, split_action)
-            except (ValueError, IndexError) as e:
+                elif cmd == 'sel':
+                    self._perform_action(command.pos, command)
+            except:
                 traceback.print_exc()
                 print('Invalid option')
                                     
-    def _perform_action(self, action, params):
+    def _perform_action(self, action, feature, evals):
         raise NotImplementedError("Subclasses must implement this method")
             

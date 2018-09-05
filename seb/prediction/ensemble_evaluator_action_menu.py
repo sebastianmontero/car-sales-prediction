@@ -76,7 +76,7 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
                    'Plot scaled min max range']
         return super(EnsembleEvaluatorActionMenu, self)._get_menu_options() + options
                                     
-    def _handle_action(self, action, feature_pos, params):
+    def _handle_action(self, action, feature_pos, evals):
         
         if action == 9:
             print(self._actor.absolute_mean_error_str(feature_pos))
