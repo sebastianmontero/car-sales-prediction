@@ -20,7 +20,7 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
         path_parser.add_argument('--show-windows', '-w', required=False, help='Indicates if it should show paths for window evaluators', dest='show_windows', action='store_true')
         
         path_parser = subparser.add_parser('seval', help='Select an evaluator')
-        path_parser.add_argument('pos', help='Select an evaluator, specify position', type=int)
+        path_parser.add_argument('pos', help='Select an evaluator, specify position', type=int, nargs='+')
         
         path_parser = subparser.add_parser('vevals', help='Plot value for all evals')
         path_parser.add_argument('value', help='Value to plot ', type=str)
@@ -81,10 +81,12 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
     
     def _get_actor(self):
         evals = []
-        evals.append({
-            'name':os.path.basename(self._path),
-            'obj': self._unpickle(self._path)
-        })
+        
+        for path in self._sel_paths:
+            evals.append({
+                'name':os.path.basename(path),
+                'obj': self._unpickle(path)
+            })
         return EvaluatorPresenter(evals)
     
     def _get_menu_options(self):
@@ -96,15 +98,15 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
         return super(EvaluatorActionMenu, self)._get_menu_options() + options
                                     
     def _handle_action(self, action, feature_pos, params):
-        if action == 8:
+        if action == 9:
             print(self._actor.absolute_mean_error_str(feature_pos))
-        elif action == 9:
-            print(self._actor.absolute_mean_error_str(feature_pos, scaled=True))
         elif action == 10:
-            print(self._actor.relative_mean_error_str(feature_pos))
+            print(self._actor.absolute_mean_error_str(feature_pos, scaled=True))
         elif action == 11:
-            print(self._actor.relative_mean_error_str(feature_pos, scaled=True))
+            print(self._actor.relative_mean_error_str(feature_pos))
         elif action == 12:
+            print(self._actor.relative_mean_error_str(feature_pos, scaled=True))
+        elif action == 13:
             path,_ = os.path.split(self._path)
             config = self._config_sm.unpickle(path)
             print('Configuration: ')

@@ -23,9 +23,11 @@ class Evaluator(BaseEvaluator):
 
     def __setstate__(self, state):
         
-        if len(state['_predictions'].shape) == 1:
-            state['_predictions'] = np.reshape(state['_predictions'],(-1,1))
-            state['_unscaled_predictions'] = np.reshape(state['_unscaled_predictions'],(-1,1))
+        if len(state['_predictions']) > 0:
+            t = type(state['_predictions'][0])
+            if t is np.float64 or t is np.float32:
+                state['_predictions'] = np.reshape(state['_predictions'],(-1,1))
+                state['_unscaled_predictions'] = np.reshape(state['_unscaled_predictions'],(-1,1))
             
         self.__dict__.update(state)
     

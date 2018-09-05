@@ -16,7 +16,7 @@ class FeatureSelectorActionMenu(ActionMenu):
         subparser.add_parser('fs', help='Search for feature selection runs')
         
         path_parser = subparser.add_parser('sfs', help='Select a feature selector run')
-        path_parser.add_argument('pos', help='Select a feature selector run, specify position', type=int)
+        path_parser.add_argument('pos', help='Select a feature selector run, specify position', type=int, nargs='+')
         
     def handle_command(self, cmd, command, base_path):
         if cmd == 'fs':
@@ -28,7 +28,7 @@ class FeatureSelectorActionMenu(ActionMenu):
             return True
         
     def _get_actor(self):
-        return FeatureSelectorReporter(run_path=self._path)
+        return FeatureSelectorReporter(run_path=self._sel_paths[0])
         
     def _print_menu_options(self):
         print('[1] Show best configuration')

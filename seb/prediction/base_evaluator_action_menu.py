@@ -11,6 +11,7 @@ class BaseEvaluatorActionMenu(ActionMenu):
         
     def _get_menu_options(self):
         return ['Display predicted features',
+                'Display selected evaluators',
                 'Plot target vs predicted real',
                 'Plot target vs predicted real with tail',
                 'Plot target vs predicted scaled',
@@ -27,16 +28,18 @@ class BaseEvaluatorActionMenu(ActionMenu):
         if action == 1:
             print(self._actor.predicted_vars_str())
         elif action == 2:
-            self._actor.plot_target_vs_predicted(feature_pos)
+            print(self._actor.evaluators_str())
         elif action == 3:
-            self._actor.plot_target_vs_predicted(feature_pos, tail=True)
+            self._actor.plot_target_vs_predicted(feature_pos)
         elif action == 4:
-            self._actor.plot_target_vs_predicted(feature_pos, scaled=True)
+            self._actor.plot_target_vs_predicted(feature_pos, tail=True)
         elif action == 5:
-            self._actor.plot_target_vs_predicted(feature_pos, scaled=True, tail=True)
+            self._actor.plot_target_vs_predicted(feature_pos, scaled=True)
         elif action == 6:
-            self._actor.plot_errors(feature_pos)
+            self._actor.plot_target_vs_predicted(feature_pos, scaled=True, tail=True)
         elif action == 7:
+            self._actor.plot_errors(feature_pos)
+        elif action == 8:
             self._actor.plot_errors(feature_pos, scaled=True)
         else:
             self._handle_action(action, feature_pos, params)

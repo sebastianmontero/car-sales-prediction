@@ -17,7 +17,7 @@ class ActionMenu():
         self._title = title
         self._paths = []
         self._actor = None
-        self._path = None
+        self._sel_paths = None
         self._sm = sm
         self._config_sm = config_sm
         self._pprint = pprint.PrettyPrinter()
@@ -55,14 +55,26 @@ class ActionMenu():
     
         
     def _select_actor(self, command, base_path):
-        if command.pos >= 0 and command.pos < len(self._paths):
-            self._path = self._paths[command.pos]
-            self._actor = self._get_actor()
-            print('Selected {}: {}'.format(self._title, self._path))
-            self._enter_action_mode()
-        else:
-            print('Invalid position')
-            self._display_paths(base_path)
+        sel_paths = []
+        
+        for pos in command.pos:
+            
+            if pos >= 0 and pos < len(self._paths):
+                sel_paths.append(self._paths[pos])
+            else:
+                print('Invalid position:', pos)
+                self._display_paths(base_path)
+                return
+        
+        self._sel_paths = sel_paths    
+        self._actor = self._get_actor()
+        print('Selected {}:'.format(self._title))
+        
+        for sel_path in sel_paths:
+            print(sel_path)
+            
+        self._enter_action_mode()
+        
             
     def _get_actor(self):
         raise NotImplementedError("Subclasses must implement this method")

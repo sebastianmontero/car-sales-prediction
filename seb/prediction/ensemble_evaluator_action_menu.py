@@ -19,7 +19,7 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
         path_parser.add_argument('--filter', '-f', required=False, help='Search for ensemble evaluators relative to the base path, possibly specifying a filter', dest='filter')
                 
         path_parser = subparser.add_parser('seneval', help='Select an ensemble evaluator')
-        path_parser.add_argument('pos', help='Select an ensemble evaluator, specify position', type=int)
+        path_parser.add_argument('pos', help='Select an ensemble evaluator, specify position', type=int, nargs='+')
         path_parser.add_argument('--networks', '-n', required=False, help='Specifies the number of networks to use', dest='networks', type=int)
         path_parser.add_argument('--operator', '-o', required=False, help='Specifies the operator to use to ensemble networks', dest='operator', type=str, default='mean')
         
@@ -43,10 +43,12 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
         
     def _get_actor(self):
         evals = []
-        evals.append({
-            'name':os.path.basename(self._path),
-            'obj': EnsembleReporter(self._path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(self._operator, find_best_ensemble=(self._networks is None))
-        })
+        
+        for path in self._sel_paths:
+            evals.append({
+                'name':os.path.basename(path),
+                'obj': EnsembleReporter(path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(self._operator, find_best_ensemble=(self._networks is None))
+            })
         return EnsembleEvaluatorPresenter(evals)
     
     def _get_menu_options(self):
@@ -76,47 +78,47 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
                                     
     def _handle_action(self, action, feature_pos, params):
         
-        if action == 8:
+        if action == 9:
             print(self._actor.absolute_mean_error_str(feature_pos))
-        elif action == 9:
-            print(self._actor.absolute_mean_error_str(feature_pos, scaled=True))
         elif action == 10:
-            print(self._actor.relative_mean_error_str(feature_pos))
+            print(self._actor.absolute_mean_error_str(feature_pos, scaled=True))
         elif action == 11:
-            print(self._actor.relative_mean_error_str(feature_pos, scaled=True))
+            print(self._actor.relative_mean_error_str(feature_pos))
         elif action == 12:
-            self._actor.plot_target_vs_ensemble_best(feature_pos)
+            print(self._actor.relative_mean_error_str(feature_pos, scaled=True))
         elif action == 13:
-            self._actor.plot_target_vs_ensemble_best(feature_pos, tail=True)
+            self._actor.plot_target_vs_ensemble_best(feature_pos)
         elif action == 14:
-            self._actor.plot_target_vs_ensemble_best(feature_pos, scaled=True)
+            self._actor.plot_target_vs_ensemble_best(feature_pos, tail=True)
         elif action == 15:
-            self._actor.plot_target_vs_ensemble_best(feature_pos, scaled=True, tail=True)
+            self._actor.plot_target_vs_ensemble_best(feature_pos, scaled=True)
         elif action == 16:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos)
+            self._actor.plot_target_vs_ensemble_best(feature_pos, scaled=True, tail=True)
         elif action == 17:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos, tail=True)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos)
         elif action == 18:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos, scaled=True)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos, tail=True)
         elif action == 19:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos, scaled=True, tail=True)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos, scaled=True)
         elif action == 20:
-            self._actor.plot_target_vs_mean_interval(feature_pos)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos, scaled=True, tail=True)
         elif action == 21:
-            self._actor.plot_target_vs_mean_interval(feature_pos, tail=True)
+            self._actor.plot_target_vs_mean_interval(feature_pos)
         elif action == 22:
-            self._actor.plot_target_vs_mean_interval(feature_pos, scaled=True)
+            self._actor.plot_target_vs_mean_interval(feature_pos, tail=True)
         elif action == 23:
-            self._actor.plot_target_vs_mean_interval(feature_pos, scaled=True, tail=True)
+            self._actor.plot_target_vs_mean_interval(feature_pos, scaled=True)
         elif action == 24:
-            self._actor.plot_std(feature_pos)
+            self._actor.plot_target_vs_mean_interval(feature_pos, scaled=True, tail=True)
         elif action == 25:
-            self._actor.plot_std(feature_pos, scaled=True)
+            self._actor.plot_std(feature_pos)
         elif action == 26:
-            self._actor.plot_variance_errors(feature_pos)
+            self._actor.plot_std(feature_pos, scaled=True)
         elif action == 27:
-            self._actor.plot_min_max_range(feature_pos)
+            self._actor.plot_variance_errors(feature_pos)
         elif action == 28:
+            self._actor.plot_min_max_range(feature_pos)
+        elif action == 29:
             self._actor.plot_min_max_range(feature_pos, scaled=True)
         else:
             raise ValueError('Unknown action')

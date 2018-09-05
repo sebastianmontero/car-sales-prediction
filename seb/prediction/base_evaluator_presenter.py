@@ -146,7 +146,13 @@ class BaseEvaluatorPresenter(object):
     def predicted_vars_str(self):
         ev = self.eval_obj(0)
         features = ev.predicted_vars
-        str = ''
+        str_ = ''
         for i, feature in enumerate(features):
-            str += '[{}] {} \n'.format(i, self.format_name(feature))
-        return str
+            str_ += '[{}] {} \n'.format(i, self.format_name(feature))
+        return str_
+    
+    def evaluators_str(self):
+        str_ = ''
+        for i, ev in enumerate(self._evaluators):
+            str_ += '[{}] {} \n'.format(i, ev['name'])
+        return str_
