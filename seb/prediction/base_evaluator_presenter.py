@@ -182,14 +182,25 @@ class BaseEvaluatorPresenter(object):
         self._plot_by_month_new_process(self.eval_name(), errors, name + ' Error', title)
         
         
-    def absolute_mean_error_str(self, feature_pos=0, scaled=False):
-        ev = self.eval_obj(0)
-        return '{} absolute mean error: {:.2f}'.format(self.generate_feature_name(feature_pos, scaled=scaled), ev.absolute_mean_error(feature_pos, scaled))
+    def absolute_mean_error_str(self, feature_pos=0, scaled=False, evals=[]):
+        return self._mean_error_str(self._absolute_mean_error_str, feature_pos, scaled, evals)
     
-    def relative_mean_error_str(self, feature_pos=0, scaled=False):
-        ev = self.eval_obj(0)
-        return '{} relative mean error: {:.2f}%'.format(self.generate_feature_name(feature_pos, scaled=scaled), ev.relative_mean_error(feature_pos, scaled))
+    def _mean_error_str(self, fn, feature_pos=0, scaled=False, evals=[]):
+        evs = self.evals(evals)
         
+        str_ = ''
+        for ev in evs:
+            str_ += self.fn(ev, feature_pos, scaled) + '\n'
+        return str_
+    
+    def _absolute_mean_error_str(self, eval_, feature_pos=0, scaled=False):
+        return '[{}] {} absolute mean error: {:.2f}'.format(eval_['name'], self.generate_feature_name(feature_pos, scaled=scaled), eval_['obj'].absolute_mean_error(feature_pos, scaled))
+    
+    def relative_mean_error_str(self, feature_pos=0, scaled=False, evals=[]):
+        return self._mean_error_str(self._relative_mean_error_str, feature_pos, scaled, evals)
+    
+    def _relative_mean_error_str(self, eval_, feature_pos=0, scaled=False):
+        return '[{}] {} relative mean error: {:.2f}%'.format(eval_['name'], self.generate_feature_name(feature_pos, scaled=scaled), eval_['obj'].relative_mean_error(feature_pos, scaled))
     
     def predicted_vars_str(self):
         ev = self.eval_obj(0)

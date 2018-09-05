@@ -37,7 +37,9 @@ class ActionMenu():
         path_parser.add_argument('pos', help='Number corresponding to the action to perform', type=int)
         path_parser.add_argument('--feature', '-f', required=False, help='Sets the feature to use', dest='feature', type=int, default=0)
         path_parser.add_argument('--evals', '-e', required=False, help='Select the evals to use', dest='evals', type=int, default=[], nargs='+')
-        path_parser.add_argument('--num', '-n', required=False, help='Number of features', dest='num_features', type=int, default=1)        
+        path_parser.add_argument('--num', '-n', required=False, help='Number of features', dest='num_features', type=int, default=1)
+        path_parser.add_argument('--scaled', '-s', required=False, help='Use scaled values', dest='scaled', type=bool, action='store_true')
+        path_parser.add_argument('--tail', '-t', required=False, help='Show real values tail', dest='tail', type=bool, action='store_true')        
        
         return parser;
    

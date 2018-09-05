@@ -53,73 +53,28 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
     
     def _get_menu_options(self):
         
-        options = ['Show real absolute mean error',
-                   'Show scaled absolute mean error',
-                   'Show real relative mean error',
-                   'Show scaled relative mean error',
-                   'Plot target vs ensemble and best network real',
-                   'Plot target vs ensemble and best network real with tail',
-                   'Plot target vs ensemble and best network scaled',
-                   'Plot target vs ensemble and best network scaled with tail',
-                   'Plot target vs ensemble, min and max real',
-                   'Plot target vs ensemble, min and max real with tail',
-                   'Plot target vs ensemble, min and max scaled',
-                   'Plot target vs ensemble, min and max scaled with tail',
-                   'Plot target vs ensemble mean and interval real',
-                   'Plot target vs ensemble mean and interval real with tail',
-                   'Plot target vs ensemble mean and interval scaled',
-                   'Plot target vs ensemble mean and interval scaled with tail',
-                   'Plot real standard deviation',
-                   'Plot scaled standard deviation',
+        options = ['Plot target vs ensemble and best network',
+                   'Plot target vs ensemble, min and max',
+                   'Plot target vs ensemble mean and interval',
+                   'Plot standard deviation',
                    'Plot variance errors',
-                   'Plot real min max range',
-                   'Plot scaled min max range']
+                   'Plot min max range']
         return super(EnsembleEvaluatorActionMenu, self)._get_menu_options() + options
                                     
-    def _handle_action(self, action, feature_pos, evals):
+    def _handle_action(self, action, feature_pos, scaled, tail, evals):
         
         if action == 9:
-            print(self._actor.absolute_mean_error_str(feature_pos))
+            self._actor.plot_target_vs_ensemble_best(feature_pos, tail=tail, scaled=scaled, evals=evals)
         elif action == 10:
-            print(self._actor.absolute_mean_error_str(feature_pos, scaled=True))
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos, tail=tail, scaled=scaled, evals=evals)
         elif action == 11:
-            print(self._actor.relative_mean_error_str(feature_pos))
+            self._actor.plot_target_vs_mean_interval(feature_pos, tail=tail, scaled=scaled, evals=evals)
         elif action == 12:
-            print(self._actor.relative_mean_error_str(feature_pos, scaled=True))
+            self._actor.plot_std(feature_pos, scaled=scaled, evals=evals)
         elif action == 13:
-            self._actor.plot_target_vs_ensemble_best(feature_pos)
+            self._actor.plot_variance_errors(feature_pos, evals=evals)
         elif action == 14:
-            self._actor.plot_target_vs_ensemble_best(feature_pos, tail=True)
-        elif action == 15:
-            self._actor.plot_target_vs_ensemble_best(feature_pos, scaled=True)
-        elif action == 16:
-            self._actor.plot_target_vs_ensemble_best(feature_pos, scaled=True, tail=True)
-        elif action == 17:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos)
-        elif action == 18:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos, tail=True)
-        elif action == 19:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos, scaled=True)
-        elif action == 20:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos, scaled=True, tail=True)
-        elif action == 21:
-            self._actor.plot_target_vs_mean_interval(feature_pos)
-        elif action == 22:
-            self._actor.plot_target_vs_mean_interval(feature_pos, tail=True)
-        elif action == 23:
-            self._actor.plot_target_vs_mean_interval(feature_pos, scaled=True)
-        elif action == 24:
-            self._actor.plot_target_vs_mean_interval(feature_pos, scaled=True, tail=True)
-        elif action == 25:
-            self._actor.plot_std(feature_pos)
-        elif action == 26:
-            self._actor.plot_std(feature_pos, scaled=True)
-        elif action == 27:
-            self._actor.plot_variance_errors(feature_pos)
-        elif action == 28:
-            self._actor.plot_min_max_range(feature_pos)
-        elif action == 29:
-            self._actor.plot_min_max_range(feature_pos, scaled=True)
+            self._actor.plot_min_max_range(feature_pos, scaled=scaled, evals)
         else:
             raise ValueError('Unknown action')
             

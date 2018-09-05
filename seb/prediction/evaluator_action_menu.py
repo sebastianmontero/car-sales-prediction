@@ -90,23 +90,11 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
         return EvaluatorPresenter(evals)
     
     def _get_menu_options(self):
-        options = ['Show real absolute mean error',
-                   'Show scaled absolute mean error',
-                   'Show real relative mean error',
-                   'Show scaled relative mean error',
-                   'Show related configuration']
+        options = ['Show related configuration']
         return super(EvaluatorActionMenu, self)._get_menu_options() + options
                                     
-    def _handle_action(self, action, feature_pos, evals):
+    def _handle_action(self, action, *_):
         if action == 9:
-            print(self._actor.absolute_mean_error_str(feature_pos))
-        elif action == 10:
-            print(self._actor.absolute_mean_error_str(feature_pos, scaled=True))
-        elif action == 11:
-            print(self._actor.relative_mean_error_str(feature_pos))
-        elif action == 12:
-            print(self._actor.relative_mean_error_str(feature_pos, scaled=True))
-        elif action == 13:
             path,_ = os.path.split(self._path)
             config = self._config_sm.unpickle(path)
             print('Configuration: ')
