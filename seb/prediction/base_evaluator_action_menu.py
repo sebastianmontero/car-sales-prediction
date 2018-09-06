@@ -15,7 +15,9 @@ class BaseEvaluatorActionMenu(ActionMenu):
                 'Plot target vs predicted',
                 'Plot errors',
                 'Plot absolute errors',
-                'Plot relative errors']
+                'Plot relative errors',
+                'Display absolute mean error',
+                'Display relative mean error']
         
     def _perform_action(self, action, command):
         
@@ -41,7 +43,7 @@ class BaseEvaluatorActionMenu(ActionMenu):
         elif action == 8:
             print(self._actor.relative_mean_error_str(feature_pos, scaled=scaled, evals=evals))
         else:
-            self._handle_action(action, feature_pos, evals)
+            self._handle_action(action, feature_pos, scaled, tail, evals)
             
     def _handle_action(self, action, feature_pos, scaled, tail, evals):
         raise NotImplementedError("Child classes must implement this method")    

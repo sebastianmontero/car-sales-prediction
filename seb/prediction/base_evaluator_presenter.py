@@ -190,7 +190,7 @@ class BaseEvaluatorPresenter(object):
         
         str_ = ''
         for ev in evs:
-            str_ += self.fn(ev, feature_pos, scaled) + '\n'
+            str_ += fn(ev, feature_pos, scaled) + '\n'
         return str_
     
     def _absolute_mean_error_str(self, eval_, feature_pos=0, scaled=False):
