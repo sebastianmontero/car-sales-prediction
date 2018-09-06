@@ -36,7 +36,8 @@ class Evaluator(BaseEvaluator):
         return self._global_step
     
     def predictions(self, scaled=False):
-        return self._predictions if scaled else self._unscaled_predictions
+        predictions = self._predictions if scaled else self._unscaled_predictions
+        return predictions[self.reader.num_base_ensembles:]
     
     def get_predictions(self, feature_pos, scaled=False):
         return self._get_feature_values(self.predictions(scaled), feature_pos)

@@ -25,7 +25,7 @@ class BaseEvaluator(object):
     
     @property
     def window_length(self):
-        return self._window_length
+        return self._window_length - self.reader.num_base_ensembles
     
     @property
     def reader(self):
@@ -102,11 +102,11 @@ class BaseEvaluator(object):
         return self._get_data(scaled)[self.predicted_vars].values
     
     def _get_data(self, scaled=False, length=None):
-        length = length if length else self._window_length
+        length = length if length else self.window_length
         return self._reader.get_data(self._end_window_pos, length, scaled)
     
     def get_target_data_length(self, tail=False):
-        return self._end_window_pos if tail else self._window_length
+        return self._end_window_pos if tail else self.window_length
     
     def get_predictions(self, feature_pos=0, scaled=False):
         raise NotImplementedError("Child classes must implement this method")

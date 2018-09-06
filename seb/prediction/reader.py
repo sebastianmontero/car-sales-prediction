@@ -46,6 +46,7 @@ class Reader(object):
         self._predicted_vars = self._scale_features if predicted_vars is None else predicted_vars
         self._num_predicted_vars = len(self._predicted_vars)
         self._base_ensembles = self._load_base_ensembles(base_ensembles)
+        self._num_base_ensembles = len(self._base_ensembles)
         self._init_fleeting_vars()
         
     def _init_fleeting_vars(self):
@@ -73,6 +74,10 @@ class Reader(object):
             state['_scale_features'] = np.concatenate((['sales'],  state['_included_features']))
             state['_predicted_vars'] = ['sales']
             state['_num_predicted_vars'] = 1
+            
+        if '_num_base_ensembles' not in state:
+            state['_num_base_ensembles'] = len(state['_base_ensembles']) if '_base_ensembles' in state else 0 
+            
         self.__dict__.update(state)
         self._init_fleeting_vars()
 
@@ -91,6 +96,10 @@ class Reader(object):
     @property
     def num_predicted_vars(self):
         return self._num_predicted_vars
+    
+    @property
+    def num_base_ensembles(self):
+        return self._num_base_ensembles
     
     def _load_base_ensembles(self, paths):
         ensembles = []

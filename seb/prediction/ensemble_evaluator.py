@@ -48,20 +48,25 @@ class EnsembleEvaluator(BaseEvaluator):
         
         self._process_evaluators(evaluators)
         
+    @property
+    def window_length(self):
+        return self._window_length
+        
     def _find_best_ensemble(self, evaluators):
         best = []
         candidate_pos = 0
-        rme = evaluators[0].relative_mean_error()
+        rme = None
         while len(evaluators) > 0 and candidate_pos is not None:
             best.append(evaluators[candidate_pos])
             del evaluators[candidate_pos]
-            print('Chosen: ', candidate_pos)
+            #print('Chosen: ', candidate_pos)
             candidate_pos = None
-            print('Current best relative mean error: {}, networks: {}'.format(rme, len(best)))
+            #if rme:
+            #    print('Current best relative mean error: {}, networks: {}'.format(rme, len(best)))
             for pos, evaluator in enumerate(evaluators):
                 ensemble = EnsembleEvaluator([evaluator] + best, operator=self._operator)
                 erme = ensemble.relative_mean_error()
-                if erme < rme:
+                if rme is None or erme < rme:
                     candidate_pos = pos
                     rme = erme
                     

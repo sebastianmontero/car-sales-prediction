@@ -108,7 +108,7 @@ class ActionMenu():
                 elif cmd == 'sel':
                     self._perform_action(command.pos, command)
             except:
-                traceback.print_exc()
+                #traceback.print_exc()
                 print('Invalid option')
                                     
     def _perform_action(self, action, feature, evals):
