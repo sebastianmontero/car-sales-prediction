@@ -93,13 +93,16 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
         options = ['Show related configuration']
         return super(EvaluatorActionMenu, self)._get_menu_options() + options
                                     
-    def _handle_action(self, action, *_):
+    def _handle_action(self, action, feature_pos, scaled, tail, evals):
         if action == 9:
-            path,_ = os.path.split(self._path)
-            config = self._config_sm.unpickle(path)
-            print('Configuration: ')
-            print()
-            self._pprint.pprint(config)
+            evals = evals if len(evals) > 0 else [i for i in range(len(self._sel_paths))]
+            for e in evals:
+                path, pickle = os.path.split(self._sel_paths[e])
+                config = self._config_sm.unpickle(path)
+                print()
+                print('Configuration for {}: '.format(pickle))
+                print()
+                self._pprint.pprint(config)
         else:
             raise ValueError('Unknown action')
             
