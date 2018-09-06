@@ -74,7 +74,7 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
         elif action == 13:
             self._actor.plot_variance_errors(feature_pos, evals=evals)
         elif action == 14:
-            self._actor.plot_min_max_range(feature_pos, scaled=scaled, evals)
+            self._actor.plot_min_max_range(feature_pos, scaled=scaled, evals=evals)
         else:
             raise ValueError('Unknown action')
             
