@@ -46,6 +46,7 @@ class Reader(object):
         self._num_features = len(self._features)
         self._predicted_features = self._scale_features if predicted_features is None else predicted_features
         self._num_predicted_features = len(self._predicted_features)
+        self._num_predicted_vars = self._num_predicted_features * prediction_size if multi_month_prediction else self._num_predicted_features 
         self._base_ensembles = self._load_base_ensembles(base_ensembles)
         self._num_base_ensembles = len(self._base_ensembles)
         self._init_fleeting_vars()
@@ -87,6 +88,7 @@ class Reader(object):
             else:
                 state['_predicted_features'] = ['sales']
                 state['_num_predicted_features'] = 1
+                state['_num_predicted_vars'] = 1
             
         self.__dict__.update(state)
         self._init_fleeting_vars()
@@ -106,6 +108,10 @@ class Reader(object):
     @property
     def num_predicted_features(self):
         return self._num_predicted_features
+    
+    @property
+    def num_predicted_vars(self):
+        return self._num_predicted_vars
     
     @property
     def num_base_ensembles(self):
@@ -231,7 +237,7 @@ class Reader(object):
     
     def get_generator(self, batch_size, num_steps, for_test=False):
         data = self._set_base_predictions(self._get_data(for_test), for_test).values
-        return Generator(data, batch_size, num_steps, self._num_predicted_features, self._prediction_size)
+        return Generator(data, batch_size, num_steps, self._num_predicted_features, self._num_predicted_vars, self._prediction_size)
     
     def _set_base_predictions(self, data, for_test=False):
         num_predictions = len(self._base_ensembles)

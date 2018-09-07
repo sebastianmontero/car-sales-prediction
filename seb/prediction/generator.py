@@ -12,7 +12,7 @@ class Generator(object):
     
     PREDICTED_VARS_START_POS = 2
 
-    def __init__(self, data, batch_size, num_steps, num_predicted_features, prediction_size=1, multi_month_prediction=False):
+    def __init__(self, data, batch_size, num_steps, num_predicted_features, num_predicted_vars, prediction_size=1, multi_month_prediction=False):
         
         residual = (data.shape[0] - prediction_size) % batch_size
         self._data = data[residual:]
@@ -20,6 +20,7 @@ class Generator(object):
         self._num_steps = num_steps
         self._data_length = data.shape[0]
         self._num_predicted_features = num_predicted_features
+        self._num_predicted_vars = num_predicted_vars
         self._prediction_size = prediction_size
         self._multi_month_prediction = multi_month_prediction
         self._num_batches = (self._data_length - prediction_size) // batch_size
@@ -35,6 +36,10 @@ class Generator(object):
     @property
     def num_predicted_features(self):
         return self._num_predicted_features
+    
+    @property
+    def num_predicted_vars(self):
+        return self._num_predicted_vars
         
     def _format_data(self):
         x_data = []
