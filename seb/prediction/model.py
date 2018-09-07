@@ -35,17 +35,17 @@ class Model(object):
         self.num_steps = config['num_steps']  
         
         inputs, targets = generator.get_data()
-        targets = tf.reshape(targets, [-1, generator.num_predicted_vars])
+        targets = tf.reshape(targets, [-1, generator.num_predicted_features])
         output, state = self._build_rnn_graph(inputs, config, self._is_training)
         
         linear_w = tf.get_variable(
             'linear_w', 
-            [config['layers'][-1], generator.num_predicted_vars],
+            [config['layers'][-1], generator.num_predicted_features],
             dtype=config['data_type'],
             initializer=tflayers.xavier_initializer())
         linear_b = tf.get_variable(
             'linear_b', 
-            initializer=tf.random_uniform([generator.num_predicted_vars]), 
+            initializer=tf.random_uniform([generator.num_predicted_features]), 
             dtype=config['data_type'])
         
         output = tf.nn.xw_plus_b(output, linear_w, linear_b)

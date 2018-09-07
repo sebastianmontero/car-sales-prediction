@@ -80,7 +80,7 @@ class ModelTrainer():
             vals = session.run(fetches, feed_dict)
             cost = vals['cost']
             state = vals['final_state']
-            predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size, model.generator.num_predicted_vars]))
+            predictions.append(np.reshape(vals['predictions'], [-1, model.batch_size, model.generator.num_predicted_features]))
             
             costs += cost
             if verbose:
@@ -89,7 +89,7 @@ class ModelTrainer():
                      costs/step))
         
         predictions = np.split(np.concatenate(predictions), model.batch_size,axis=1)
-        predictions = np.reshape(np.concatenate(predictions), [-1,model.generator.num_predicted_vars])       
+        predictions = np.reshape(np.concatenate(predictions), [-1,model.generator.num_predicted_features])       
         return costs, predictions
 
     def _get_base_config(self):
@@ -116,7 +116,7 @@ class ModelTrainer():
             'included_features': ['inflation_index_roc_prev_month',
                                   'consumer_confidence_index',
                                   'energy_price_index_roc_prev_month'],
-            'predicted_vars': None,
+            'predicted_features': None,
             'store_window' : True # Whether the configuration and evaluator object should be saved for every window
         }
         
@@ -154,7 +154,7 @@ class ModelTrainer():
         if 'base_ensembles' not in self._config:
             self._config['base_ensembles'] = EnsembleReporter.find_base_ensemble_runs(os.path.dirname(self._config['save_path']))
              
-        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'], self._config['predicted_vars'], prediction_size=self._config['prediction_size'], base_ensembles=self._config['base_ensembles'])
+        self._reader = Reader(self._config['line_id'], self._config['window_size'], self._config['included_features'], self._config['predicted_features'], prediction_size=self._config['prediction_size'], base_ensembles=self._config['base_ensembles'])
     
     def _config_layers(self, config):
                 
@@ -276,7 +276,7 @@ class ModelTrainer():
                     train_writer.close()
                     #print('Test Mean Squared Error: {:.5f}'.format(test_mse))
                     evaluator = Evaluator(reader, predictions, reader.get_end_window_pos(True), global_step)
-                    #for pos,_ in enumerate(evaluator.predicted_vars):
+                    #for pos,_ in enumerate(evaluator.predicted_features):
                     #    evaluator.plot_target_vs_predicted(pos, scaled=True)
                     #print(predictions)
                     current_test_absolute_error = evaluator.window_real_absolute_mean_error()
@@ -315,7 +315,7 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-#modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':True, 'predicted_vars':['sales']})
+#modelTrainer = ModelTrainer({'max_epoch' : 1000, 'line_id':13, 'train_months':51, 'prediction_size':1, 'store_window':True, 'predicted_features':['sales']})
 #modelTrainer.train()
             
         

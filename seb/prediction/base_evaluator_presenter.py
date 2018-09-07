@@ -202,9 +202,9 @@ class BaseEvaluatorPresenter(object):
     def _relative_mean_error_str(self, eval_, feature_pos=0, scaled=False):
         return '[{}] {} relative mean error: {:.2f}%'.format(eval_['name'], self.generate_feature_name(feature_pos, scaled=scaled), eval_['obj'].relative_mean_error(feature_pos, scaled))
     
-    def predicted_vars_str(self):
+    def predicted_features_str(self):
         ev = self.eval_obj(0)
-        features = ev.predicted_vars
+        features = ev.predicted_features
         str_ = ''
         for i, feature in enumerate(features):
             str_ += '[{}] {} \n'.format(i, self.format_name(feature))

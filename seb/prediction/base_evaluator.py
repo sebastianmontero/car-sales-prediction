@@ -32,12 +32,12 @@ class BaseEvaluator(object):
         return self._reader
     
     @property
-    def predicted_vars(self):
-        return self.reader.predicted_vars
+    def predicted_features(self):
+        return self.reader.predicted_features
     
     @property
-    def num_predicted_vars(self):
-        return self.reader.num_predicted_vars
+    def num_predicted_features(self):
+        return self.reader.num_predicted_features
     
     def predictions_by_absolute_pos(self, pos, scaled=False):
         start = self.start_window_pos
@@ -99,7 +99,7 @@ class BaseEvaluator(object):
         return self._get_data(length=length)['month_id'].values
     
     def get_predicted_targets(self, scaled=False):
-        return self._get_data(scaled)[self.predicted_vars].values
+        return self._get_data(scaled)[self.predicted_features].values
     
     def _get_data(self, scaled=False, length=None):
         length = length if length else self.window_length

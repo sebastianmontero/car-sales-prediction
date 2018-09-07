@@ -32,19 +32,20 @@ class Reader(object):
     }
     
 
-    def __init__(self, line_id, window_size, included_features, predicted_vars=None, prediction_size = 1, base_ensembles=[]):
+    def __init__(self, line_id, window_size, included_features, predicted_features=None, prediction_size = 1, base_ensembles=[], multi_month_prediction=False):
         assert (window_size > 0), "Window size must be greater than zero"
         self._line_id = str(line_id) 
         self._window_size = window_size
         self._window_pos = -1
         self._prediction_size = prediction_size
+        self._multi_month_prediction = multi_month_prediction
         self._included_features = included_features
         self._scale_features = ['sales'] + included_features
         self._features = ['month_of_year_sin', 'month_of_year_cos', 'sales']
         self._features.extend(self._included_features)
         self._num_features = len(self._features)
-        self._predicted_vars = self._scale_features if predicted_vars is None else predicted_vars
-        self._num_predicted_vars = len(self._predicted_vars)
+        self._predicted_features = self._scale_features if predicted_features is None else predicted_features
+        self._num_predicted_features = len(self._predicted_features)
         self._base_ensembles = self._load_base_ensembles(base_ensembles)
         self._num_base_ensembles = len(self._base_ensembles)
         self._init_fleeting_vars()
@@ -72,11 +73,20 @@ class Reader(object):
         
         if '_dont_scale_features' in state:
             state['_scale_features'] = np.concatenate((['sales'],  state['_included_features']))
-            state['_predicted_vars'] = ['sales']
-            state['_num_predicted_vars'] = 1
             
         if '_num_base_ensembles' not in state:
-            state['_num_base_ensembles'] = len(state['_base_ensembles']) if '_base_ensembles' in state else 0 
+            state['_num_base_ensembles'] = len(state['_base_ensembles']) if '_base_ensembles' in state else 0
+        
+        if '_multi_month_prediction' not in state:
+            state['_multi_month_prediction'] = False 
+            
+        if '_predicted_features' not in state:
+            if '_predicted_vars' in state:
+                state['_predicted_features'] = state['_predicted_vars']
+                state['_num_predicted_features'] = state['_num_predicted_vars']
+            else:
+                state['_predicted_features'] = ['sales']
+                state['_num_predicted_features'] = 1
             
         self.__dict__.update(state)
         self._init_fleeting_vars()
@@ -90,12 +100,12 @@ class Reader(object):
         return self._window_pos
     
     @property
-    def predicted_vars(self):
-        return self._predicted_vars
+    def predicted_features(self):
+        return self._predicted_features
     
     @property
-    def num_predicted_vars(self):
-        return self._num_predicted_vars
+    def num_predicted_features(self):
+        return self._num_predicted_features
     
     @property
     def num_base_ensembles(self):
@@ -115,10 +125,10 @@ class Reader(object):
     
     def _is_base_ensemble_compatible(self, ensemble):
         ereader = ensemble.reader
-        return ereader.predicted_vars == self.predicted_vars
+        return ereader.predicted_features == self.predicted_features
         
     def get_predicted_var_name(self, pos):
-        return self._predicted_vars[pos]
+        return self._predicted_features[pos]
     
     def _get_raw_data(self):
         
@@ -221,7 +231,7 @@ class Reader(object):
     
     def get_generator(self, batch_size, num_steps, for_test=False):
         data = self._set_base_predictions(self._get_data(for_test), for_test).values
-        return Generator(data, batch_size, num_steps, self._num_predicted_vars, self._prediction_size)
+        return Generator(data, batch_size, num_steps, self._num_predicted_features, self._prediction_size)
     
     def _set_base_predictions(self, data, for_test=False):
         num_predictions = len(self._base_ensembles)
@@ -229,7 +239,7 @@ class Reader(object):
         for ensemble in self._base_ensembles:
             predictions = ensemble.predictions_by_absolute_pos(self._get_absolute_pos(pos), scaled=True)
             if predictions is not None:
-                data.iloc[pos][self._predicted_vars] = predictions
+                data.iloc[pos][self._predicted_features] = predictions
             pos += 1
         return data
     
@@ -253,11 +263,11 @@ class Reader(object):
         num_sf = len(self._scale_features)
         scaled_features = features[:,:num_sf]
         
-        if self._num_predicted_vars < num_sf:
-            scaled_features = np.concatenate((scaled_features, np.zeros((len(features), num_sf - self._num_predicted_vars))), axis=1)
+        if self._num_predicted_features < num_sf:
+            scaled_features = np.concatenate((scaled_features, np.zeros((len(features), num_sf - self._num_predicted_features))), axis=1)
         
         unscaled = self._scaler.inverse_transform(scaled_features)
-        unscaled = unscaled[:, :self._num_predicted_vars]
+        unscaled = unscaled[:, :self._num_predicted_features]
         if round_sales:
             for l in unscaled:
                 l[0] = round(max(l[0],0))

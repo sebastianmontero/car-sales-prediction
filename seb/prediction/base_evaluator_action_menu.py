@@ -27,7 +27,7 @@ class BaseEvaluatorActionMenu(ActionMenu):
         tail = command.tail
         
         if action == 1:
-            print(self._actor.predicted_vars_str())
+            print(self._actor.predicted_features_str())
         elif action == 2:
             print(self._actor.evaluators_str())
         elif action == 3:

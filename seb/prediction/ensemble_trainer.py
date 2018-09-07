@@ -64,7 +64,7 @@ ensemble_trainer = EnsembleTrainer({
                 'prediction_size': 2,
                 'store_window' : False,
                 'included_features' : ['energy_price_index_roc_prev_month'],
-                'predicted_vars':['sales'],
+                'predicted_features':['sales'],
                 'num_steps': 50
             }, repeats=4, description='model_2n')'''
 
@@ -78,7 +78,7 @@ ensemble_trainer = EnsembleTrainer({
                 'store_window' : False,
                 'included_features' : ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index'],
-                'predicted_vars':['sales'],
+                'predicted_features':['sales'],
                 'num_steps': 50
             }, repeats=3, description='nationwide_3n')'''
 
