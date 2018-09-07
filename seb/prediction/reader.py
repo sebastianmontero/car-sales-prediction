@@ -58,7 +58,7 @@ class Reader(object):
         self._start_month_id = None
         self._raw_data = None
         self._process_data()
-        self._num_windows = self._data.shape[0] - self._window_size
+        self._num_windows = self._data.shape[0] - self.get_window_size(for_test=True)
     
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -151,7 +151,7 @@ class Reader(object):
     def _process_data(self):
         
         self._raw_data = data_df = self._get_raw_data()
-        assert (data_df.shape[0] >= (self._window_size + 1)), 'Data length: {} is smaller than window size + 1 (Test Value): {}'.format(data_df.shape[0], (self._window_size + 1))
+        assert (data_df.shape[0] >= (self.get_window_size(for_test=True))), 'Data length: {} is smaller than "test window size" : {}'.format(data_df.shape[0], (self.get_window_size(for_test=True)))
          
         self._start_month_id = int(data_df['month_id'][0])
         
@@ -237,8 +237,9 @@ class Reader(object):
     
     def get_generator(self, batch_size, num_steps, for_test=False):
         data = self._set_base_predictions(self._get_data(for_test), for_test).values
-        return Generator(data, batch_size, num_steps, self._num_predicted_features, self._num_predicted_vars, self._prediction_size)
+        return Generator(data, batch_size, num_steps, self._num_predicted_features, self._num_predicted_vars, self._prediction_size, self._multi_month_prediction, for_test)
     
+    #multi_month_prediction does not apply to the use base predictions method
     def _set_base_predictions(self, data, for_test=False):
         num_predictions = len(self._base_ensembles)
         pos = data.shape[0] - num_predictions - (1 if for_test else 0)
@@ -256,7 +257,13 @@ class Reader(object):
         return 'w-{}-{}'.format(self.get_start_month_id(), self.get_end_month_id(for_test))
     
     def get_end_window_pos(self, for_test=False):
-        return self._window_pos + self._window_size + (1 if for_test else 0)
+        return self._window_pos + self.get_window_size(for_test)
+    
+    def get_window_size(self, for_test=False):
+        inc = 0
+        if for_test:
+            inc = self._prediction_size if self._multi_month_prediction else 1
+        return self._window_size + inc
     
     def get_start_month_id(self):
         return Utils.add_months_to_month_id(self._start_month_id, self._window_pos)
@@ -353,6 +360,34 @@ while reader.next_window():
         #print('')
         print('y value:')
         print(vals['y'][-3:])
+        print()
+        print()'''
+    
+
+'''features = ['inflation_index_roc_prev_month',
+                                   'consumer_confidence_index']
+#features = ['inflation_index_roc_prev_month']
+reader = Reader(13, 39, features, predicted_features=['sales'], prediction_size=3, multi_month_prediction=False)
+#reader = Reader(13, 37, features)
+
+while reader.next_window():
+    
+    print(reader.get_start_month_id(), reader.get_end_month_id(for_test=True))
+
+    generator = reader.get_generator(1, 50, for_test=True)
+    x, y = generator.get_data()
+    
+    with tf.Session() as sess:
+        #for i in range(4):
+        vals = sess.run({'x':x, 'y': y})
+        print('x value:')
+        print(vals['x'][-5:])
+        print('')
+        #x_vals = np.reshape(vals['x'], (-1, 7))
+        #print(np.array(reader.unscale_features(np.take(x_vals, [2,3,4,5,6], axis=1), round_sales=True)))
+        #print('')
+        print('y value:')
+        print(vals['y'][-5:])
         print()
         print()'''
     
