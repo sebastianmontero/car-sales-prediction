@@ -53,7 +53,7 @@ ensemble_trainer = EnsembleTrainer({
                 'store_window' : False,
                 'included_features' : ['energy_price_index_roc_prev_month'],
                 'num_steps': 50
-            }, repeats=3, description='model_sf_ifp_2m')
+            }, repeats=3, description='model_sf_ifp_3m')
 
 '''ensemble_trainer = EnsembleTrainer({
                 'line_id': 13,
