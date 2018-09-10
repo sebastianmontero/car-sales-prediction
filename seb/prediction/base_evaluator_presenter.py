@@ -36,25 +36,18 @@ class BaseEvaluatorPresenter(object):
         p = Process(target=target, args=args)
         p.start()
     
-    def _plot_target_vs_predicted_new_process(self, real, predictions, ylabel, title):
-        self._run_in_new_process(target=self._plot_target_vs, args=(real, predictions, ylabel, title))
-    
-    def _plot_target_vs(self, real, vs, ylabel, title):
+    def _plot_target_vs(self, months, real, vs, ylabel, title):
         vs['Real'] = real
-        self._plot_by_month('Real', vs, ylabel, title)
+        self._plot_by_month_new_process(months, vs, ylabel, title)
     
-    def _plot_by_month_new_process(self, ref_key, series, ylabel, title, yfix=False):
-        self._run_in_new_process(target=self._plot_by_month, args=(ref_key, series, ylabel, title, yfix))
+    def _plot_by_month_new_process(self, months, series, ylabel, title, yfix=False):
+        self._run_in_new_process(target=self._plot_by_month, args=(months, series, ylabel, title, yfix))
         
-    def _plot_by_month(self, ref_key, series, ylabel, title, yfix=False):
-        ref_vals = series[ref_key]
-        if isinstance(ref_vals, dict):
-            ref_vals = ref_vals['values']
-        months = self.eval_obj().get_months(len(ref_vals))
-        num_months = len(months)
+    def _plot_by_month(self, months, series, ylabel, title, yfix=False):
         
         min_val = None
         max_val = None
+        num_months = len(months)
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         i = 0
         for label, obj in series.items():
@@ -88,11 +81,10 @@ class BaseEvaluatorPresenter(object):
         plt.legend()
         plt.show()
     
-    def _plot_errors_new_process(self, absolute, relative, ylabel_absolute, ylabel_relative, title):
-        self._run_in_new_process(target=self._plot_errors, args=(absolute, relative, ylabel_absolute, ylabel_relative, title))
+    def _plot_errors_new_process(self, months, absolute, relative, ylabel_absolute, ylabel_relative, title):
+        self._run_in_new_process(target=self._plot_errors, args=(months, absolute, relative, ylabel_absolute, ylabel_relative, title))
             
-    def _plot_errors(self, absolute, relative, ylabel_absolute, ylabel_relative, title):
-        months = self.eval_obj().get_months()
+    def _plot_errors(self, months, absolute, relative, ylabel_absolute, ylabel_relative, title):
         color = 'tab:blue'
         fig, ax1 = plt.subplots()
         ax1.set_xticks(range(len(months)))
@@ -132,28 +124,47 @@ class BaseEvaluatorPresenter(object):
             
         return fname  
     
-    def plot_target_vs_predicted(self, feature_pos=0, scaled=False, tail=False, evals=[]):
+    def plot_target_vs_predicted(self, feature_pos=0, scaled=False, tail=False, evals_pos=[], prediction_indexes=[[0]]):
         ev = self.eval_obj(0)
         feature_name = ev.get_predicted_var_name(feature_pos)
         formatted_feature_name = self._generate_feature_name(feature_name, scaled)
         
         predictions = {}
-        for evl in self.evals(evals):
-            predictions[evl['name']] = evl['obj'].get_predictions(feature_pos, scaled)
+        min_start_month_pos = None
+        max_end_month_pos = None
+        evals = self.evals(evals_pos)
+        prediction_indexes = np.concatenate((prediction_indexes, np.zeros([len(evals) - len(prediction_indexes),1])))
+        for pos, evl in enumerate(evals):
+            for pi in prediction_indexes[pos]:
+                eo = evl['obj']
+                
+                start_month_pos = eo.start_window_pos(pi)
+                end_month_pos = eo.end_window_pos(pi)
+                if min_start_month_pos is None or start_month_pos < min_start_month_pos:
+                    min_start_month_pos = start_month_pos
+                if max_end_month_pos is None or end_month_pos > max_end_month_pos:
+                    max_end_month_pos = end_month_pos
+                
+                predictions['{}P{}'.format(evl['name'], pi)] = eo.get_predictions(feature_pos, scaled, pi)
         
-        self._plot_target_vs_predicted_new_process(ev.get_target(feature_name, scaled=scaled, length=ev.get_target_data_length(tail)), 
+        if tail:
+            min_start_month_pos = 0
+        
+        months = ev.get_months(max_end_month_pos, max_end_month_pos - min_start_month_pos)
+        self._plot_target_vs(months, ev.get_target_by_start_end(feature_name, min_start_month_pos, max_end_month_pos, scaled=scaled), 
                                                    predictions, 
                                                    formatted_feature_name, 'Real vs Predicted ' + formatted_feature_name) 
     
-    def plot_errors(self, feature_pos=0, scaled=False, evals=[]):
+    def plot_errors(self, feature_pos=0, scaled=False, evals=[], prediction_index=0):
         ev = self.eval(evals)
         ev_name = ev['name']
         ev = ev['obj']
         feature_name = ev.get_predicted_var_name(feature_pos)
+        months = ev.get_months(prediction_index)
         absolute = ev.absolute_error(feature_pos, scaled)
         relative = ev.relative_error(feature_pos, scaled)
         title = '{} Target vs Prediction Errors [{}]'.format(self._generate_feature_name(feature_name, scaled), ev_name)
-        self._plot_errors_new_process(absolute, relative, 'Absolute Error', 'Relative Error', title)
+        self._plot_errors_new_process(months, absolute, relative, 'Absolute Error', 'Relative Error', title)
         
     def plot_absolute_errors(self, feature_pos=0, scaled=False, evals=[]):
         self.plot_errors_by_type('absolute', feature_pos, scaled, evals)

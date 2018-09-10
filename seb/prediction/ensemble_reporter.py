@@ -41,16 +41,11 @@ class EnsembleReporter():
             
             if pickle is None or self._overwrite:
                 self._ensemble_evaluator = EnsembleEvaluator(self._get_evaluators(), operator, find_best_ensemble)
-                #self.store_noise_variance_dataset('test')
                 self._ensemble_eval_sm.pickle(self._ensemble_evaluator, self.run_path, self._ensemble_evaluator.absolute_mean_error())
             else:
                 self._ensemble_evaluator = self._ensemble_eval_sm.unpickle(pickle)
                 
-        return self._ensemble_evaluator
-    
-    def store_noise_variance_dataset(self, suffix):
-        dataset = self.get_ensemble_evaluator().get_noise_variance_dataset()
-        dataset.to_sql(name='month_noise_variance_' + suffix, con=DBManager.get_engine(), if_exists='replace', index=False)
+        return self._ensemble_evaluator  
         
         
     def _get_evaluators(self):

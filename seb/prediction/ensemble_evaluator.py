@@ -188,8 +188,8 @@ class EnsembleEvaluator(BaseEvaluator):
               }
         return fn[self._operator](scaled)
     
-    def get_predictions(self, feature_pos=0, scaled=False):
-        return self._get_feature_values(self.predictions(scaled), feature_pos)
+    def get_predictions(self, feature_pos=0, scaled=False, prediction_index=0):
+        return self._get_feature_values(self.predictions(scaled), self.feature_index(feature_pos, prediction_index))
     
     def get_std(self, feature_pos=0, scaled=False):
         return self._get_feature_values(self.std(scaled), feature_pos)
@@ -214,9 +214,4 @@ class EnsembleEvaluator(BaseEvaluator):
     
     def get_noise_variance(self, feature_pos=0):
         return self._get_feature_values(self._noise_variance, feature_pos)
-    
-    def get_noise_variance_dataset(self):
-        data = self._reader.get_data(self._end_window_pos, self._window_length, scaled=True).reset_index(drop=True)
-        data = data.join(pd.DataFrame({'variance':self.get_noise_variance()}))
-        return data;
     

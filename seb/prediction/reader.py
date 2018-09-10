@@ -117,6 +117,14 @@ class Reader(object):
     def num_base_ensembles(self):
         return self._num_base_ensembles
     
+    @property
+    def multi_month_prediction(self):
+        return self._multi_month_prediction
+    
+    @property
+    def prediction_size(self):
+        return self._prediction_size
+    
     def _load_base_ensembles(self, paths):
         ensembles = []
         for path in paths:
