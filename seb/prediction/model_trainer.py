@@ -317,8 +317,8 @@ class ModelTrainer():
         saver.save(session, save_file)
             
                 
-modelTrainer = ModelTrainer({'max_epoch' : 100, 'line_id':13, 'train_months':47, 'prediction_size':3, 'store_window':True, 'predicted_features':['sales'], 'multi_month_prediction':True})
-modelTrainer.train()
+#modelTrainer = ModelTrainer({'max_epoch' : 100, 'line_id':13, 'train_months':47, 'prediction_size':3, 'store_window':True, 'predicted_features':['sales'], 'multi_month_prediction':True})
+#modelTrainer.train()
             
         
         
