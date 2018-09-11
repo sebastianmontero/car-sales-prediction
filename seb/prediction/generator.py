@@ -14,8 +14,7 @@ class Generator(object):
 
     def __init__(self, data, batch_size, num_steps, num_predicted_features, num_predicted_vars, prediction_size=1, multi_month_prediction=False, for_test=False):
         
-        prediction_data_size = (prediction_size * 2 - 1) if for_test and multi_month_prediction else prediction_size
-        residual = (data.shape[0] - prediction_data_size) % batch_size
+        residual = (data.shape[0] - prediction_size) % batch_size
         self._data = data[residual:]
         self._batch_size = batch_size
         self._num_steps = num_steps
@@ -25,8 +24,8 @@ class Generator(object):
         self._prediction_size = prediction_size
         self._multi_month_prediction = multi_month_prediction
         self._for_test = for_test
-        self._num_batches = (self._data_length - prediction_data_size) // batch_size
-        self._epoch_size = math.ceil((self._data_length - prediction_data_size) / (num_steps * batch_size))
+        self._num_batches = (self._data_length - prediction_size) // batch_size
+        self._epoch_size = math.ceil((self._data_length - prediction_size) / (num_steps * batch_size))
         assert (self._epoch_size > 0), "Epoch size is zero, num_steps or batch_size are to big"
         self._pos = -1
         self._x_data, self._y_data = self._format_data()
@@ -47,17 +46,10 @@ class Generator(object):
         x_data = []
         y_data = []
         predictions = [i + 1 for i in range(self._prediction_size)] if self._multi_month_prediction else [self._prediction_size]
-        for num_batch in range(self._num_batches - 1):
+        for num_batch in range(self._num_batches):
             x_batch, y_batch = self._create_batch(num_batch, predictions)        
             x_data.append(x_batch)
             y_data.append(y_batch)
-        
-        final_batch_pos = self._num_batches - 1
-        if self._for_test and self._multi_month_prediction:
-            final_batch_pos += self._prediction_size - 1
-        x_batch, y_batch = self._create_batch(final_batch_pos, predictions)        
-        x_data.append(x_batch)
-        y_data.append(y_batch)
         
         return np.asarray(x_data), np.asarray(y_data)
     

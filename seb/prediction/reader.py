@@ -371,11 +371,10 @@ while reader.next_window():
         print()
         print()'''
     
-
 '''features = ['inflation_index_roc_prev_month',
                                    'consumer_confidence_index']
 #features = ['inflation_index_roc_prev_month']
-reader = Reader(13, 39, features, predicted_features=['sales'], prediction_size=3, multi_month_prediction=False)
+reader = Reader(13, 39, features, predicted_features=['sales'], prediction_size=3, multi_month_prediction=True)
 #reader = Reader(13, 37, features)
 
 while reader.next_window():
