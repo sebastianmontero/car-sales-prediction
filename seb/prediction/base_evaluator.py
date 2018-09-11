@@ -25,7 +25,7 @@ class BaseEvaluator(object):
         return prediction_indexes
     
     def window_shift(self, prediction_index=0):
-        return self.num_predictions() - prediction_index - 1
+        return self.num_predictions - prediction_index - 1
         
     def start_window_pos(self, prediction_index=0):
         return self.end_window_pos(prediction_index) - self.window_length
@@ -78,7 +78,7 @@ class BaseEvaluator(object):
     
     def _unscale_features(self, features, round_=True):
         unscaled = []
-        for pi in self.prediction_indexes:
+        for pi in self.prediction_indexes():
             unscaled.append(self.reader.unscale_features(features[:, self.feature_index(prediction_index=pi):self.feature_index(prediction_index=pi+1)], round_))
         unscaled = np.concatenate(unscaled, axis=1)
         return unscaled     
@@ -104,9 +104,9 @@ class BaseEvaluator(object):
         predictions = self.get_predictions(feature_pos, scaled=scaled, prediction_index=prediction_index)
         return self.calculate_absolute_error(targets, predictions)
     
-    def relative_error(self, feature_pos=0, scaled=False):
-        targets = self._get_target_by_pos(feature_pos, scaled=scaled)
-        predictions = self.get_predictions(feature_pos, scaled=scaled)
+    def relative_error(self, feature_pos=0, scaled=False, prediction_index=0):
+        targets = self._get_target_by_pos(feature_pos, scaled=scaled, prediction_index=prediction_index)
+        predictions = self.get_predictions(feature_pos, scaled=scaled, prediction_index=prediction_index)
         return self.calculate_relative_error(targets, predictions)
     
     def _calculate_absolute_mean_error(self, targets, predictions):
@@ -129,7 +129,7 @@ class BaseEvaluator(object):
     
     def get_predicted_targets(self, scaled=False):
         targets = []
-        for pi in self.prediction_indexes:
+        for pi in self.prediction_indexes():
             targets.append(self._get_data(scaled, prediction_index=pi)[self.predicted_features].values)
         
         targets = np.concatenate(targets, axis=1)

@@ -23,7 +23,7 @@ class EnsembleEvaluator(BaseEvaluator):
         best_network = evaluators[0]
         self._quantile = 0.975 #0.95 confidence interval 
         self._best_network = best_network
-        self._end_window_pos = best_network.end_window_pos
+        self._end_window_pos = best_network._end_window_pos
         self._window_length = best_network.window_length
         self._num_networks = len(evaluators)
         self._reader = best_network.reader

@@ -230,8 +230,8 @@ class Reader(object):
         if length < 0:
             length = end_window_pos
         assert (end_window_pos <= source.shape[0]), "end_window_pos index out of bounds"
-        assert (length <= end_window_pos), "length must be lower than end_window_pos"
-        return source[end_window_pos - length: end_window_pos]
+        assert (length <= end_window_pos), "length: {} must be lower or equal than end_window_pos: {}".format(length, end_window_pos)
+        return source[int(end_window_pos - length): int(end_window_pos)]
     
     def process_absolute_pos(self, pos):
         return pos if pos >= 0 else self._data.shape[0] + pos + 1
