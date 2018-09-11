@@ -53,9 +53,11 @@ class BaseEvaluatorPresenter(object):
         for label, obj in series.items():
             vals = obj
             plt_type = 'line'
+            x_shift = 0
             if isinstance(obj, dict):
                 vals = obj['values']
                 plt_type = obj.get('type', 'line')
+                x_shift = obj.get('x_shift', 0)
             
             tmin=min(vals)
             tmax=max(vals)
@@ -63,8 +65,8 @@ class BaseEvaluatorPresenter(object):
                 min_val = tmin
             if max_val is None or tmax > max_val:
                 max_val = tmax
-            
-            xvals = range(num_months - len(vals), num_months)
+            range_end = num_months - x_shift
+            xvals = range(range_end - len(vals), range_end)
             if plt_type == 'bar':
                 plt.bar(xvals, vals, label=(label))
             elif plt_type == 'line':
@@ -132,13 +134,16 @@ class BaseEvaluatorPresenter(object):
         predictions = {}
         evals = self.evals(evals_pos)
         prediction_indexes = self._normalize_prediction_indexes(evals, prediction_indexes)
+        min_start_month_pos, max_end_month_pos = self._get_month_range(evals, prediction_indexes, tail)
         for pos, evl in enumerate(evals):
             for pi in prediction_indexes[pos]:
                 eo = evl['obj']
-                predictions[self._evaluator_name(evl['name'], pi)] = eo.get_predictions(feature_pos, scaled, pi)
-        
+                predictions[self._evaluator_name(evl['name'], pi)] = {
+                    'values': eo.get_predictions(feature_pos, scaled, pi),
+                    'x_shift': max_end_month_pos - eo.end_window_pos(pi)
+                }
 
-        min_start_month_pos, max_end_month_pos = self._get_month_range(evals, prediction_indexes, tail) 
+         
         months = ev.get_months(max_end_month_pos, max_end_month_pos - min_start_month_pos)
         self._plot_target_vs(months, ev.get_target_by_start_end(feature_name, min_start_month_pos, max_end_month_pos, scaled=scaled), 
                                                    predictions, 
@@ -163,7 +168,8 @@ class BaseEvaluatorPresenter(object):
         return min_start_month_pos, max_end_month_pos
     
     def _normalize_prediction_indexes(self, evals, prediction_indexes):
-        return np.concatenate((prediction_indexes, np.zeros([len(evals) - len(prediction_indexes),1])))
+        complement = np.zeros([len(evals) - len(prediction_indexes),1]).tolist()
+        return prediction_indexes + complement
         
     def _evaluator_name(self, name, prediction_index):
         return '{}P{}'.format(name, int(prediction_index))

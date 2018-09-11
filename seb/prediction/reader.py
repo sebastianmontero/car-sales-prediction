@@ -58,7 +58,7 @@ class Reader(object):
         self._start_month_id = None
         self._raw_data = None
         self._process_data()
-        self._num_windows = self._data.shape[0] - self.get_window_size(for_test=True)
+        self._num_windows = self._data.shape[0] - self.get_window_size(for_test=True) + 1
     
     def __getstate__(self):
         state = self.__dict__.copy()
