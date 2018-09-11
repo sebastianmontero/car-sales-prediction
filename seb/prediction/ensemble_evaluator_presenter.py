@@ -6,6 +6,7 @@ Created on Jun 15, 2018
 
 from utils import Utils
 from base_evaluator_presenter import BaseEvaluatorPresenter
+from seb import prediction
 
 class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
     
@@ -107,10 +108,25 @@ class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
                                              title, 
                                              title)
     
-    def _absolute_mean_error_str(self, eval_, feature_pos=0, scaled=False):
-        ame_str = super(EnsembleEvaluatorPresenter, self)._absolute_mean_error_str(eval_, feature_pos, scaled)
-        return '{} Best Network: {:.2f}'.format(ame_str, eval_['obj'].best_network.absolute_mean_error(feature_pos, scaled))
+    def _absolute_mean_error_str(self, eval_, feature_pos=0, scaled=False, prediction_index=0):
+        ame_str = super(EnsembleEvaluatorPresenter, self)._absolute_mean_error_str(eval_, feature_pos, scaled, prediction_index)
+        return self._error_str(ame_str, eval_['obj'].best_network.absolute_mean_error_single(feature_pos, scaled, prediction_index))
+    
+    def _total_absolute_mean_error_str(self, eval_, feature_pos=0, scaled=False, prediction_indexes=[]):
+        ame_str = super(EnsembleEvaluatorPresenter, self)._total_absolute_mean_error_str(eval_, feature_pos, scaled, prediction_indexes)
+        return self._error_str(ame_str, eval_['obj'].best_network.absolute_mean_error(feature_pos, scaled, prediction_indexes))
+    
+    def _error_str(self, prefix, error, percent=False):
+        str_ = '{} Best Network: {:.2f}'
+        if percent:
+            str_ += '%'
+        return str_.format(prefix, error)
        
-    def _relative_mean_error_str(self, eval_, feature_pos=0, scaled=False):
-        rme_str = super(EnsembleEvaluatorPresenter, self)._relative_mean_error_str(eval_, feature_pos, scaled)
-        return '{} Best Network: {:.2f}%'.format(rme_str, eval_['obj'].best_network.relative_mean_error(feature_pos, scaled))
+    def _relative_mean_error_str(self, eval_, feature_pos=0, scaled=False, prediction_index=0):
+        rme_str = super(EnsembleEvaluatorPresenter, self)._relative_mean_error_str(eval_, feature_pos, scaled, prediction_index)
+        return self._error_str(rme_str, eval_['obj'].best_network.relative_mean_error_single(feature_pos, scaled, prediction_index), percent=True)
+    
+    def _total_relative_mean_error_str(self, eval_, feature_pos=0, scaled=False, prediction_indexes=[]):
+        rme_str = super(EnsembleEvaluatorPresenter, self)._total_relative_mean_error_str(eval_, feature_pos, scaled, prediction_indexes)
+        return self._error_str(rme_str, eval_['obj'].best_network.relative_mean_error(feature_pos, scaled, prediction_indexes), percent=True)
+    

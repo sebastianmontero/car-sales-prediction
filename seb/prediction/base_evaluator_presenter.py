@@ -130,39 +130,52 @@ class BaseEvaluatorPresenter(object):
         formatted_feature_name = self._generate_feature_name(feature_name, scaled)
         
         predictions = {}
-        min_start_month_pos = None
-        max_end_month_pos = None
         evals = self.evals(evals_pos)
-        prediction_indexes = np.concatenate((prediction_indexes, np.zeros([len(evals) - len(prediction_indexes),1])))
+        prediction_indexes = self._normalize_prediction_indexes(evals, prediction_indexes)
         for pos, evl in enumerate(evals):
             for pi in prediction_indexes[pos]:
                 eo = evl['obj']
-                
+                predictions[self._evaluator_name(evl['name'], pi)] = eo.get_predictions(feature_pos, scaled, pi)
+        
+
+        min_start_month_pos, max_end_month_pos = self._get_month_range(evals, prediction_indexes, tail) 
+        months = ev.get_months(max_end_month_pos, max_end_month_pos - min_start_month_pos)
+        self._plot_target_vs(months, ev.get_target_by_start_end(feature_name, min_start_month_pos, max_end_month_pos, scaled=scaled), 
+                                                   predictions, 
+                                                   formatted_feature_name, 'Real vs Predicted ' + formatted_feature_name) 
+    
+    def _get_month_range(self, evals, prediction_indexes, tail=False):
+        
+        min_start_month_pos = None
+        max_end_month_pos = None
+        for pos, evl in enumerate(evals):
+            for pi in prediction_indexes[pos]:
+                eo = evl['obj']
                 start_month_pos = eo.start_window_pos(pi)
                 end_month_pos = eo.end_window_pos(pi)
                 if min_start_month_pos is None or start_month_pos < min_start_month_pos:
                     min_start_month_pos = start_month_pos
                 if max_end_month_pos is None or end_month_pos > max_end_month_pos:
                     max_end_month_pos = end_month_pos
-                
-                predictions['{}P{}'.format(evl['name'], pi)] = eo.get_predictions(feature_pos, scaled, pi)
         
         if tail:
             min_start_month_pos = 0
-        
-        months = ev.get_months(max_end_month_pos, max_end_month_pos - min_start_month_pos)
-        self._plot_target_vs(months, ev.get_target_by_start_end(feature_name, min_start_month_pos, max_end_month_pos, scaled=scaled), 
-                                                   predictions, 
-                                                   formatted_feature_name, 'Real vs Predicted ' + formatted_feature_name) 
+        return min_start_month_pos, max_end_month_pos
     
+    def _normalize_prediction_indexes(self, evals, prediction_indexes):
+        return np.concatenate((prediction_indexes, np.zeros([len(evals) - len(prediction_indexes),1])))
+        
+    def _evaluator_name(self, name, prediction_index):
+        return '{}P{}'.format(name, prediction_index)
+        
     def plot_errors(self, feature_pos=0, scaled=False, evals=[], prediction_index=0):
         ev = self.eval(evals)
         ev_name = ev['name']
         ev = ev['obj']
         feature_name = ev.get_predicted_var_name(feature_pos)
         months = ev.get_months(prediction_index)
-        absolute = ev.absolute_error(feature_pos, scaled)
-        relative = ev.relative_error(feature_pos, scaled)
+        absolute = ev.absolute_error(feature_pos, scaled, prediction_index)
+        relative = ev.relative_error(feature_pos, scaled, prediction_index)
         title = '{} Target vs Prediction Errors [{}]'.format(self._generate_feature_name(feature_name, scaled), ev_name)
         self._plot_errors_new_process(months, absolute, relative, 'Absolute Error', 'Relative Error', title)
         
@@ -172,7 +185,7 @@ class BaseEvaluatorPresenter(object):
     def plot_relative_errors(self, feature_pos=0, scaled=False, evals=[]):
         self.plot_errors_by_type('relative', feature_pos, scaled, evals)
             
-    def plot_errors_by_type(self, type_='absolute',  feature_pos=0, scaled=False, evals=[]):
+    def plot_errors_by_type(self, type_='absolute',  feature_pos=0, scaled=False, evals=[], prediction_indexes=[[0]]):
         props = {
             'absolute' : ('Absolute', 'absolute_error'),
             'relative' : ('Relative', 'relative_error')
@@ -183,35 +196,57 @@ class BaseEvaluatorPresenter(object):
         ev = self.eval_obj(0)
         feature_name = ev.get_predicted_var_name(feature_pos)
         errors = {}
-        for evl in self.evals(evals):
-            errors[evl['name']] = {
-                'values': getattr(evl['obj'],fn)(feature_pos, scaled),
-                'type':'o'
-            }
+        prediction_indexes = self._normalize_prediction_indexes(evals, prediction_indexes)
+        for pos, evl in enumerate(self.evals(evals)):
+            for pi in prediction_indexes[pos]:
+                errors[self._evaluator_name(evl['name'], pi)] = {
+                    'values': getattr(evl['obj'],fn)(feature_pos, scaled, pi),
+                    'type':'o'
+                }
             
         title = '{} Target vs Prediction {} Errors'.format(self._generate_feature_name(feature_name, scaled), name)
-        self._plot_by_month_new_process(self.eval_name(), errors, name + ' Error', title)
+        min_start_month_pos, max_end_month_pos = self._get_month_range(evals, prediction_indexes, tail=False) 
+        months = ev.get_months(max_end_month_pos, max_end_month_pos - min_start_month_pos)
+        self._plot_by_month_new_process(months, self.eval_name(), errors, name + ' Error', title)
         
         
-    def absolute_mean_error_str(self, feature_pos=0, scaled=False, evals=[]):
-        return self._mean_error_str(self._absolute_mean_error_str, feature_pos, scaled, evals)
+    def absolute_mean_error_str(self, feature_pos=0, scaled=False, evals=[], prediction_indexes=[[0]]):
+        return self._mean_error_str(self._absolute_mean_error_str, self._total_absolute_mean_error_str, feature_pos, scaled, evals, prediction_indexes)
     
-    def _mean_error_str(self, fn, feature_pos=0, scaled=False, evals=[]):
+    def _mean_error_str(self, fn, fn_total, feature_pos=0, scaled=False, evals=[], prediction_indexes=[[0]]):
         evs = self.evals(evals)
         
         str_ = ''
-        for ev in evs:
-            str_ += fn(ev, feature_pos, scaled) + '\n'
+        prediction_indexes = self._normalize_prediction_indexes(evals, prediction_indexes)
+        for pos,ev in enumerate(evs):
+            pis = prediction_indexes[pos]
+            for pi in pis: 
+                str_ += fn(ev, feature_pos, scaled, pi) + '\n'
+            if len(pis) > 1:
+                str_ += '\t' + fn_total(ev, feature_pos, scaled, pis) + '\n'
         return str_
     
-    def _absolute_mean_error_str(self, eval_, feature_pos=0, scaled=False):
-        return '[{}] {} absolute mean error: {:.2f}'.format(eval_['name'], self.generate_feature_name(feature_pos, scaled=scaled), eval_['obj'].absolute_mean_error(feature_pos, scaled))
+    def _absolute_mean_error_str(self, eval_, feature_pos=0, scaled=False, prediction_index=0):
+        return self.__absolute_mean_error_str(eval_['obj'].absolute_mean_error_single(feature_pos, scaled, prediction_index), self._evaluator_name(eval_['name'], prediction_index), feature_pos, scaled)
+    
+    def _total_absolute_mean_error_str(self, eval_, feature_pos=0, scaled=False, prediction_indexes=[]):
+        return self.__absolute_mean_error_str(eval_['obj'].absolute_mean_error(feature_pos, scaled, prediction_indexes), eval_['name'], feature_pos, scaled)
+    
+    def __absolute_mean_error_str(self, error, eval_name, feature_pos=0, scaled=False):
+        return '[{}] {} absolute mean error: {:.2f}'.format(eval_name, self.generate_feature_name(feature_pos, scaled=scaled), error)
     
     def relative_mean_error_str(self, feature_pos=0, scaled=False, evals=[]):
-        return self._mean_error_str(self._relative_mean_error_str, feature_pos, scaled, evals)
+        return self._mean_error_str(self._relative_mean_error_str,self._total_relative_mean_error_str, feature_pos, scaled, evals)
     
-    def _relative_mean_error_str(self, eval_, feature_pos=0, scaled=False):
-        return '[{}] {} relative mean error: {:.2f}%'.format(eval_['name'], self.generate_feature_name(feature_pos, scaled=scaled), eval_['obj'].relative_mean_error(feature_pos, scaled))
+    def _relative_mean_error_str(self, eval_, feature_pos=0, scaled=False, prediction_index=0):
+        return self.__relative_mean_error_str(eval_['obj'].relative_mean_error_single(feature_pos, scaled, prediction_index), self._evaluator_name(eval_['name'], prediction_index), feature_pos, scaled)
+    
+    def _total_relative_mean_error_str(self, eval_, feature_pos=0, scaled=False, prediction_indexes=[]):
+        return self.__relative_mean_error_str(eval_['obj'].relative_mean_error(feature_pos, scaled, prediction_indexes), eval_['name'], feature_pos, scaled)
+    
+    def __relative_mean_error_str(self, error, eval_name, feature_pos=0, scaled=False):
+        return '[{}] {} relative mean error: {:.2f}%'.format(eval_name, self.generate_feature_name(feature_pos, scaled=scaled), error)
+    
     
     def predicted_features_str(self):
         ev = self.eval_obj(0)

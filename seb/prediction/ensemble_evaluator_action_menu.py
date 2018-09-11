@@ -61,20 +61,20 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
                    'Plot min max range']
         return super(EnsembleEvaluatorActionMenu, self)._get_menu_options() + options
                                     
-    def _handle_action(self, action, feature_pos, scaled, tail, evals):
+    def _handle_action(self, action, feature_pos, scaled, tail, evals, prediction_indexes, prediction_index):
         
         if action == 9:
-            self._actor.plot_target_vs_ensemble_best(feature_pos, tail=tail, scaled=scaled, evals=evals)
+            self._actor.plot_target_vs_ensemble_best(feature_pos, tail=tail, scaled=scaled, evals=evals, prediction_index=prediction_index)
         elif action == 10:
-            self._actor.plot_target_vs_ensemble_min_max(feature_pos, tail=tail, scaled=scaled, evals=evals)
+            self._actor.plot_target_vs_ensemble_min_max(feature_pos, tail=tail, scaled=scaled, evals=evals, prediction_index=prediction_index)
         elif action == 11:
-            self._actor.plot_target_vs_mean_interval(feature_pos, tail=tail, scaled=scaled, evals=evals)
+            self._actor.plot_target_vs_mean_interval(feature_pos, tail=tail, scaled=scaled, evals=evals, prediction_index=prediction_index)
         elif action == 12:
-            self._actor.plot_std(feature_pos, scaled=scaled, evals=evals)
+            self._actor.plot_std(feature_pos, scaled=scaled, evals=evals, prediction_index=prediction_index)
         elif action == 13:
-            self._actor.plot_variance_errors(feature_pos, evals=evals)
+            self._actor.plot_variance_errors(feature_pos, evals=evals, prediction_index=prediction_index)
         elif action == 14:
-            self._actor.plot_min_max_range(feature_pos, scaled=scaled, evals=evals)
+            self._actor.plot_min_max_range(feature_pos, scaled=scaled, evals=evals, prediction_index=prediction_index)
         else:
             raise ValueError('Unknown action')
             

@@ -166,40 +166,45 @@ class BaseEvaluator(object):
             
         return fname  
     
-    def absolute_mean_error(self, feature_pos=0, scaled=False):
-        return self.absolute_mean_error_detail(feature_pos, scaled)['total']
+    def absolute_mean_error(self, feature_pos=0, scaled=False, prediction_indexes=[]):
+        return self._mean_error_total(self.absolute_mean_error_single, feature_pos, scaled, prediction_indexes)
         
-    def absolute_mean_error_detail(self, feature_pos=0, scaled=False, prediction_indexes=[]):
+    def absolute_mean_error_single(self, feature_pos=0, scaled=False, prediction_index=0):
         
-        return self._mean_error_detail(self._calculate_absolute_mean_error, feature_pos, scaled, prediction_indexes) 
+        return self._calculate_absolute_mean_error(self._get_target_by_pos(feature_pos, scaled=scaled, prediction_index=prediction_index), 
+                                                   self.get_predictions(feature_pos, scaled=scaled, prediction_index=prediction_index)) 
     
-    def _mean_error_detail(self, fn, feature_pos=0, scaled=False, prediction_indexes=[]):
+
+    
+    def relative_mean_error_single(self, feature_pos=0, scaled=False, prediction_index=0):
+        
+        return self._calculate_relative_mean_error(self._get_target_by_pos(feature_pos, scaled=scaled, prediction_index=prediction_index), 
+                                                   self.get_predictions(feature_pos, scaled=scaled, prediction_index=prediction_index)) 
+    
+        
+    def _mean_error_total(self, fn, feature_pos=0, scaled=False, prediction_indexes=[]):
         
         mes = []
         prediction_indexes = self.prediction_indexes(prediction_indexes)
         
         for pi in prediction_indexes:
-            mes.append(fn(self._get_target_by_pos(feature_pos, scaled=scaled, prediction_index=pi), 
-                                                   self.get_predictions(feature_pos, scaled=scaled, prediction_index=pi)))
-        return {
-            'detail': mes,
-            'total': np.average(mes)
-        } 
+            mes.append(fn(feature_pos, scaled, pi))
+        return np.average(mes)
     
     def window_real_absolute_mean_error(self):
         return (self.absolute_mean_error(0) + self.absolute_error_by_pos(-1)) / 2
     
-    def relative_mean_error(self, feature_pos=0, scaled=False):
-        return self.relative_mean_error_detail(feature_pos, scaled)['total']
+    def relative_mean_error(self, feature_pos=0, scaled=False, prediction_indexes=[]):
+        return self._mean_error_total(self.relative_mean_error_single, feature_pos, scaled, prediction_indexes)
     
-    def relative_mean_error_detail(self, feature_pos=0, scaled=False, prediction_indexes=[]):
-        return self._mean_error_detail(self._calculate_relative_mean_error, feature_pos, scaled, prediction_indexes) 
+    def _get_absolute_error_by_pos(self, pos, feature_pos=0,  scaled=False):
+        aes = []
     
-    
-    def _get_absolute_error_by_pos(self, pos, feature_pos=0,  scaled=False, prediction_index=0):
-        return self._calculate_absolute_error_by_pos(self._get_target_by_pos(feature_pos, scaled=scaled, prediction_index=prediction_index), 
-                                                     self.get_predictions(feature_pos,scaled=scaled, prediction_index=prediction_index), pos)
-    
+        for pi in self.prediction_indexes():
+            aes.append(self._calculate_absolute_error_by_pos(self._get_target_by_pos(feature_pos, scaled=scaled, prediction_index=pi), 
+                                                     self.get_predictions(feature_pos,scaled=scaled, prediction_index=pi), pos))
+        return np.average(aes)    
+        
     def absolute_error_by_pos(self, pos, feature_pos=0, scaled=False):
         return self._get_absolute_error_by_pos(pos, feature_pos, scaled=scaled)
     

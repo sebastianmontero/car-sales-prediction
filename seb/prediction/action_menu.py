@@ -39,7 +39,9 @@ class ActionMenu():
         path_parser.add_argument('--evals', '-e', required=False, help='Select the evals to use', dest='evals', type=int, default=[], nargs='+')
         path_parser.add_argument('--num', '-n', required=False, help='Number of features', dest='num_features', type=int, default=1)
         path_parser.add_argument('--scaled', '-s', required=False, help='Use scaled values', dest='scaled', action='store_true')
-        path_parser.add_argument('--tail', '-t', required=False, help='Show real values tail', dest='tail', action='store_true')        
+        path_parser.add_argument('--tail', '-t', required=False, help='Show real values tail', dest='tail', action='store_true')
+        path_parser.add_argument('--prediction_index', '-p', required=False, help='Prediction Indexes to select, can be used multiple times to use different prediction indexes for different evals', 
+                                 dest='prediction_indexes', type=int, default=[[0]], nargs='+', action='append')        
        
         return parser;
    

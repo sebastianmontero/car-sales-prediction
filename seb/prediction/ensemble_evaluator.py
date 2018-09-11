@@ -191,27 +191,27 @@ class EnsembleEvaluator(BaseEvaluator):
     def get_predictions(self, feature_pos=0, scaled=False, prediction_index=0):
         return self._get_feature_values(self.predictions(scaled), self.feature_index(feature_pos, prediction_index))
     
-    def get_std(self, feature_pos=0, scaled=False):
-        return self._get_feature_values(self.std(scaled), feature_pos)
+    def get_std(self, feature_pos=0, scaled=False, prediction_index=0):
+        return self._get_feature_values(self.std(scaled), self.feature_index(feature_pos, prediction_index))
     
-    def get_min(self, feature_pos=0, scaled=False):
-        return self._get_feature_values(self.min(scaled), feature_pos)
+    def get_min(self, feature_pos=0, scaled=False, prediction_index=0):
+        return self._get_feature_values(self.min(scaled), self.feature_index(feature_pos, prediction_index))
     
-    def get_max(self, feature_pos=0, scaled=False):
-        return self._get_feature_values(self.max(scaled), feature_pos)
+    def get_max(self, feature_pos=0, scaled=False, prediction_index=0):
+        return self._get_feature_values(self.max(scaled), self.feature_index(feature_pos, prediction_index))
     
-    def get_min_max_range(self, feature_pos=0, scaled=False):
-        return self.get_max(feature_pos, scaled) - self.get_min(feature_pos, scaled)
+    def get_min_max_range(self, feature_pos=0, scaled=False, prediction_index=0):
+        return self.get_max(feature_pos, scaled, prediction_index) - self.get_min(feature_pos, scaled, prediction_index)
     
-    def get_lower(self, feature_pos=0, scaled=False):
-        return self._get_feature_values(self.lower(scaled), feature_pos)
+    def get_lower(self, feature_pos=0, scaled=False, prediction_index=0):
+        return self._get_feature_values(self.lower(scaled), self.feature_index(feature_pos, prediction_index))
     
-    def get_upper(self, feature_pos=0, scaled=False):
-        return self._get_feature_values(self.upper(scaled), feature_pos)
+    def get_upper(self, feature_pos=0, scaled=False, prediction_index=0):
+        return self._get_feature_values(self.upper(scaled), self.feature_index(feature_pos, prediction_index))
     
-    def get_model_variance(self, feature_pos=0):
-        return self._get_feature_values(self._model_variance, feature_pos)
+    def get_model_variance(self, feature_pos=0, prediction_index=0):
+        return self._get_feature_values(self._model_variance, self.feature_index(feature_pos, prediction_index))
     
-    def get_noise_variance(self, feature_pos=0):
-        return self._get_feature_values(self._noise_variance, feature_pos)
+    def get_noise_variance(self, feature_pos=0, prediction_index=0):
+        return self._get_feature_values(self._noise_variance, self.feature_index(feature_pos, prediction_index))
     

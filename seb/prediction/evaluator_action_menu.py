@@ -93,7 +93,7 @@ class EvaluatorActionMenu(BaseEvaluatorActionMenu):
         options = ['Show related configuration']
         return super(EvaluatorActionMenu, self)._get_menu_options() + options
                                     
-    def _handle_action(self, action, feature_pos, scaled, tail, evals):
+    def _handle_action(self, action, feature_pos, scaled, tail, evals, prediction_indexes, prediction_index):
         if action == 9:
             evals = evals if len(evals) > 0 else [i for i in range(len(self._sel_paths))]
             for e in evals:
