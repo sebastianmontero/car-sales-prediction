@@ -56,8 +56,8 @@ ensemble_trainer = EnsembleTrainer({
                                    'consumer_confidence_index'],
                 'predicted_features':['sales'],
                 'multi_month_prediction':True,
-                'num_steps': 50
-            }, repeats=3, description='nationwide_3n_mp')
+                'num_steps': 70
+            }, repeats=4, description='nationwide_3n_mp_r4')
 
 '''ensemble_trainer = EnsembleTrainer({
                 'line_id': 13,
