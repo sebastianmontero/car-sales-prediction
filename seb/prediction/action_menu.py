@@ -41,7 +41,7 @@ class ActionMenu():
         path_parser.add_argument('--scaled', '-s', required=False, help='Use scaled values', dest='scaled', action='store_true')
         path_parser.add_argument('--tail', '-t', required=False, help='Show real values tail', dest='tail', action='store_true')
         path_parser.add_argument('--prediction_index', '-p', required=False, help='Prediction Indexes to select, can be used multiple times to use different prediction indexes for different evals', 
-                                 dest='prediction_indexes', type=int, default=[[0]], nargs='+', action='append')        
+                                 dest='prediction_indexes', type=int, nargs='+', action='append')        
        
         return parser;
    

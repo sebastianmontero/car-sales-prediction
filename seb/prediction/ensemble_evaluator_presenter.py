@@ -23,7 +23,7 @@ class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
                                                    ev.get_predictions(feature_pos, scaled, prediction_index=prediction_index), 
                                                    ev.best_network.get_predictions(feature_pos, scaled, prediction_index=prediction_index), 
                                                    formatted_feature_name, 
-                                                   'Target vs Ensemble and Best Network {} [{}]'.format(formatted_feature_name, ev_name))
+                                                   'Target vs Ensemble and Best Network {} [{}]'.format(formatted_feature_name, self._evaluator_name(ev_name, prediction_index)))
         
         
     def _plot_target_vs_ensemble_min_max(self, months, real, ensemble, min_, max_, ylabel, title):
@@ -41,7 +41,7 @@ class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
                                                       ev.get_min(feature_pos, scaled, prediction_index), 
                                                       ev.get_max(feature_pos, scaled, prediction_index) , 
                                                       formatted_feature_name, 
-                                                      'Target vs Ensemble, Min and Max {} [{}]'.format(formatted_feature_name, ev_name))
+                                                      'Target vs Ensemble, Min and Max {} [{}]'.format(formatted_feature_name, self._evaluator_name(ev_name, prediction_index)))
             
     def _plot_target_vs_mean_interval(self, months, real, mean, lower, upper, ylabel, title):
         self._plot_target_vs(months, real,{'Ensemble Mean':mean, 'Lower Limit': lower, 'Upper Limit': upper}, ylabel, title)
@@ -58,7 +58,7 @@ class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
                                                        ev.get_lower(feature_pos, scaled, prediction_index), 
                                                        ev.get_upper(feature_pos, scaled, prediction_index) , 
                                                        formatted_feature_name, 
-                                                       'Target vs Ensemble Mean and Interval {} [{}]'.format(formatted_feature_name, ev_name))
+                                                       'Target vs Ensemble Mean and Interval {} [{}]'.format(formatted_feature_name, self._evaluator_name(ev_name, prediction_index)))
         
         
     def _plot_variance_errors(self, months, model_variance, noise_variance, ylabel, title):
@@ -73,7 +73,7 @@ class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
         formatted_feature_name = self._generate_feature_name(feature_name, scaled=None)
         self._plot_variance_errors(months, ev.get_model_variance(feature_pos), 
                                                ev.get_noise_variance(feature_pos), 
-                                               formatted_feature_name + ' Variance', 'Model and Noise {} Variance [{}]'.format(formatted_feature_name, ev_name))
+                                               formatted_feature_name + ' Variance', 'Model and Noise {} Variance [{}]'.format(formatted_feature_name, self._evaluator_name(ev_name, prediction_index)))
         
     
     
@@ -87,7 +87,7 @@ class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
         feature_name = ev.get_predicted_var_name(feature_pos)
         months = ev.get_months(prediction_index=prediction_index)
         formatted_feature_name = self._generate_feature_name(feature_name, scaled=scaled)
-        title = '{} Standard Deviation [{}]'.format(formatted_feature_name, ev_name)
+        title = '{} Standard Deviation [{}]'.format(formatted_feature_name, self._evaluator_name(ev_name, prediction_index))
         self._plot_std(months, ev.get_std(feature_pos, scaled=scaled),
                                    title, 
                                    title)
@@ -102,7 +102,7 @@ class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
         feature_name = ev.get_predicted_var_name(feature_pos)
         months = ev.get_months(prediction_index=prediction_index)
         formatted_feature_name = self._generate_feature_name(feature_name, scaled=scaled)
-        title = '{} Min Max Range [{}]'.format(formatted_feature_name, ev_name)
+        title = '{} Min Max Range [{}]'.format(formatted_feature_name, self._evaluator_name(ev_name, prediction_index))
         self._plot_min_max_range(months, ev.get_min_max_range(feature_pos, scaled=scaled),
                                              title, 
                                              title)

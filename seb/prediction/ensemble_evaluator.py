@@ -102,7 +102,7 @@ class EnsembleEvaluator(BaseEvaluator):
     def _generate_predictions_array(self, evaluators):
         predictions = []
         for e in evaluators:
-            predictions.append(np.reshape(e.predictions(scaled=True), [-1, 1, e.num_predicted_features]))
+            predictions.append(np.reshape(e.predictions(scaled=True), [-1, 1, e.num_predicted_vars]))
         
         return np.concatenate(predictions, axis=1)
     

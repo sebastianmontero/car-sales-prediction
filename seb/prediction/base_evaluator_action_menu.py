@@ -25,7 +25,7 @@ class BaseEvaluatorActionMenu(ActionMenu):
         evals = command.evals
         scaled = command.scaled
         tail = command.tail
-        prediction_indexes = command.prediction_indexes
+        prediction_indexes = [[0]] if command.prediction_indexes is None else command.prediction_indexes 
         prediction_index = prediction_indexes[0][0]
         
         if action == 1:

@@ -65,7 +65,7 @@ class BaseEvaluatorPresenter(object):
                 min_val = tmin
             if max_val is None or tmax > max_val:
                 max_val = tmax
-            range_end = num_months - x_shift
+            range_end = int(num_months - x_shift)
             xvals = range(range_end - len(vals), range_end)
             if plt_type == 'bar':
                 plt.bar(xvals, vals, label=(label))
@@ -172,7 +172,7 @@ class BaseEvaluatorPresenter(object):
         return prediction_indexes + complement
         
     def _evaluator_name(self, name, prediction_index):
-        return '{}P{}'.format(name, int(prediction_index))
+        return '{}-P{}'.format(name, int(prediction_index))
         
     def plot_errors(self, feature_pos=0, scaled=False, evals=[], prediction_index=0):
         ev = self.eval(evals)
@@ -182,7 +182,7 @@ class BaseEvaluatorPresenter(object):
         months = ev.get_months(prediction_index=prediction_index)
         absolute = ev.absolute_error(feature_pos, scaled, prediction_index)
         relative = ev.relative_error(feature_pos, scaled, prediction_index)
-        title = '{} Target vs Prediction Errors [{}]'.format(self._generate_feature_name(feature_name, scaled), ev_name)
+        title = '{} Target vs Prediction Errors [{}]'.format(self._generate_feature_name(feature_name, scaled), self._evaluator_name(ev_name, prediction_index))
         self._plot_errors_new_process(months, absolute, relative, 'Absolute Error', 'Relative Error', title)
         
     def plot_absolute_errors(self, feature_pos=0, scaled=False, evals=[], prediction_indexes=[[0]]):

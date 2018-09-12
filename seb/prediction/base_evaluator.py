@@ -60,6 +60,10 @@ class BaseEvaluator(object):
     def num_predicted_features(self):
         return self.reader.num_predicted_features
     
+    @property
+    def num_predicted_vars(self):
+        return self.reader.num_predicted_vars
+    
     def predictions_by_absolute_pos(self, pos, scaled=False):
         prediction_index = self.num_predictions - 1
         start = self.start_window_pos(prediction_index)
