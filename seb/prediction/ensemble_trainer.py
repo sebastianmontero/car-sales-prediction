@@ -50,6 +50,21 @@ ensemble_trainer = EnsembleTrainer({
                 'layer_0' : grid_search([26, 29, 31, 34, 37, 40]),
                 'max_epoch' : 2,
                 'train_months': 36,
+                'prediction_size': 2,
+                'store_window' : False,
+                'included_features' : ['inflation_index_roc_prev_month',
+                                   'consumer_confidence_index'],
+                'predicted_features':['sales'],
+                'multi_month_prediction':False,
+                'num_steps': 70
+            }, repeats=4, description='nationwide_2n_r4')
+
+'''ensemble_trainer = EnsembleTrainer({
+                'line_id': 201,
+                'keep_prob' : grid_search([0.8, 0.9, 1.0]),
+                'layer_0' : grid_search([26, 29, 31, 34, 37, 40]),
+                'max_epoch' : 2,
+                'train_months': 36,
                 'prediction_size': 3,
                 'store_window' : False,
                 'included_features' : ['inflation_index_roc_prev_month',
@@ -57,7 +72,7 @@ ensemble_trainer = EnsembleTrainer({
                 'predicted_features':['sales'],
                 'multi_month_prediction':True,
                 'num_steps': 70
-            }, repeats=4, description='nationwide_3n_mp_r4')
+            }, repeats=4, description='nationwide_3n_mp_r4')'''
 
 '''ensemble_trainer = EnsembleTrainer({
                 'line_id': 13,
