@@ -28,7 +28,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._reader = best_network.reader
         self._operator = operator
         self._weights = np.ones((self._num_networks))
-        predictions = self._generate_predictions_array(evaluators)    
+        self._evals_predictions = self._generate_predictions_array(evaluators)    
         self._mean = None
         self._mean_u = None
         self._mode = None
@@ -49,34 +49,39 @@ class EnsembleEvaluator(BaseEvaluator):
         self._upper_u = None
         
         if find_best_ensemble:
-            self._find_best_ensemble(predictions)
+            self._find_best_ensemble()
             
-        self._process_evaluators(predictions)
+        self._process_evaluators(self._evals_predictions)
         
     @property
     def window_length(self):
         return self._window_length
         
-    def _find_best_ensemble(self, predictions):
+    def _find_best_ensemble(self):
         candidate_pos = 0
         rme = None
-        self._weights = np.zeros((self._num_networks))
-        while len(predictions) > 0 and candidate_pos is not None:
-            self._weights[candidate_pos] = 1
+        weights = np.zeros((self._num_networks))
+        while candidate_pos is not None:
+            weights[candidate_pos] = 1
             print('Chosen: ', candidate_pos)
             candidate_pos = None
             if rme:
                 print('Current best relative mean error: {}'.format(rme))
             for pos in range(self._num_networks):
-                if self._weights[pos] == 0:
-                    self._weights[pos] = 1
-                    self._calculate_ensemble_prediction(predictions)
+                if weights[pos] == 0:
+                    weights[pos] = 1
+                    self.test_ensemble(weights)
                     erme = self.relative_mean_error()
                     if rme is None or erme < rme:
                         candidate_pos = pos
                         rme = erme
-                    self._weights[pos] = 0
+                    weights[pos] = 0
         
+    
+    def test_ensemble(self, weights):
+        self._weights = weights
+        self._calculate_ensemble_prediction(self._evals_predictions)
+        return self.relative_mean_error()
         
     def _process_evaluators(self, predictions):
         self._calculate_ensemble_prediction(predictions)
