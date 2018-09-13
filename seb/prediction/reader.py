@@ -13,7 +13,7 @@ import numpy as np
 from utils import Utils
 from generator import Generator
 from db_manager import DBManager
-from ensemble_reporter import EnsembleReporter
+#from ensemble_reporter import EnsembleReporter
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -127,14 +127,14 @@ class Reader(object):
     
     def _load_base_ensembles(self, paths):
         ensembles = []
-        for path in paths:
+        '''for path in paths:
             print('Loading base ensemble: {} {} ...'.format(path, self._line_id))
             ensembleReporter = EnsembleReporter(path, overwrite=True)
             ensemble = ensembleReporter.get_ensemble_evaluator(find_best_ensemble=True)
             if not self._is_base_ensemble_compatible(ensemble):
                 raise IncompatibleBaseEnsemble('Base ensemble is not compatible with current reader')
             ensembles.append(ensemble)
-            print('Loaded base ensemble: {} ...'.format(path))
+            print('Loaded base ensemble: {} ...'.format(path))'''
         return ensembles
     
     def _is_base_ensemble_compatible(self, ensemble):

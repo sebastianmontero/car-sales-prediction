@@ -21,14 +21,15 @@ class EnsembleEvolver(object):
         self._config = {
             'indpb': 0.05,
             'cxpb': 0.5,
-            'mutpb': 0.2,
+            'mutpb': 0.3,
             'num_best': 3,
-            'num_generations': 300,
+            'num_generations': 20000,
             'tournament_size': 3,
-            'population_size': 100
+            'population_size': 500
         }
         
         self._config.update(config)
+        config = self._config
         creator.create('FitnessMin', base.Fitness, weights = (-1.0,))
         creator.create('Individual', list, fitness=creator.FitnessMin)
         
@@ -38,7 +39,7 @@ class EnsembleEvolver(object):
         toolbox.register('individual', tools.initRepeat, creator.Individual, toolbox.rand_float, self._ensemble_evaluator._num_networks)
         toolbox.register('population', tools.initRepeat, list, toolbox.individual)
         
-        toolbox.register('evaluate', lambda ind: self._ensemble_evaluator.test_ensemble(ind))
+        toolbox.register('evaluate', lambda ind: (self._ensemble_evaluator.test_ensemble(ind),))
         toolbox.register('mate', tools.cxTwoPoint)
         toolbox.register('mutate', SebsToolbox.mutUniformFloat, indpb=config['indpb'])
         toolbox.register('select_best', tools.selBest)
@@ -69,10 +70,10 @@ class EnsembleEvolver(object):
         for gen in range(config['num_generations']):
             
             record = self._stats.compile(pop)
-            self._logbook.record(generation=gen, **record)
+            self._logbook.record(gen=gen, **record)
             print(self._logbook.stream)
             
-            best = toolbox.select_best(num_best)
+            best = toolbox.select_best(pop, num_best)
             offspring = toolbox.select(pop, len(pop) - num_best)
             offspring = list(map(toolbox.clone, offspring))
             
@@ -93,7 +94,7 @@ class EnsembleEvolver(object):
             pop[:num_best] = best
             pop[num_best:] = offspring
         
-        best_ind = toolbox.select(pop, 1)[0]
+        best_ind = toolbox.select_best(pop, 1)[0]
         print('Best individual {}%:'.format(best_ind.fitness.values))
         print(best_ind)
         
