@@ -56,6 +56,15 @@ class EnsembleEvaluator(BaseEvaluator):
     @property
     def window_length(self):
         return self._window_length
+    
+    @property
+    def weights(self):
+        return self._weights
+    
+    @weights.setter
+    def weights(self, weights):
+        self._weights = np.array(weights)
+        self._calculate_ensemble_prediction(self._evals_predictions)
         
     def _find_best_ensemble(self):
         candidate_pos = 0
@@ -79,8 +88,7 @@ class EnsembleEvaluator(BaseEvaluator):
         
     
     def test_ensemble(self, weights):
-        self._weights = weights
-        self._calculate_ensemble_prediction(self._evals_predictions)
+        self.weights = weights
         return self.relative_mean_error()
         
     def _process_evaluators(self, predictions):
