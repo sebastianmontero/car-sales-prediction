@@ -12,6 +12,7 @@ from utils import Utils
 from ensemble_config import EnsembleConfig
 from ensemble_evaluator import EnsembleEvaluator
 from db_manager import DBManager
+from ensemble_evolver import EnsembleEvolver
 
 
 class InvalidIFP(Exception):
@@ -45,7 +46,12 @@ class EnsembleReporter():
             else:
                 self._ensemble_evaluator = self._ensemble_eval_sm.unpickle(pickle)
                 
-        return self._ensemble_evaluator  
+        return self._ensemble_evaluator
+    
+    def evolve_ensemble(self, config):  
+        evaluator = self.get_ensemble_evaluator()
+        evolver = EnsembleEvolver(config, evaluator)
+        evolver.evolve()
         
         
     def _get_evaluators(self):
@@ -93,4 +99,10 @@ class EnsembleReporter():
                     traceback.print_exc()
                     raise InvalidIFP('Invalid Input Feature Prediction Name')
         return False
+    
+reporter = EnsembleReporter(run_path='/home/nishilab/Documents/python/model-storage/ensemble-run-model-20180815225523217235',
+                            overwrite=True)
+reporter.evolve_ensemble({
+        'num_generations': 2
+    })
 

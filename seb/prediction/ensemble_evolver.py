@@ -93,7 +93,11 @@ class EnsembleEvolver(object):
             pop[:num_best] = best
             pop[num_best:] = offspring
         
-        return toolbox.select(pop, 1)[0]
+        best_ind = toolbox.select(pop, 1)[0]
+        print('Best individual {}%:'.format(best_ind.fitness.values))
+        print(best_ind)
+        
+        return best_ind
             
     def evaluate(self, population):
         fitnesses = map(self._toolbox.evaluate, population)
