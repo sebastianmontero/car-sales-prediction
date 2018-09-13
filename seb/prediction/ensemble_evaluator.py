@@ -16,17 +16,19 @@ class EnsembleEvaluator(BaseEvaluator):
 
     def __init__(self, evaluators, operator='mean', find_best_ensemble=False):
         BaseEvaluator.__init__(self)
-        self._operator = operator
-        if find_best_ensemble:
-            evaluators = self._find_best_ensemble(evaluators)
-        assert (len(evaluators) > 1), "There must be at least two evaluators in the ensemble"
+        
+        self._num_networks = len(evaluators)
+        assert (self._num_networks > 1), "There must be at least two evaluators in the ensemble"
+        
         best_network = evaluators[0]
         self._quantile = 0.975 #0.95 confidence interval 
         self._best_network = best_network
         self._end_window_pos = best_network._end_window_pos
         self._window_length = best_network.window_length
-        self._num_networks = len(evaluators)
         self._reader = best_network.reader
+        self._operator = operator
+        self._weights = np.ones((self._num_networks))
+        predictions = self._generate_predictions_array(evaluators)    
         self._mean = None
         self._mean_u = None
         self._mode = None
@@ -46,50 +48,57 @@ class EnsembleEvaluator(BaseEvaluator):
         self._upper = None
         self._upper_u = None
         
-        self._process_evaluators(evaluators)
+        if find_best_ensemble:
+            self._find_best_ensemble(predictions)
+            
+        self._process_evaluators(predictions)
         
     @property
     def window_length(self):
         return self._window_length
         
-    def _find_best_ensemble(self, evaluators):
-        best = []
+    def _find_best_ensemble(self, predictions):
         candidate_pos = 0
         rme = None
-        while len(evaluators) > 0 and candidate_pos is not None:
-            best.append(evaluators[candidate_pos])
-            del evaluators[candidate_pos]
-            #print('Chosen: ', candidate_pos)
+        self._weights = np.zeros((self._num_networks))
+        while len(predictions) > 0 and candidate_pos is not None:
+            self._weights[candidate_pos] = 1
+            print('Chosen: ', candidate_pos)
             candidate_pos = None
-            #if rme:
-            #    print('Current best relative mean error: {}, networks: {}'.format(rme, len(best)))
-            for pos, evaluator in enumerate(evaluators):
-                ensemble = EnsembleEvaluator([evaluator] + best, operator=self._operator)
-                erme = ensemble.relative_mean_error()
-                if rme is None or erme < rme:
-                    candidate_pos = pos
-                    rme = erme
-                    
-        return best
+            if rme:
+                print('Current best relative mean error: {}'.format(rme))
+            for pos in range(self._num_networks):
+                if self._weights[pos] == 0:
+                    self._weights[pos] = 1
+                    self._calculate_ensemble_prediction(predictions)
+                    erme = self.relative_mean_error()
+                    if rme is None or erme < rme:
+                        candidate_pos = pos
+                        rme = erme
+                    self._weights[pos] = 0
         
-    def _process_evaluators(self, evaluators):
-        predictions = self._generate_predictions_array(evaluators)
-        self._mean = self._calculate_mean(predictions)
-        self._median = self._calculate_median(predictions)
         
+    def _process_evaluators(self, predictions):
+        self._calculate_ensemble_prediction(predictions)
         self._model_variance = self._calculate_model_variance(predictions)
         self._noise_variance = self._calculate_noise_variance(self.get_predicted_targets(scaled=True),self._mean, self._model_variance)
         self._std = self._calculate_std(predictions)
         self._min = self._get_min(predictions)
         self._max = self._get_max(predictions)
         self._lower, self._upper = self._calculate_interval(self._mean, self._std)
-        self._mean_u = self._unscale_features(self._mean)
-        self._median_u = self._unscale_features(self._median)
         self._std_u = self._unscale_features(self._std, round_=False)
         self._min_u = self._unscale_features(self._min)
         self._max_u = self._unscale_features(self._max)
         self._lower_u = self._unscale_features(self._lower)
         self._upper_u = self._unscale_features(self._upper)
+        
+    
+    def _calculate_ensemble_prediction(self, predictions):
+        
+        self._mean = self._calculate_mean(predictions)
+        self._median = self._calculate_median(predictions)
+        self._mean_u = self._unscale_features(self._mean)
+        self._median_u = self._unscale_features(self._median)
         
         if self._operator == 'mode':
             self._mode = self._calculate_mode(predictions)
@@ -107,7 +116,7 @@ class EnsembleEvaluator(BaseEvaluator):
         return np.concatenate(predictions, axis=1)
     
     def _calculate_mean(self, predictions):
-        return np.mean(predictions, axis=1)
+        return np.average(predictions, axis=1, weights=self._weights)
     
     def _calculate_median(self, predictions):
         return np.median(predictions, axis=1)
