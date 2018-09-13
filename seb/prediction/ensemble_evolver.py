@@ -12,13 +12,23 @@ from deap import base, creator, tools
 class EnsembleEvolver(object):
     
     def __init__(self, config, ensemble_evaluator):
-        self._config = config
         self._ensemble_evaluator = ensemble_evaluator
         self._setup(config)
         
         
     def _setup(self, config):
         
+        self._config = {
+            'indpb': 0.05,
+            'cxpb': 0.5,
+            'mutpb': 0.2,
+            'num_best': 3,
+            'num_generations': 300,
+            'tournament_size': 3,
+            'population_size': 100
+        }
+        
+        self._config.update(config)
         creator.create('FitnessMin', base.Fitness, weights = (-1.0,))
         creator.create('Individual', list, fitness=creator.FitnessMin)
         
@@ -31,6 +41,7 @@ class EnsembleEvolver(object):
         toolbox.register('evaluate', lambda ind: self._ensemble_evaluator.test_ensemble(ind))
         toolbox.register('mate', tools.cxTwoPoint)
         toolbox.register('mutate', SebsToolbox.mutUniformFloat, indpb=config['indpb'])
+        toolbox.register('select_best', tools.selBest)
         toolbox.register('select', tools.selTournament, tournsize=config['tournament_size'])
         
         stats = tools.Statistics(key=lambda ind: ind.fitness.values)
@@ -47,6 +58,7 @@ class EnsembleEvolver(object):
     def evolve(self):
         config = self._config
         toolbox = self._toolbox
+        num_best = config['num_best']
         
         pop = toolbox.population(n=config['population_size'])
         
@@ -60,24 +72,28 @@ class EnsembleEvolver(object):
             self._logbook.record(generation=gen, **record)
             print(self._logbook.stream)
             
-            offspring = toolbox.select(pop, len(pop))
+            best = toolbox.select_best(num_best)
+            offspring = toolbox.select(pop, len(pop) - num_best)
             offspring = list(map(toolbox.clone, offspring))
             
             for child1, child2 in zip(offspring[::2], offspring[1::2]):
-                if random.random() < config['CXPB']:
+                if random.random() < config['cxpb']:
                     toolbox.mate(child1, child2)
                     del child1.fitness.values
                     del child2.fitness.values
             
             for mutant in offspring:
-                if random.random() < config['MUTPB']:
+                if random.random() < config['mutpb']:
                     toolbox.mutate(mutant)
                     del mutant.fitness.values
                     
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
             self.evaluate(invalid_ind)
             
-            pop[:] = offspring
+            pop[:num_best] = best
+            pop[num_best:] = offspring
+        
+        return toolbox.select(pop, 1)[0]
             
     def evaluate(self, population):
         fitnesses = map(self._toolbox.evaluate, population)
