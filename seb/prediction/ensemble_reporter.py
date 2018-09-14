@@ -100,9 +100,9 @@ class EnsembleReporter():
                     raise InvalidIFP('Invalid Input Feature Prediction Name')
         return False
     
-'''reporter = EnsembleReporter(run_path='/home/nishilab/Documents/python/model-storage/ensemble-run-model-20180815225523217235',
+reporter = EnsembleReporter(run_path='/home/nishilab/Documents/python/model-storage/ensemble-run-model-20180815225523217235',
                             overwrite=True)
 reporter.evolve_ensemble({
         'num_generations': 20000
-    })'''
+    })
 

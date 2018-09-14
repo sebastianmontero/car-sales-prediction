@@ -63,7 +63,7 @@ class EnsembleEvaluator(BaseEvaluator):
     
     @weights.setter
     def weights(self, weights):
-        self._weights = np.array(weights)
+        self._weights = np.array(list(map(lambda x: 0 if x < 0 else x, weights)))
         self._calculate_ensemble_prediction(self._evals_predictions)
         
     def _find_best_ensemble(self):

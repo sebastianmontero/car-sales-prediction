@@ -25,7 +25,9 @@ class EnsembleEvolver(object):
             'num_best': 3,
             'num_generations': 20000,
             'tournament_size': 3,
-            'population_size': 500
+            'population_size': 500,
+            'weight_range': 1000,
+            'zero_percentage': 20
         }
         
         self._config.update(config)
@@ -35,13 +37,15 @@ class EnsembleEvolver(object):
         
         toolbox = base.Toolbox()
         
-        toolbox.register('rand_float', random.uniform, 0.0, 1.0)
-        toolbox.register('individual', tools.initRepeat, creator.Individual, toolbox.rand_float, self._ensemble_evaluator._num_networks)
+        max = config['weight_range']
+        min =  -1 * (max * config['zero_percentage'])//100
+        toolbox.register('rand_int', random.randint, min, max)
+        toolbox.register('individual', tools.initRepeat, creator.Individual, toolbox.rand_int, self._ensemble_evaluator._num_networks)
         toolbox.register('population', tools.initRepeat, list, toolbox.individual)
         
         toolbox.register('evaluate', lambda ind: (self._ensemble_evaluator.test_ensemble(ind),))
         toolbox.register('mate', tools.cxTwoPoint)
-        toolbox.register('mutate', SebsToolbox.mutUniformFloat, indpb=config['indpb'])
+        toolbox.register('mutate', tools.mutUniformInt, low=min, up=max, indpb=config['indpb'])
         toolbox.register('select_best', tools.selBest)
         toolbox.register('select', tools.selTournament, tournsize=config['tournament_size'])
         
