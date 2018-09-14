@@ -79,8 +79,7 @@ class EnsembleEvaluator(BaseEvaluator):
             for pos in range(self._num_networks):
                 if weights[pos] == 0:
                     weights[pos] = 1
-                    self.test_ensemble(weights)
-                    erme = self.relative_mean_error()
+                    erme = self.test_ensemble(weights)
                     if rme is None or erme < rme:
                         candidate_pos = pos
                         rme = erme
