@@ -13,7 +13,7 @@ from utils import Utils
 class StorageManagerType(Enum):
     EVALUATOR = 'evaluator-pickle-'
     CONFIG = 'config-pickle-'
-    ENSEMBLE_EVALUATOR = 'ensemble-evaluator-pickle-'
+    ENSEMBLE_EVALUATOR = 'ensemble-run-'
     EVOLVER_STATS = 'evolver-stats-'
 
 class PickleAction(Enum):
@@ -61,7 +61,7 @@ class StorageManager(object):
         
     def _get_error_from_pickle(self, pickle):
         name = self._get_pickle_file_name(pickle)
-        return float(name[len(self._file_name_prefix):-4])
+        return float(name[name.rfind('-') + 1:-4])
             
     def get_pickles(self, path, filter_=None, recursive=False, sorted_=True, exclude_filter=None):
         
@@ -77,6 +77,9 @@ class StorageManager(object):
             return pickles[0]
         else:
             return None
+        
+    def is_pickle(self, path):
+        return os.path.isfile(path) and path.endswith('.bin')
     
     def get_objects_errors(self, path, filter_=None, recursive=False, sorted_=True, max_= None):
         

@@ -20,13 +20,14 @@ class InvalidIFP(Exception):
 
 class EnsembleReporter():
     
+    _ensemble_eval_sm = StorageManager.get_storage_manager(StorageManagerType.ENSEMBLE_EVALUATOR)
+    _eval_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
+    
     def __init__(self, run_path, num_networks=None, overwrite=False):
                 
         self._ensemble_config = EnsembleConfig(run_path=run_path)
         self._run_path = run_path
         self._num_networks = num_networks
-        self._eval_sm = StorageManager.get_storage_manager(StorageManagerType.EVALUATOR)
-        self._ensemble_eval_sm = StorageManager.get_storage_manager(StorageManagerType.ENSEMBLE_EVALUATOR)
         self._ensemble_evaluator = None
         self._overwrite = overwrite
         
@@ -37,15 +38,7 @@ class EnsembleReporter():
     
     def get_ensemble_evaluator(self, operator='mean', find_best_ensemble=False):
         
-        if self._ensemble_evaluator is None:
-            pickle = self._ensemble_eval_sm.get_pickle(self.run_path)
-            
-            if pickle is None or self._overwrite:
-                self._ensemble_evaluator = EnsembleEvaluator(self._get_evaluators(), operator, find_best_ensemble)
-                self._ensemble_eval_sm.pickle(self._ensemble_evaluator, self.run_path, self._ensemble_evaluator.absolute_mean_error())
-            else:
-                self._ensemble_evaluator = self._ensemble_eval_sm.unpickle(pickle)
-                
+        self._ensemble_evaluator = EnsembleEvaluator(self._get_evaluators(), operator, find_best_ensemble)        
         return self._ensemble_evaluator
     
     def evolve_ensemble(self, config):  
@@ -61,6 +54,26 @@ class EnsembleReporter():
     @classmethod
     def find_ensemble_runs(cls, path, filter_=None, exclude_filter=None, sort=True):
         return Utils.search_paths(path, EnsembleConfig.BASE_DIR_PREFIX + '*', recursive=False, sort=sort, filter_=filter_, exclude_filter=exclude_filter)
+    
+    @classmethod
+    def find_pickled_ensembles(cls, path, best_by_ensemble=False):
+        paths = cls._ensemble_eval_sm.get_pickles(path, filter_='-GA-', recursive=2)
+        
+        best_paths = []
+        best_paths_dict = {}
+        if best_by_ensemble:
+            for path in paths:
+                file_name = os.path.basename(path)
+                ensemble_name = file_name[:file_name.find('-GA-')]
+                if ensemble_name not in best_paths_dict:
+                    best_paths.append(path)
+                    best_paths_dict[ensemble_name] = True
+            paths = best_paths
+        return paths
+    
+    @classmethod
+    def find_all_ensembles(cls, path, best_by_ensemble=False):
+        return cls.find_ensemble_runs(path) + cls.find_pickled_ensembles(path, best_by_ensemble=best_by_ensemble)
     
     @classmethod
     def find_base_ensemble_runs(cls, path):
@@ -83,6 +96,7 @@ class EnsembleReporter():
                 raise InvalidIFP('Invalid base ensemble runs')
             
         return ensembles
+    
     
     @classmethod
     def _process_ifp_run(cls, name):

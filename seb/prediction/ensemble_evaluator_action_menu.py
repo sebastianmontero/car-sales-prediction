@@ -13,10 +13,12 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
     
     def __init__(self, config_sm):
         BaseEvaluatorActionMenu.__init__(self, 'Ensemble Evaluator',StorageManager.get_storage_manager(StorageManagerType.ENSEMBLE_EVALUATOR), config_sm)
-   
+        self._ensemble_eval_sm = StorageManager.get_storage_manager(StorageManagerType.ENSEMBLE_EVALUATOR)
+        
     def add_main_menu_actions(self, subparser):
         path_parser = subparser.add_parser('enevals', help='Search for ensemble evaluators')
         path_parser.add_argument('--filter', '-f', required=False, help='Search for ensemble evaluators relative to the base path, possibly specifying a filter', dest='filter')
+        path_parser.add_argument('--best', '-b', required=False, help='Show real values tail', dest='best', action='store_true')
                 
         path_parser = subparser.add_parser('seneval', help='Select an ensemble evaluator')
         path_parser.add_argument('pos', help='Select an ensemble evaluator, specify position', type=int, nargs='+')
@@ -25,7 +27,7 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
         
     def handle_command(self, cmd, command, base_path):
         if cmd == 'enevals':
-            self._paths = EnsembleReporter.find_ensemble_runs(base_path)
+            self._paths = EnsembleReporter.find_all_ensembles(base_path, best_by_ensemble=command.best)
             self._display_paths(base_path)
             return True
         elif cmd == 'seneval':
@@ -45,9 +47,14 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
         evals = []
         
         for path in self._sel_paths:
+            if self._ensemble_eval_sm.is_pickle(path):
+                obj = self._ensemble_eval_sm.unpickle(path)
+            else:
+                obj =EnsembleReporter(path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(self._operator, find_best_ensemble=(self._networks is None))
+            
             evals.append({
                 'name':os.path.basename(path),
-                'obj': EnsembleReporter(path, num_networks=self._networks, overwrite=True).get_ensemble_evaluator(self._operator, find_best_ensemble=(self._networks is None))
+                'obj': obj 
             })
         return EnsembleEvaluatorPresenter(evals)
     
