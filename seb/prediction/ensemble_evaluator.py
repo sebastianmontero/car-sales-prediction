@@ -5,7 +5,6 @@ Created on Jun 15, 2018
 '''
 
 import numpy as np
-import pandas as pd
 
 from utils import Utils
 from base_evaluator import BaseEvaluator
@@ -84,7 +83,7 @@ class EnsembleEvaluator(BaseEvaluator):
                         candidate_pos = pos
                         rme = erme
                     weights[pos] = 0
-        
+        self.weights = weights
     
     def test_ensemble(self, weights):
         self.weights = weights
