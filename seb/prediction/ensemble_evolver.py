@@ -15,7 +15,6 @@ class EnsembleEvolver(object):
         self._ensemble_evaluator = ensemble_evaluator
         self._setup(config)
         
-        
     def _setup(self, config):
         
         self._config = {
@@ -37,15 +36,15 @@ class EnsembleEvolver(object):
         
         toolbox = base.Toolbox()
         
-        max = config['weight_range']
-        min =  -1 * (max * config['zero_percentage'])//100
-        toolbox.register('rand_int', random.randint, min, max)
+        max_ = config['weight_range']
+        min_ =  -1 * (max_ * config['zero_percentage'])//100
+        toolbox.register('rand_int', random.randint, min_, max_)
         toolbox.register('individual', tools.initRepeat, creator.Individual, toolbox.rand_int, self._ensemble_evaluator._num_networks)
         toolbox.register('population', tools.initRepeat, list, toolbox.individual)
         
         toolbox.register('evaluate', lambda ind: (self._ensemble_evaluator.test_ensemble(ind),))
         toolbox.register('mate', tools.cxTwoPoint)
-        toolbox.register('mutate', tools.mutUniformInt, low=min, up=max, indpb=config['indpb'])
+        toolbox.register('mutate', tools.mutUniformInt, low=min_, up=max_, indpb=config['indpb'])
         toolbox.register('select_best', tools.selBest)
         toolbox.register('select', tools.selTournament, tournsize=config['tournament_size'])
         
@@ -59,22 +58,36 @@ class EnsembleEvolver(object):
         self._stats = stats
         self._logbook = tools.Logbook()
         self._logbook.header = 'gen', 'min', 'max', 'avg', 'std'
+    
+    def init_population(self):
+        self._generation = 0
+        self._population = self._toolbox.population(n=self._config['population_size'])
+        self.evaluate(self._population)
+        
         
     def evolve(self):
         config = self._config
+        self.init_population()
+        
+        for _ in range(config['num_generations']):
+            best_ind, best_fitness = self.evolve_step(1)
+        
+        print('Best individual {}%:'.format(best_fitness))
+        print(best_ind)
+        
+        return best_ind
+    
+    def evolve_step(self, gens):
+        
+        config = self._config
         toolbox = self._toolbox
         num_best = config['num_best']
+        pop = self._population
         
-        pop = toolbox.population(n=config['population_size'])
-        
-        print("Start of evolution")
-        
-        self.evaluate(pop)
-        
-        for gen in range(config['num_generations']):
+        for _ in range(gens):
             
             record = self._stats.compile(pop)
-            self._logbook.record(gen=gen, **record)
+            self._logbook.record(gen=self._generation, **record)
             print(self._logbook.stream)
             
             best = toolbox.select_best(pop, num_best)
@@ -97,12 +110,10 @@ class EnsembleEvolver(object):
             
             pop[:num_best] = best
             pop[num_best:] = offspring
+            self._generation += 1
         
         best_ind = toolbox.select_best(pop, 1)[0]
-        print('Best individual {}%:'.format(best_ind.fitness.values))
-        print(best_ind)
-        
-        return best_ind
+        return best_ind, best_ind.fitness.values
             
     def evaluate(self, population):
         fitnesses = map(self._toolbox.evaluate, population)

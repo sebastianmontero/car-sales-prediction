@@ -103,6 +103,6 @@ class EnsembleReporter():
 reporter = EnsembleReporter(run_path='/home/nishilab/Documents/python/model-storage/ensemble-run-model-20180815225523217235',
                             overwrite=True)
 reporter.evolve_ensemble({
-        'num_generations': 20000
+        'num_generations': 20
     })
 

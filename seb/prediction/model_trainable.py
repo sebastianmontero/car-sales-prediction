@@ -5,8 +5,6 @@ from __future__ import print_function
 
 import os
 from ray.tune import Trainable, TrainingResult
-from ray.tune.async_hyperband import AsyncHyperBandScheduler
-from ray.tune.hyperband import HyperBandScheduler 
 
 from model_trainer import ModelTrainer
 
