@@ -14,6 +14,7 @@ class StorageManagerType(Enum):
     EVALUATOR = 'evaluator-pickle-'
     CONFIG = 'config-pickle-'
     ENSEMBLE_EVALUATOR = 'ensemble-evaluator-pickle-'
+    EVOLVER_STATS = 'evolver-stats-'
 
 class PickleAction(Enum):
     KEEP = 'keep'
@@ -26,8 +27,9 @@ class StorageManager(object):
     def __init__(self, file_name_prefix):
         self._file_name_prefix = file_name_prefix
     
-    def _get_pickle_file_path(self, path, error):
-        return os.path.join(path, self._file_name_prefix + str(error) + '.bin')
+    def _get_pickle_file_path(self, path, error, file_name_prefix=None):
+        file_name_prefix = file_name_prefix if file_name_prefix else self._file_name_prefix
+        return os.path.join(path, '{}{:.3f}'.format(file_name_prefix, error) + '.bin')
     
     def unpickle(self, path):
         if os.path.isdir(path):
@@ -92,8 +94,8 @@ class StorageManager(object):
             })
         return objs
         
-    def pickle(self, obj, path, error, pickle_action=PickleAction.OVERWRITE):
-
+    def pickle(self, obj, path, error, pickle_action=PickleAction.OVERWRITE, file_name_prefix=None):
+        
         if PickleAction.BEST:
             best_error = self._get_best_pickle_error(path)
             pickle_action = PickleAction.OVERWRITE if best_error is None or error < best_error else PickleAction.NOTHING
@@ -102,7 +104,7 @@ class StorageManager(object):
             self._remove_pickles(path)
             
         if pickle_action != PickleAction.NOTHING:
-            pickle_file = self._get_pickle_file_path(path, error)
+            pickle_file = self._get_pickle_file_path(path, error, file_name_prefix=file_name_prefix)
             os.makedirs(os.path.dirname(pickle_file), exist_ok=True)
             with open(pickle_file, mode='wb') as file:
                 pickle.dump(obj, file)

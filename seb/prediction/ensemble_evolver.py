@@ -14,6 +14,7 @@ class EnsembleEvolver(object):
     def __init__(self, config, ensemble_evaluator):
         self._ensemble_evaluator = ensemble_evaluator
         self._setup(config)
+        self._init_population()
         
     def _setup(self, config):
         
@@ -59,17 +60,21 @@ class EnsembleEvolver(object):
         self._logbook = tools.Logbook()
         self._logbook.header = 'gen', 'min', 'max', 'avg', 'std'
     
-    def init_population(self):
+    def _init_population(self):
         self._generation = 0
         self._population = self._toolbox.population(n=self._config['population_size'])
         self.evaluate(self._population)
-        
+       
+    @property
+    def generation(self):
+        return self._generation 
+    
+    @property
+    def logbook(self):
+        return self._logbook 
         
     def evolve(self):
-        config = self._config
-        self.init_population()
-        
-        for _ in range(config['num_generations']):
+        for _ in range(self._config['num_generations']):
             best_ind, best_fitness = self.evolve_step(1)
         
         print('Best individual {}%:'.format(best_fitness))
@@ -112,8 +117,16 @@ class EnsembleEvolver(object):
             pop[num_best:] = offspring
             self._generation += 1
         
-        best_ind = toolbox.select_best(pop, 1)[0]
-        return best_ind, best_ind.fitness.values
+        best_ind = self._get_best_ind()
+        return best_ind, best_ind.fitness.values[0]
+    
+    def get_best_ensemble(self):
+        self._ensemble_evaluator.weights = self._get_best_ind()
+        return self._ensemble_evaluator
+    
+    def _get_best_ind(self):
+        return self._toolbox.select_best(self._population, 1)[0]
+        
             
     def evaluate(self, population):
         fitnesses = map(self._toolbox.evaluate, population)
