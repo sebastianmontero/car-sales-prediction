@@ -25,7 +25,7 @@ run_experiments({
                 'mutpb': 0.3,
                 'num_best': grid_search([3, 10, 20]),
                 'tournament_size': grid_search([3, 30, 60]),
-                'population_size': 2000,
+                'population_size': 3000,
                 'weight_range': grid_search([10,100,1000]),
                 'zero_percentage': grid_search([10, 30, 50])
             },
