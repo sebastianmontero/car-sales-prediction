@@ -14,19 +14,19 @@ register_trainable('ensemble_evolver_trainable', EnsembleEvolverTrainable)
 
 
 run_experiments({
-    'evolver_model_1n_focus2' : {
+    'evolver_model_1n_r4_focus' : {
             'run': 'ensemble_evolver_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 0},
-            'stop': {'training_iteration': 80},
+            'stop': {'training_iteration': 70},
             'config' : {
-                'run_path': '/home/nishilab/Documents/python/model-storage/ensemble-run-model-20180815225523217235',
+                'run_path': '/home/nishilab/Documents/python/model-storage/ensemble-run-model_1n_r4-20180916111403290168',
                 'gens_per_step' : 10,
                 'indpb': 0.05,
                 'cxpb': 0.7,
                 'mutpb':  0.5,
                 'num_best': 20,
                 'tournament_size': 80,
-                'population_size': 4000,
+                'population_size': 5000,
                 'weight_range': 100,
                 'zero_percentage': 50
             },
