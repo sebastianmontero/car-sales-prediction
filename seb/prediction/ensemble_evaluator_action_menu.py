@@ -65,7 +65,8 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
                    'Plot target vs ensemble mean and interval',
                    'Plot standard deviation',
                    'Plot variance errors',
-                   'Plot min max range']
+                   'Plot min max range',
+                   'Display weights']
         return super(EnsembleEvaluatorActionMenu, self)._get_menu_options() + options
                                     
     def _handle_action(self, action, feature_pos, scaled, tail, evals, prediction_indexes, prediction_index):
@@ -82,6 +83,8 @@ class EnsembleEvaluatorActionMenu(BaseEvaluatorActionMenu):
             self._actor.plot_variance_errors(feature_pos, evals=evals, prediction_index=prediction_index)
         elif action == 14:
             self._actor.plot_min_max_range(feature_pos, scaled=scaled, evals=evals, prediction_index=prediction_index)
+        elif action == 15:
+            print(self._actor.weights_str(evals))
         else:
             raise ValueError('Unknown action')
             

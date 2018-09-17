@@ -129,3 +129,14 @@ class EnsembleEvaluatorPresenter(BaseEvaluatorPresenter):
         rme_str = super(EnsembleEvaluatorPresenter, self)._total_relative_mean_error_str(eval_, feature_pos, scaled, prediction_indexes)
         return self._error_str(rme_str, eval_['obj'].best_network.relative_mean_error(feature_pos, scaled, prediction_indexes), percent=True)
     
+    def weights_str(self, evals_pos=[]):
+        evals = self.evals(evals_pos)
+        str_ = ''
+        for evl in evals:
+            eo = evl['obj']
+            str_ += '{} weights:\n'.format(evl['name'])
+            if hasattr(eo, 'weights'):
+                str_ += '{}\n'.format(eo.weights)
+            else:
+                str_ += 'This ensemble does not use weights\n'
+        return str_

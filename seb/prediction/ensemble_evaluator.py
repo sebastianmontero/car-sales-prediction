@@ -26,7 +26,7 @@ class EnsembleEvaluator(BaseEvaluator):
         self._window_length = best_network.window_length
         self._reader = best_network.reader
         self._operator = operator
-        self._weights = np.ones((self._num_networks))
+        self._weights = np.ones((self._num_networks), dtype=np.int)
         self._evals_predictions = self._generate_predictions_array(evaluators)    
         self._mean = None
         self._mean_u = None
@@ -49,8 +49,8 @@ class EnsembleEvaluator(BaseEvaluator):
         
         if find_best_ensemble:
             self._find_best_ensemble()
-            
-        self._process_evaluators(self._evals_predictions)
+        else:
+            self._process_evaluators()
         
     @property
     def window_length(self):
@@ -62,13 +62,16 @@ class EnsembleEvaluator(BaseEvaluator):
     
     @weights.setter
     def weights(self, weights):
+        self._set_weights(weights)
+        self._process_evaluators()
+        
+    def _set_weights(self, weights):
         self._weights = np.array(list(map(lambda x: 0 if x < 0 else x, weights)))
-        self._calculate_ensemble_prediction(self._evals_predictions)
         
     def _find_best_ensemble(self):
         candidate_pos = 0
         rme = None
-        weights = np.zeros((self._num_networks))
+        weights = np.zeros((self._num_networks), dtype=np.int)
         while candidate_pos is not None:
             weights[candidate_pos] = 1
             print('Chosen: ', candidate_pos)
@@ -86,11 +89,14 @@ class EnsembleEvaluator(BaseEvaluator):
         self.weights = weights
     
     def test_ensemble(self, weights):
-        self.weights = weights
+        self._set_weights(weights)
+        predictions, weights = self._filter_zero_networks(self._evals_predictions, self.weights)
+        self._calculate_ensemble_prediction(predictions, weights)
         return self.relative_mean_error()
         
-    def _process_evaluators(self, predictions):
-        self._calculate_ensemble_prediction(predictions)
+    def _process_evaluators(self):
+        predictions, weights = self._filter_zero_networks(self._evals_predictions, self.weights)
+        self._calculate_ensemble_prediction(predictions, weights)
         self._model_variance = self._calculate_model_variance(predictions)
         self._noise_variance = self._calculate_noise_variance(self.get_predicted_targets(scaled=True),self._mean, self._model_variance)
         self._std = self._calculate_std(predictions)
@@ -103,15 +109,20 @@ class EnsembleEvaluator(BaseEvaluator):
         self._lower_u = self._unscale_features(self._lower)
         self._upper_u = self._unscale_features(self._upper)
         
-    
-    def _calculate_ensemble_prediction(self, predictions):
+    def _filter_zero_networks(self, predictions, weights):
+        non_zero_pos = np.nonzero(weights)[0]
+        return predictions[:,non_zero_pos], weights[non_zero_pos]
         
-        self._mean = self._calculate_mean(predictions)
-        self._median = self._calculate_median(predictions)
-        self._mean_u = self._unscale_features(self._mean)
-        self._median_u = self._unscale_features(self._median)
         
-        if self._operator == 'mode':
+    def _calculate_ensemble_prediction(self, predictions, weights):
+        
+        if self._operator == 'mean':
+            self._mean = self._calculate_mean(predictions, weights)
+            self._mean_u = self._unscale_features(self._mean)
+        elif self._operator == 'median':
+            self._median = self._calculate_median(predictions)
+            self._median_u = self._unscale_features(self._median)
+        elif self._operator == 'mode':
             self._mode = self._calculate_mode(predictions)
             self._mode_u = self._unscale_features(self._mode)
         
@@ -126,8 +137,8 @@ class EnsembleEvaluator(BaseEvaluator):
         
         return np.concatenate(predictions, axis=1)
     
-    def _calculate_mean(self, predictions):
-        return np.average(predictions, axis=1, weights=self._weights)
+    def _calculate_mean(self, predictions, weights):
+        return np.average(predictions, axis=1, weights=weights)
     
     def _calculate_median(self, predictions):
         return np.median(predictions, axis=1)
