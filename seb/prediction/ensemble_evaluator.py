@@ -11,6 +11,9 @@ from base_evaluator import BaseEvaluator
 from scipy.stats import t
 from sklearn.cluster import MeanShift
 
+class InvalidEnsembleWeights(Exception):
+    pass
+
 class EnsembleEvaluator(BaseEvaluator):
 
     def __init__(self, evaluators, operator='mean', find_best_ensemble=False):
@@ -111,6 +114,8 @@ class EnsembleEvaluator(BaseEvaluator):
         
     def _filter_zero_networks(self, predictions, weights):
         non_zero_pos = np.nonzero(weights)[0]
+        if len(non_zero_pos) == 0:
+            raise InvalidEnsembleWeights("No non zero weights")
         return predictions[:,non_zero_pos], weights[non_zero_pos]
         
         

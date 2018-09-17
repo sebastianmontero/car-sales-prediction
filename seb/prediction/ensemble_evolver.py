@@ -6,6 +6,7 @@ Created on Sep 13, 2018
 
 import random
 import numpy as np
+from ensemble_evaluator import InvalidEnsembleWeights
 from deap import base, creator, tools
 
 
@@ -43,6 +44,12 @@ class EnsembleEvolver(object):
         toolbox.register('individual', tools.initRepeat, creator.Individual, toolbox.rand_int, self._ensemble_evaluator._num_networks)
         toolbox.register('population', tools.initRepeat, list, toolbox.individual)
         
+        def evaluate_individual(ind):
+            try:
+                return (self._ensemble_evaluator.test_ensemble(ind),)
+            except InvalidEnsembleWeights:
+                return 10000
+            
         toolbox.register('evaluate', lambda ind: (self._ensemble_evaluator.test_ensemble(ind),))
         toolbox.register('mate', tools.cxTwoPoint)
         toolbox.register('mutate', tools.mutUniformInt, low=min_, up=max_, indpb=config['indpb'])
