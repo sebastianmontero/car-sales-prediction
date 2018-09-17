@@ -14,7 +14,7 @@ register_trainable('ensemble_evolver_trainable', EnsembleEvolverTrainable)
 
 
 run_experiments({
-    'evolver_model_1n_focus' : {
+    'evolver_model_1n_focus2' : {
             'run': 'ensemble_evolver_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 0},
             'stop': {'training_iteration': 80},
@@ -27,7 +27,7 @@ run_experiments({
                 'num_best': 20,
                 'tournament_size': 80,
                 'population_size': 4000,
-                'weight_range': 50,
+                'weight_range': 100,
                 'zero_percentage': 50
             },
             'repeat':5
