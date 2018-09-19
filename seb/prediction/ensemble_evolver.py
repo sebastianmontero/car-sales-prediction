@@ -48,9 +48,9 @@ class EnsembleEvolver(object):
             try:
                 return (self._ensemble_evaluator.test_ensemble(ind),)
             except InvalidEnsembleWeights:
-                return 10000
+                return (10000,)
             
-        toolbox.register('evaluate', lambda ind: (self._ensemble_evaluator.test_ensemble(ind),))
+        toolbox.register('evaluate', evaluate_individual)
         toolbox.register('mate', tools.cxTwoPoint)
         toolbox.register('mutate', tools.mutUniformInt, low=min_, up=max_, indpb=config['indpb'])
         toolbox.register('select_best', tools.selBest)

@@ -57,7 +57,7 @@ ensemble_trainer = EnsembleTrainer({
                 'predicted_features':['sales'],
                 'multi_month_prediction':False,
                 'num_steps': 70
-            }, repeats=4, description='model_2n_r4')
+            }, repeats=4, description='model_2n_r4_2')
 
 '''ensemble_trainer = EnsembleTrainer({
                 'line_id': 102,
