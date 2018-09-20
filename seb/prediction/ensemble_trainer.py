@@ -56,7 +56,7 @@ ensemble_trainer = EnsembleTrainer({
                 'included_features' : ['energy_price_index_roc_prev_month'],
                 'predicted_features':['sales'],
                 'multi_month_prediction':False,
-                'num_steps': 50
+                'num_steps': 12
             }, repeats=5, description='model_2n_r5')
 
 '''ensemble_trainer = EnsembleTrainer({

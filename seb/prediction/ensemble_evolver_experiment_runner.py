@@ -12,8 +12,27 @@ ray.init()
 
 register_trainable('ensemble_evolver_trainable', EnsembleEvolverTrainable)
 
-
 run_experiments({
+    'evolver_platform_1n_focus' : {
+            'run': 'ensemble_evolver_trainable',
+            'trial_resources': {'cpu': 8, 'gpu': 0},
+            'stop': {'training_iteration': 70},
+            'config' : {
+                'run_path': '/home/nishilab/Documents/python/model-storage/ensemble-run-platform_23_37-20180826000513927940',
+                'gens_per_step' : 10,
+                'indpb': 0.05,
+                'cxpb': 0.7,
+                'mutpb':  0.5,
+                'num_best': 20,
+                'tournament_size': 80,
+                'population_size': 5000,
+                'weight_range': 100,
+                'zero_percentage': 50
+            },
+            'repeat':5
+    }
+})
+'''run_experiments({
     'evolver_platform_3n_r4_focus' : {
             'run': 'ensemble_evolver_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 0},
@@ -86,7 +105,7 @@ run_experiments({
             },
             'repeat':5
     }
-})
+})'''
 '''run_experiments({
     'evolver_model_3n_r4_focus' : {
             'run': 'ensemble_evolver_trainable',
