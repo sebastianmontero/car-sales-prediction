@@ -84,18 +84,18 @@ class EnsembleEvaluator(BaseEvaluator):
             for pos in range(self._num_networks):
                 if weights[pos] == 0:
                     weights[pos] = 1
-                    erme = self.test_ensemble(weights)
+                    erme = self.test_ensemble(weights, 90)
                     if rme is None or erme < rme:
                         candidate_pos = pos
                         rme = erme
                     weights[pos] = 0
         self.weights = weights
     
-    def test_ensemble(self, weights):
+    def test_ensemble(self, weights, subset=100):
         self._set_weights(weights)
         predictions, weights = self._filter_zero_networks(self._evals_predictions, self.weights)
         self._calculate_ensemble_prediction(predictions, weights)
-        return self.relative_mean_error()
+        return self.relative_mean_error(subset=subset)
         
     def _process_evaluators(self):
         predictions, weights = self._filter_zero_networks(self._evals_predictions, self.weights)

@@ -14,7 +14,7 @@ register_trainable('ensemble_evolver_trainable', EnsembleEvolverTrainable)
 
 
 run_experiments({
-    'evolver_model_2n_r5_focus' : {
+    'evolver_model_2n_r5_v_focus' : {
             'run': 'ensemble_evolver_trainable',
             'trial_resources': {'cpu': 8, 'gpu': 0},
             'stop': {'training_iteration': 70},

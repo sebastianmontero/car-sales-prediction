@@ -46,7 +46,7 @@ class EnsembleEvolver(object):
         
         def evaluate_individual(ind):
             try:
-                return (self._ensemble_evaluator.test_ensemble(ind),)
+                return (self._ensemble_evaluator.test_ensemble(ind, 90),)
             except InvalidEnsembleWeights:
                 return (10000,)
             
