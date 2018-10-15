@@ -6,6 +6,7 @@ Created on Jun 15, 2018
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 import seaborn as sns
 from multiprocessing import Process
 
@@ -45,9 +46,16 @@ class BaseEvaluatorPresenter(object):
         
     def _plot_by_month(self, months, series, ylabel, title, yfix=False):
         
+        FONT_SIZE = 14
+        LINE_WIDTH = 2.5
         min_val = None
         max_val = None
         num_months = len(months)
+        
+        plt.rc('xtick', labelsize=FONT_SIZE)
+        plt.rc('ytick', labelsize=FONT_SIZE)
+        plt.rc('legend', fontsize=FONT_SIZE)
+        plt.gca().yaxis.set_major_formatter(mtick.StrMethodFormatter('{x:,.0f}')) 
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         i = 0
         for label, obj in series.items():
@@ -70,7 +78,7 @@ class BaseEvaluatorPresenter(object):
             if plt_type == 'bar':
                 plt.bar(xvals, vals, label=(label))
             elif plt_type == 'line':
-                plt.plot(xvals, vals, label=(label))
+                plt.plot(xvals, vals, label=(label), linewidth=LINE_WIDTH)
             else:
                 plt.plot(xvals, vals, plt_type, label=(label), color=colors[i])
             i += 1
